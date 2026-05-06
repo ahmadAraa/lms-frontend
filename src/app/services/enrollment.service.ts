@@ -147,20 +147,16 @@ export class EnrollmentService {
   /**
    * Enrolls a user into a learning path.
    *
-   * Backend receives:
-   * - userId
-   * - courseId as 0
-   * - learningPathId
-   *
    * @param userId - User ID
    * @param learningPathId - Learning path ID
+   * @param managerId - Optional manager who performed the enrollment
    */
-  enroll(userId: string, learningPathId: number, managerId: string): Observable<string> {
+  enroll(userId: string, learningPathId: number, managerId?: string): Observable<string> {
     return this.http.post(
-      `${this.baseUrl}/api/Enrollment/EnrollUser`,
+      `${this.baseUrl}/api/Enrollment`,
       {
         userId,
-        managerId,
+        managerId: managerId ?? null,
         courseId: 0,
         learningPathId,
       },

@@ -47,11 +47,30 @@ export class Login implements OnInit {
         }
         this.authService.saveToken(token);
         const role = this.authService.getUserRole();
-        if (role === 'HR' || role === 'MANAGER') {
-          this.router.navigate(['/hr/dashboard']);
-        } else {
-          this.router.navigate(['/employee/dashboard']);
+
+        if (!role) {
+          this.authService.logout();
+          this.errorMessage = 'Login succeeded, but your account role is not recognized.';
+          this.isLoading = false;
+          this.cdr.markForCheck();
+          return;
         }
+
+        const target = role === 'HR' || role === 'MANAGER'
+          ? '/hr/dashboard'
+          : '/employee/dashboard';
+
+        this.router.navigate([target]).then((navigated) => {
+          if (!navigated) {
+            this.errorMessage = 'Login succeeded, but the dashboard could not be opened.';
+            this.isLoading = false;
+            this.cdr.markForCheck();
+          }
+        }).catch(() => {
+          this.errorMessage = 'Login succeeded, but the dashboard could not be opened.';
+          this.isLoading = false;
+          this.cdr.markForCheck();
+        });
       },
       error: (err) => {
         this.errorMessage = err.error || 'Login failed. Please check your credentials.';

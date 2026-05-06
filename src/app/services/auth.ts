@@ -124,6 +124,7 @@ export class AuthService {
 
     const normalizedRoles = roles.map(r => r.trim().toLowerCase());
 
+    if (normalizedRoles.includes('admin')) return 'HR';
     if (normalizedRoles.includes('hr')) return 'HR';
     if (normalizedRoles.includes('manager')) return 'MANAGER';
     if (normalizedRoles.includes('employee')) return 'EMPLOYEE';

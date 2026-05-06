@@ -11,6 +11,7 @@ export const roleGuard: CanActivateFn = (route) => {
     return true;
   }
 
-  router.navigate(['/employee/dashboard']);
+  const userRole = authService.getUserRole();
+  router.navigate([userRole === 'HR' || userRole === 'MANAGER' ? '/hr/dashboard' : '/employee/dashboard']);
   return false;
 };
