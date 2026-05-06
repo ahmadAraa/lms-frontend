@@ -155,11 +155,12 @@ export class EnrollmentService {
    * @param userId - User ID
    * @param learningPathId - Learning path ID
    */
-  enroll(userId: string, learningPathId: number): Observable<string> {
+  enroll(userId: string, learningPathId: number, managerId: string): Observable<string> {
     return this.http.post(
-      `${this.baseUrl}/api/Enrollment`,
+      `${this.baseUrl}/api/Enrollment/EnrollUser`,
       {
         userId,
+        managerId,
         courseId: 0,
         learningPathId,
       },

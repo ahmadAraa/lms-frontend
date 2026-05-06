@@ -7,6 +7,7 @@ import { LearningPathService, LearningPathResponseDto } from '../../services/lea
 import { EnrollmentService, UserSearchResult } from '../../services/enrollment.service';
 import { ActivityService } from '../../services/activity.service';
 import { NotificationBellComponent } from '../../components/notification-bell/notification-bell';
+import { AuthService } from '../../services/auth';
 
 @Component({
   selector: 'app-hr-assign-path',
@@ -39,6 +40,7 @@ export class HrAssignPath implements OnInit {
     private enrollmentService: EnrollmentService,
     private location: Location,
     private activityService: ActivityService,
+    private authService: AuthService,
   ) {}
 
   ngOnInit() {
@@ -107,7 +109,8 @@ export class HrAssignPath implements OnInit {
     this.successMessage.set('');
     this.errorMessage.set('');
 
-    this.enrollmentService.enroll(this.selectedUser()!.id, this.selectedPathId()!).subscribe({
+    const managerId = this.authService.getUserId();
+    this.enrollmentService.enroll(this.selectedUser()!.id, this.selectedPathId()!, managerId).subscribe({
       next: () => {
         this.isSubmitting.set(false);
         const userName = this.selectedUser()!.userName;

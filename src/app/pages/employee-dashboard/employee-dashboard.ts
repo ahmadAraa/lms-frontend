@@ -167,7 +167,7 @@ export class EmployeeDashboard implements OnInit {
     this.enrollError.set('');
     this.enrollSuccess.set('');
 
-    this.enrollmentService.enroll(userId, path.id).subscribe({
+    this.enrollmentService.enroll(userId, path.id, userId).subscribe({
       next: () => {
         // Add to enrolled set immediately (optimistic UI)
         const updated = new Set(this.enrolledPathIds());
