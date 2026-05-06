@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { BASE_URL } from '../types/course-builder.types';
 
 /**
  * Service responsible for handling password reset flow.
@@ -14,7 +15,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root',
 })
 export class PasswordResetService {
-  private readonly apiUrl = 'http://localhost:5232/api/PasswordReset';
+  private readonly apiUrl = `${BASE_URL}/api/Password`;
 
   constructor(private http: HttpClient) {}
 
