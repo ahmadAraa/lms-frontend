@@ -24,7 +24,7 @@ export class AuthService {
     email: string,
     password: string,
     passwordConfirm: string,
-    fullName: string
+    fullName: string,
   ) {
     return this.http.post(`${this.baseUrl}/Register`, {
       userName,
@@ -56,7 +56,7 @@ export class AuthService {
   }
 
   deleteUser(id: string) {
-    return this.http.delete(`${this.baseUrl}/DeleteUser/${id}`);
+    return this.http.delete(`${this.baseUrl}/DeleteUser/${id}`, { responseType: 'text' });
   }
 
   saveToken(token: string | undefined | null) {
@@ -122,7 +122,7 @@ export class AuthService {
       }
     }
 
-    const normalizedRoles = roles.map(r => r.trim().toLowerCase());
+    const normalizedRoles = roles.map((r) => r.trim().toLowerCase());
 
     if (normalizedRoles.includes('admin')) return 'HR';
     if (normalizedRoles.includes('hr')) return 'HR';
@@ -139,9 +139,9 @@ export class AuthService {
 
     return String(
       payload['sub'] ??
-      payload['nameid'] ??
-      payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] ??
-      ''
+        payload['nameid'] ??
+        payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] ??
+        '',
     );
   }
 
@@ -152,19 +152,15 @@ export class AuthService {
 
     const nameClaim = String(
       payload['name'] ??
-      payload['unique_name'] ??
-      payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ??
-      payload['email'] ??
-      ''
+        payload['unique_name'] ??
+        payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ??
+        payload['email'] ??
+        '',
     );
 
-    const rawName = nameClaim.includes('@')
-      ? nameClaim.split('@')[0]
-      : nameClaim;
+    const rawName = nameClaim.includes('@') ? nameClaim.split('@')[0] : nameClaim;
 
-    return rawName
-      ? rawName.charAt(0).toUpperCase() + rawName.slice(1)
-      : '';
+    return rawName ? rawName.charAt(0).toUpperCase() + rawName.slice(1) : '';
   }
 
   hasAnyRole(roles: UserRole[]): boolean {

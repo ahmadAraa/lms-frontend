@@ -9,10 +9,10 @@ export interface AdminActivity {
 
 const STORAGE_KEY = 'lms_admin_activity';
 const MAX_ITEMS = 20;
+const EXPIRY_MS = 2 * 60 * 60 * 1000; // 2 hours
 
 @Injectable({ providedIn: 'root' })
 export class ActivityService {
-
   log(icon: string, message: string, detail: string): void {
     const activity: AdminActivity = {
       icon,
@@ -24,13 +24,30 @@ export class ActivityService {
     const updated = [activity, ...existing].slice(0, MAX_ITEMS);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    } catch { /* storage full — ignore */ }
+    } catch {
+      /* storage full — ignore */
+    }
   }
 
   getAll(): AdminActivity[] {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? (JSON.parse(raw) as AdminActivity[]) : [];
+      if (!raw) return [];
+
+      const all = JSON.parse(raw) as AdminActivity[];
+      const cutoff = Date.now() - EXPIRY_MS;
+      const fresh = all.filter((a) => new Date(a.timestamp).getTime() > cutoff);
+
+      // Persist the pruned list so stale entries don't accumulate
+      if (fresh.length !== all.length) {
+        if (fresh.length === 0) {
+          localStorage.removeItem(STORAGE_KEY);
+        } else {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
+        }
+      }
+
+      return fresh;
     } catch {
       return [];
     }

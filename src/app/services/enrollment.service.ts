@@ -18,6 +18,7 @@ export interface UserInfo {
   id: string;
   userName: string;
   email: string;
+  role: string;
   createdAt: string;
   enrollments: {
     id?: number;
@@ -42,11 +43,7 @@ function readArray(value: unknown): unknown[] {
 
   const node = asObject(value);
 
-  const values =
-    node['$values'] ??
-    node['values'] ??
-    node['Items'] ??
-    node['items'];
+  const values = node['$values'] ?? node['values'] ?? node['Items'] ?? node['items'];
 
   return Array.isArray(values) ? values : [];
 }
@@ -55,9 +52,7 @@ function readArray(value: unknown): unknown[] {
  * Safely converts unknown values into objects.
  */
 function asObject(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object'
-    ? (value as Record<string, unknown>)
-    : {};
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
 }
 
 /**
@@ -66,7 +61,7 @@ function asObject(value: unknown): Record<string, unknown> {
 function getValue(
   node: Record<string, unknown>,
   camelCaseKey: string,
-  pascalCaseKey: string
+  pascalCaseKey: string,
 ): unknown {
   return node[camelCaseKey] ?? node[pascalCaseKey];
 }
@@ -92,9 +87,7 @@ function normalizeEnrollment(raw: unknown): {
 
   return {
     id: toOptionalNumber(getValue(node, 'id', 'Id')),
-    learningPathId: toOptionalNumber(
-      getValue(node, 'learningPathId', 'LearningPathId')
-    ),
+    learningPathId: toOptionalNumber(getValue(node, 'learningPathId', 'LearningPathId')),
     courseId: toOptionalNumber(getValue(node, 'courseId', 'CourseId')),
   };
 }
@@ -129,7 +122,7 @@ export class EnrollmentService {
    */
   searchUsers(value: string): Observable<UserSearchResult[]> {
     return this.http.get<UserSearchResult[]>(
-      `${this.baseUrl}/api/User/SearchUsers?value=${encodeURIComponent(value)}`
+      `${this.baseUrl}/api/User/SearchUsers?value=${encodeURIComponent(value)}`,
     );
   }
 
@@ -162,7 +155,7 @@ export class EnrollmentService {
       },
       {
         responseType: 'text',
-      }
+      },
     );
   }
 
@@ -220,10 +213,9 @@ export class EnrollmentService {
       id: String(getValue(node, 'id', 'Id') ?? ''),
       userName: String(getValue(node, 'userName', 'UserName') ?? ''),
       email: String(getValue(node, 'email', 'Email') ?? ''),
+      role: String(getValue(node, 'role', 'Role') ?? '').toUpperCase(),
       createdAt: String(getValue(node, 'createdAt', 'CreatedAt') ?? ''),
-      enrollments: readArray(
-        getValue(node, 'enrollments', 'Enrollments')
-      ).map(normalizeEnrollment),
+      enrollments: readArray(getValue(node, 'enrollments', 'Enrollments')).map(normalizeEnrollment),
       progresses: readArray(getValue(node, 'progresses', 'Progresses')),
     };
   }

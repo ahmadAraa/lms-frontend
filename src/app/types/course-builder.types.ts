@@ -4,7 +4,7 @@ export enum MaterialType {
   Video = 0,
   PDF = 1,
   Presentation = 2,
-  Link = 3
+  Link = 3,
 }
 
 export interface LessonResponseDTO {
@@ -16,6 +16,7 @@ export interface LessonResponseDTO {
   order: number;
   sectionId: number;
   type: MaterialType;
+  isComplete?: boolean;
 }
 
 export interface SectionResponseDTO {

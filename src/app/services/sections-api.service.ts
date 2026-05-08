@@ -1,9 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-  BASE_URL,
-  LessonResponseDTO,
-  SectionResponseDTO,
-} from '../types/course-builder.types';
+import { BASE_URL, LessonResponseDTO, SectionResponseDTO } from '../types/course-builder.types';
 import { fetchJson } from './course-builder-api.utils';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -13,11 +9,7 @@ function readArray(value: unknown): unknown[] {
 
   const node = asObject(value);
 
-  const wrappedValues =
-    node['$values'] ??
-    node['values'] ??
-    node['Items'] ??
-    node['items'];
+  const wrappedValues = node['$values'] ?? node['values'] ?? node['Items'] ?? node['items'];
 
   return Array.isArray(wrappedValues) ? wrappedValues : [];
 }
@@ -47,7 +39,7 @@ function toNumber(value: unknown, fallback = 0): number {
 function getValue(
   node: Record<string, unknown>,
   camelCaseKey: string,
-  pascalCaseKey: string
+  pascalCaseKey: string,
 ): unknown {
   return node[camelCaseKey] ?? node[pascalCaseKey];
 }
@@ -64,6 +56,7 @@ function normalizeLesson(raw: unknown): LessonResponseDTO {
     order: toNumber(getValue(node, 'order', 'Order')),
     sectionId: toNumber(getValue(node, 'sectionId', 'SectionId')),
     type: toNumber(getValue(node, 'type', 'Type')),
+    isComplete: Boolean(getValue(node, 'isComplete', 'IsComplete') ?? false),
   };
 }
 
@@ -88,16 +81,14 @@ function normalizeSection(raw: unknown): SectionResponseDTO {
 export class SectionsApiService {
   async getSectionsByCourse(courseId: number): Promise<SectionResponseDTO[]> {
     const data = await fetchJson<unknown>(
-      `${BASE_URL}/api/Sections/GetSectionsByCourse/${courseId}`
+      `${BASE_URL}/api/Sections/GetSectionsByCourse/${courseId}`,
     );
 
     return readArray(data).map(normalizeSection);
   }
 
   async getSectionById(id: number): Promise<SectionResponseDTO> {
-    const data = await fetchJson<unknown>(
-      `${BASE_URL}/api/Sections/GetSectionById/${id}`
-    );
+    const data = await fetchJson<unknown>(`${BASE_URL}/api/Sections/GetSectionById/${id}`);
 
     return normalizeSection(data);
   }
@@ -118,7 +109,7 @@ export class SectionsApiService {
     dto: {
       title: string;
       description: string | null;
-    }
+    },
   ): Promise<void> {
     await fetchJson<void>(`${BASE_URL}/api/Sections/${id}`, {
       method: 'PUT',

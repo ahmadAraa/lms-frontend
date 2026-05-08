@@ -25,13 +25,13 @@
   border: none;
   border-radius: 50%;
   background: transparent;
-  color: #ffffff;
+  color: var(--nb-icon-color, #ffffff);
   cursor: pointer;
   transition: background 0.15s;
 }
 .nb-btn:hover,
 .nb-btn--active {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--nb-btn-hover-bg, rgba(255, 255, 255, 0.12));
 }
 .nb-btn .material-symbols-outlined {
   font-size: 22px;
@@ -115,7 +115,9 @@
   animation: nb-spin 0.7s linear infinite;
 }
 @keyframes nb-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ── Empty state ────────────────────────────────────────── */

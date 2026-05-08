@@ -27,9 +27,7 @@ export class LearningPathsApiService {
    * Fetches all learning paths.
    */
   async getPaths(): Promise<LearningPathResponseDto[]> {
-    const data = await fetchJson<unknown>(
-      `${BASE_URL}/api/LearningPath/GetPaths`
-    );
+    const data = await fetchJson<unknown>(`${BASE_URL}/api/LearningPath/GetPaths`);
 
     return readArray(data).map((item) => this.normalizePath(item));
   }
@@ -42,9 +40,7 @@ export class LearningPathsApiService {
    * - Wrapped/list response
    */
   async getPathById(id: number): Promise<LearningPathResponseDto> {
-    const data = await fetchJson<unknown>(
-      `${BASE_URL}/api/LearningPath/GetPathById/${id}`
-    );
+    const data = await fetchJson<unknown>(`${BASE_URL}/api/LearningPath/GetPathById/${id}`);
 
     const list = readArray(data);
 
@@ -65,11 +61,7 @@ export class LearningPathsApiService {
     description: string | null;
     picture?: File | null;
   }): Promise<void> {
-    await this.sendFormData(
-      `${BASE_URL}/api/LearningPath/AddPath`,
-      'POST',
-      dto
-    );
+    await this.sendFormData(`${BASE_URL}/api/LearningPath/AddPath`, 'POST', dto);
   }
 
   /**
@@ -83,13 +75,9 @@ export class LearningPathsApiService {
       title: string;
       description: string | null;
       picture?: File | null;
-    }
+    },
   ): Promise<void> {
-    await this.sendFormData(
-      `${BASE_URL}/api/LearningPath/UpdatePath/${id}`,
-      'PUT',
-      dto
-    );
+    await this.sendFormData(`${BASE_URL}/api/LearningPath/UpdatePath/${id}`, 'PUT', dto);
   }
 
   /**
@@ -115,7 +103,7 @@ export class LearningPathsApiService {
       title: string;
       description: string | null;
       picture?: File | null;
-    }
+    },
   ): Promise<void> {
     const formData = new FormData();
 
@@ -159,7 +147,7 @@ export class LearningPathsApiService {
       description: toNullableString(getValue(node, 'description', 'Description')),
       pictureUrl: toNullableString(getValue(node, 'image', 'Image')),
       courses: readArray(getValue(node, 'courses', 'Courses')).map((course) =>
-        this.normalizeCourse(course)
+        this.normalizeCourse(course),
       ),
     };
   }
@@ -175,12 +163,10 @@ export class LearningPathsApiService {
       title: toString(getValue(node, 'title', 'Title')),
       description: toNullableString(getValue(node, 'description', 'Description')),
       order: toNumber(getValue(node, 'order', 'Order')),
-      learningPathId: toNumber(
-        getValue(node, 'learningPathId', 'LearningPathId')
-      ),
+      learningPathId: toNumber(getValue(node, 'learningPathId', 'LearningPathId')),
       pictureUrl: toNullableString(getValue(node, 'image', 'Image')),
-      sections: readArray(getValue(node, 'sections', 'Sections')).map(
-        (section) => this.normalizeSection(section)
+      sections: readArray(getValue(node, 'sections', 'Sections')).map((section) =>
+        this.normalizeSection(section),
       ),
     };
   }
@@ -198,7 +184,7 @@ export class LearningPathsApiService {
       order: toNumber(getValue(node, 'order', 'Order')),
       courseId: toNumber(getValue(node, 'courseId', 'CourseId')),
       lessons: readArray(getValue(node, 'lessons', 'Lessons')).map((lesson) =>
-        this.normalizeLesson(lesson)
+        this.normalizeLesson(lesson),
       ),
     };
   }
@@ -218,6 +204,7 @@ export class LearningPathsApiService {
       order: toNumber(getValue(node, 'order', 'Order')),
       sectionId: toNumber(getValue(node, 'sectionId', 'SectionId')),
       type: toNumber(getValue(node, 'type', 'Type')),
+      isComplete: Boolean(getValue(node, 'isComplete', 'IsComplete') ?? false),
     };
   }
 }
@@ -230,11 +217,7 @@ function readArray(value: unknown): unknown[] {
 
   const node = asObject(value);
 
-  const values =
-    node['$values'] ??
-    node['values'] ??
-    node['Items'] ??
-    node['items'];
+  const values = node['$values'] ?? node['values'] ?? node['Items'] ?? node['items'];
 
   return Array.isArray(values) ? values : [];
 }
@@ -243,9 +226,7 @@ function readArray(value: unknown): unknown[] {
  * Safely converts any unknown value into an object.
  */
 function asObject(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object'
-    ? (value as Record<string, unknown>)
-    : {};
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
 }
 
 /**
@@ -254,7 +235,7 @@ function asObject(value: unknown): Record<string, unknown> {
 function getValue(
   node: Record<string, unknown>,
   camelCaseKey: string,
-  pascalCaseKey: string
+  pascalCaseKey: string,
 ): unknown {
   return node[camelCaseKey] ?? node[pascalCaseKey];
 }
@@ -291,12 +272,7 @@ async function readErrorMessage(response: Response): Promise<string> {
   try {
     const errorBody = await response.json();
 
-    return (
-      errorBody?.message ||
-      errorBody?.title ||
-      JSON.stringify(errorBody) ||
-      errorMessage
-    );
+    return errorBody?.message || errorBody?.title || JSON.stringify(errorBody) || errorMessage;
   } catch {
     try {
       const text = await response.text();

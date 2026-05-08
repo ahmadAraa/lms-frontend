@@ -17,7 +17,6 @@ import { fetchJson } from './course-builder-api.utils';
   providedIn: 'root',
 })
 export class LessonsApiService {
-
   /**
    * Fetch all lessons for a specific section.
    *
@@ -26,7 +25,7 @@ export class LessonsApiService {
    */
   async getLessonsBySection(sectionId: number): Promise<LessonResponseDTO[]> {
     return fetchJson<LessonResponseDTO[]>(
-      `${BASE_URL}/api/Lessons/GetLessonsBySection/${sectionId}`
+      `${BASE_URL}/api/Lessons/GetLessonsBySection/${sectionId}`,
     );
   }
 
@@ -37,9 +36,7 @@ export class LessonsApiService {
    * @returns Promise<LessonResponseDTO>
    */
   async getLessonById(id: number): Promise<LessonResponseDTO> {
-    return fetchJson<LessonResponseDTO>(
-      `${BASE_URL}/api/Lessons/GetLessonById/${id}`
-    );
+    return fetchJson<LessonResponseDTO>(`${BASE_URL}/api/Lessons/GetLessonById/${id}`);
   }
 
   /**
@@ -64,7 +61,6 @@ export class LessonsApiService {
     sectionId: number;
     order: number;
   }): Promise<void> {
-
     const formData = new FormData();
 
     formData.append('title', dto.title);
@@ -104,10 +100,7 @@ export class LessonsApiService {
       try {
         const errorBody = await response.json();
         errorMessage =
-          errorBody?.message ||
-          errorBody?.title ||
-          JSON.stringify(errorBody) ||
-          errorMessage;
+          errorBody?.message || errorBody?.title || JSON.stringify(errorBody) || errorMessage;
       } catch {
         try {
           const text = await response.text();
@@ -131,7 +124,7 @@ export class LessonsApiService {
       title: string;
       description: string | null;
       content: string | null;
-    }
+    },
   ): Promise<void> {
     await fetchJson<void>(`${BASE_URL}/api/Lessons/${id}`, {
       method: 'PUT',
@@ -151,14 +144,15 @@ export class LessonsApiService {
   }
 
   /**
-   * Marks a lesson as completed.
+   * Sets the completion state of a lesson for the current user.
    *
-   * @param lessonId - Lesson ID
+   * @param lessonId  - Lesson ID
+   * @param isComplete - true to mark complete, false to mark incomplete
    */
-  async completeLesson(lessonId: number): Promise<void> {
-    await fetchJson<void>(
-      `${BASE_URL}/api/Lessons/CompleteLesson/${lessonId}`,
-      { method: 'POST' }
-    );
+  async completeLesson(lessonId: number, isComplete: boolean): Promise<void> {
+    await fetchJson<void>(`${BASE_URL}/api/Lessons/CompleteLesson/${lessonId}`, {
+      method: 'POST',
+      body: JSON.stringify({ isComplete }),
+    });
   }
 }

@@ -19,19 +19,17 @@ import { UserRole } from '../../services/auth';
   styleUrl: './hr-create-user.css',
 })
 export class HrCreateUser implements OnInit {
-
   // ── Employee list ────────────────────────────────────────
   private allUsers = signal<UserInfo[]>([]);
   isLoadingUsers = signal(false);
   listError = signal('');
-  userSearch = '';
+  userSearch = signal('');
 
   users = computed(() => {
-    const q = this.userSearch.trim().toLowerCase();
+    const q = this.userSearch().trim().toLowerCase();
     if (!q) return this.allUsers();
-    return this.allUsers().filter(u =>
-      u.userName.toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q)
+    return this.allUsers().filter(
+      (u) => u.userName.toLowerCase().includes(q) || u.email.toLowerCase().includes(q),
     );
   });
 
@@ -43,6 +41,7 @@ export class HrCreateUser implements OnInit {
   fullName = '';
   role: UserRole = 'EMPLOYEE';
   currentUserRole = signal<UserRole | null>(null);
+  currentUserId = signal('');
   errorMessage = signal('');
   successMessage = signal('');
   isSubmitting = signal(false);
@@ -58,6 +57,7 @@ export class HrCreateUser implements OnInit {
 
   ngOnInit() {
     this.currentUserRole.set(this.authService.getUserRole());
+    this.currentUserId.set(this.authService.getUserId());
     this.loadAllUsers();
   }
 
@@ -65,41 +65,48 @@ export class HrCreateUser implements OnInit {
     this.isLoadingUsers.set(true);
     this.listError.set('');
 
-    this.enrollmentService.searchUsers('@').pipe(
-      catchError((err: HttpErrorResponse) => {
-        if (err.status === 401) {
-          this.sessionExpired();
-          return of(null);
-        }
-        this.listError.set('Failed to load employees.');
-        return of([]);
-      }),
-      switchMap(searchResults => {
-        if (searchResults === null) return of([] as UserInfo[]);
-        if (!searchResults || searchResults.length === 0) return of([] as UserInfo[]);
-        return forkJoin(
-          searchResults.map(u =>
-            this.enrollmentService.getUserInfo(u.id).pipe(catchError(() => of(null)))
-          )
-        ).pipe(
-          switchMap(infos =>
-            of((infos as (UserInfo | null)[]).filter((u): u is UserInfo => u !== null))
-          )
-        );
-      })
-    ).subscribe(results => {
-      this.allUsers.set(results);
-      this.isLoadingUsers.set(false);
-    });
+    this.enrollmentService
+      .searchUsers('@')
+      .pipe(
+        catchError((err: HttpErrorResponse) => {
+          if (err.status === 401) {
+            this.sessionExpired();
+            return of(null);
+          }
+          this.listError.set('Failed to load employees.');
+          return of([]);
+        }),
+        switchMap((searchResults) => {
+          if (searchResults === null) return of([] as UserInfo[]);
+          if (!searchResults || searchResults.length === 0) return of([] as UserInfo[]);
+          return forkJoin(
+            searchResults.map((u) =>
+              this.enrollmentService.getUserInfo(u.id).pipe(catchError(() => of(null))),
+            ),
+          ).pipe(
+            switchMap((infos) =>
+              of((infos as (UserInfo | null)[]).filter((u): u is UserInfo => u !== null)),
+            ),
+          );
+        }),
+      )
+      .subscribe((results) => {
+        this.allUsers.set(results);
+        this.isLoadingUsers.set(false);
+      });
   }
 
   onUserSearch(event: Event) {
-    this.userSearch = (event.target as HTMLInputElement).value;
+    this.userSearch.set((event.target as HTMLInputElement).value);
   }
 
   formatDate(iso: string): string {
     if (!iso) return '—';
-    return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    return new Date(iso).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
   }
 
   onCreateUser() {
@@ -149,7 +156,7 @@ export class HrCreateUser implements OnInit {
           this.activityService.log(
             'person_add',
             `<strong>${this.authService.getUserName() || 'HR'}</strong> created a new user account for <strong>${createdName}</strong>.`,
-            'User Management'
+            'User Management',
           );
           this.successMessage.set('Employee created successfully.');
           this.resetForm();
@@ -165,9 +172,9 @@ export class HrCreateUser implements OnInit {
           const msg =
             asAny?.['name'] === 'TimeoutError'
               ? 'Request timed out. Please try again.'
-              : (typeof httpErr?.error === 'string' && httpErr.error
-                  ? httpErr.error
-                  : httpErr?.message || 'Failed to create employee. Please try again.');
+              : typeof httpErr?.error === 'string' && httpErr.error
+                ? httpErr.error
+                : httpErr?.message || 'Failed to create employee. Please try again.';
           this.errorMessage.set(msg);
         },
       });
@@ -202,6 +209,52 @@ export class HrCreateUser implements OnInit {
     this.isDeleting.set(false);
   }
 
+  canDelete(user: UserInfo): boolean {
+    // Never allow deleting yourself
+    if (user.id === this.currentUserId()) return false;
+
+    const myRole = this.currentUserRole();
+    const targetRole = (user.role ?? '').toUpperCase();
+
+    if (myRole === 'HR') {
+      // HR can delete employees and managers only (not other HR accounts)
+      return targetRole === 'EMPLOYEE' || targetRole === 'MANAGER';
+    }
+
+    if (myRole === 'MANAGER') {
+      // Manager can only delete regular employees
+      return targetRole === 'EMPLOYEE';
+    }
+
+    return false;
+  }
+
+  roleBadgeClass(role: string): string {
+    switch ((role ?? '').toUpperCase()) {
+      case 'HR':
+        return 'cu-badge badge-hr';
+      case 'MANAGER':
+        return 'cu-badge badge-manager';
+      case 'EMPLOYEE':
+        return 'cu-badge badge-employee';
+      default:
+        return 'cu-badge badge-employee';
+    }
+  }
+
+  roleLabel(role: string): string {
+    switch ((role ?? '').toUpperCase()) {
+      case 'HR':
+        return 'HR';
+      case 'MANAGER':
+        return 'Manager';
+      case 'EMPLOYEE':
+        return 'Employee';
+      default:
+        return role || 'Employee';
+    }
+  }
+
   confirmDeleteUser() {
     const user = this.userToDelete();
     if (!user || this.deleteConfirmationText().trim().toLowerCase() !== 'delete') return;
@@ -212,9 +265,9 @@ export class HrCreateUser implements OnInit {
         this.activityService.log(
           'person_remove',
           `<strong>${this.authService.getUserName() || 'HR'}</strong> deleted user account <strong>${user.userName}</strong>.`,
-          'User Management'
+          'User Management',
         );
-        this.allUsers.update(users => users.filter(u => u.id !== user.id));
+        this.allUsers.update((users) => users.filter((u) => u.id !== user.id));
         this.closeDeleteModal();
       },
       error: (err: HttpErrorResponse) => {
@@ -225,7 +278,7 @@ export class HrCreateUser implements OnInit {
         }
         this.listError.set('Failed to delete user.');
         this.closeDeleteModal();
-      }
+      },
     });
   }
 }
