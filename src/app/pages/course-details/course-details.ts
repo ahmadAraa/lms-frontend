@@ -5,13 +5,11 @@ import { CoursesApiService } from '../../services/courses-api.service';
 import { SectionsApiService } from '../../services/sections-api.service';
 import { ProgressService } from '../../services/progress.service';
 import { CourseResponseDTO, SectionResponseDTO } from '../../types/course-builder.types';
-import { AuthService } from '../../services/auth';
-import { NotificationBellComponent } from '../../components/notification-bell/notification-bell';
 
 @Component({
   selector: 'app-course-details',
   standalone: true,
-  imports: [CommonModule, RouterLink, NotificationBellComponent],
+  imports: [CommonModule, RouterLink],
   templateUrl: './course-details.html',
   styleUrl: './course-details.css',
 })
@@ -31,7 +29,6 @@ export class CourseDetails implements OnInit {
     private coursesApi: CoursesApiService,
     private sectionsApi: SectionsApiService,
     private progressService: ProgressService,
-    private authService: AuthService,
   ) {}
 
   ngOnInit() {
@@ -124,8 +121,4 @@ export class CourseDetails implements OnInit {
     void this.router.navigate(['/employee/dashboard']);
   }
 
-  logout() {
-    this.authService.logout();
-    void this.router.navigate(['/']);
-  }
 }

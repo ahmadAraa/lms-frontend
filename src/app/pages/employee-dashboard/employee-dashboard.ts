@@ -1,14 +1,13 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { AuthService } from '../../services/auth';
 import { LearningPathService, LearningPathResponseDto } from '../../services/learning-path.service';
 import { EnrollmentService } from '../../services/enrollment.service';
 import { BASE_URL } from '../../types/course-builder.types';
-import { NotificationBellComponent } from '../../components/notification-bell/notification-bell';
 
 interface ContinueLearningState {
   isCompleted: boolean;
@@ -20,7 +19,7 @@ interface ContinueLearningState {
 @Component({
   selector: 'app-employee-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, NotificationBellComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './employee-dashboard.html',
   styleUrl: './employee-dashboard.css',
 })
@@ -245,10 +244,5 @@ export class EmployeeDashboard implements OnInit {
 
   onSearch(event: Event) {
     this.searchQuery.set((event.target as HTMLInputElement).value);
-  }
-
-  logout() {
-    this.authService.logout();
-    this.router.navigate(['/']);
   }
 }

@@ -3,13 +3,11 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LearningPathService, LearningPathResponseDto, CourseResponseDTO } from '../../services/learning-path.service';
-import { AuthService } from '../../services/auth';
-import { NotificationBellComponent } from '../../components/notification-bell/notification-bell';
 
 @Component({
   selector: 'app-learning-path-details',
   standalone: true,
-  imports: [CommonModule, RouterLink, NotificationBellComponent],
+  imports: [CommonModule, RouterLink],
   templateUrl: './learning-path-details.html',
   styleUrl: './learning-path-details.css'
 })
@@ -25,16 +23,10 @@ export class LearningPathDetails implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private learningPathService: LearningPathService,
-    private authService: AuthService,
   ) {}
 
   goBack() {
     void this.router.navigate(['/employee/dashboard']);
-  }
-
-  logout() {
-    this.authService.logout();
-    void this.router.navigate(['/']);
   }
 
   openCourse(course: CourseResponseDTO) {

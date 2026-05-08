@@ -27,19 +27,29 @@ export const routes: Routes = [
 
   // ── Student pages (lazy) ─────────────────────────────────
   {
-    path: 'learning-path/:id',
-    loadComponent: () => import('./pages/learning-path-details/learning-path-details').then(m => m.LearningPathDetails),
-    canActivate: [authGuard]
-  },
-  {
-    path: 'course/:id',
-    loadComponent: () => import('./pages/course-details/course-details').then(m => m.CourseDetails),
-    canActivate: [authGuard]
-  },
-  {
-    path: 'lesson/:id',
-    loadComponent: () => import('./pages/lesson-viewer/lesson-viewer.component').then(m => m.LessonViewerComponent),
-    canActivate: [authGuard]
+    path: '',
+    loadComponent: () => import('./layouts/employee-layout/employee-layout.component').then(m => m.EmployeeLayoutComponent),
+    canActivate: [authGuard],
+    children: [
+      {
+        path: 'learning-path/:id',
+        loadComponent: () => import('./pages/learning-path-details/learning-path-details').then(m => m.LearningPathDetails),
+        canActivate: [roleGuard],
+        data: { roles: ['EMPLOYEE', 'HR'] }
+      },
+      {
+        path: 'course/:id',
+        loadComponent: () => import('./pages/course-details/course-details').then(m => m.CourseDetails),
+        canActivate: [roleGuard],
+        data: { roles: ['EMPLOYEE', 'HR'] }
+      },
+      {
+        path: 'lesson/:id',
+        loadComponent: () => import('./pages/lesson-viewer/lesson-viewer.component').then(m => m.LessonViewerComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['EMPLOYEE', 'HR'] }
+      }
+    ]
   },
 
   // ── Admin / HR Layout ────────────────────────────────────
@@ -77,15 +87,34 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/hr-assign-path/hr-assign-path').then(m => m.HrAssignPath),
         canActivate: [roleGuard],
         data: { roles: ['HR', 'MANAGER'] }
+      },
+      {
+        path: 'user-settings',
+        loadComponent: () => import('./pages/user-settings/user-settings.component').then(m => m.UserSettingsComponent),
+        canActivate: [authGuard, roleGuard],
+        data: { roles: ['HR', 'MANAGER'] }
       }
     ]
   },
 
   // ── Employee ─────────────────────────────────────────────
   {
-    path: 'employee/dashboard',
-    loadComponent: () => import('./pages/employee-dashboard/employee-dashboard').then(m => m.EmployeeDashboard),
-    canActivate: [authGuard, roleGuard],
-    data: { roles: ['EMPLOYEE', 'HR'] }
+    path: 'employee',
+    loadComponent: () => import('./layouts/employee-layout/employee-layout.component').then(m => m.EmployeeLayoutComponent),
+    canActivate: [authGuard],
+    children: [
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./pages/employee-dashboard/employee-dashboard').then(m => m.EmployeeDashboard),
+        canActivate: [roleGuard],
+        data: { roles: ['EMPLOYEE', 'HR'] }
+      },
+      {
+        path: 'user-settings',
+        loadComponent: () => import('./pages/user-settings/user-settings.component').then(m => m.UserSettingsComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['EMPLOYEE', 'HR'] }
+      }
+    ]
   },
 ];

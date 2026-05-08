@@ -1,42 +1,24 @@
-<div class="ed-layout">
-
-  <!-- Top navbar -->
-  <nav class="ed-nav">
-    <a routerLink="/employee/dashboard" class="ed-nav-brand">
-      <span class="material-symbols-outlined">school</span>
-      LearnPath
-    </a>
-
-    <div class="ed-search">
-      <span class="material-symbols-outlined ed-search-icon">search</span>
-      <input
-        type="text"
-        class="ed-search-input"
-        placeholder="Search learning paths..."
-        [value]="searchQuery()"
-        (input)="onSearch($event)"
-      />
-      @if (searchQuery()) {
-        <button class="ed-search-clear" (click)="searchQuery.set('')">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      }
-    </div>
-
-    <div class="ed-nav-right">
-      <app-notification-bell></app-notification-bell>
-      <button class="ed-logout" (click)="logout()">
-        <span class="material-symbols-outlined">logout</span>
-      </button>
-    </div>
-  </nav>
-
-  <!-- Hero -->
-  <div class="ed-hero">
+<!-- Hero -->
+<div class="ed-hero">
     <div class="ed-hero-orb orb1"></div>
     <div class="ed-hero-orb orb2"></div>
     <div class="ed-hero-content">
       <h1>Welcome back, <span class="ed-hero-name">{{ userName() || 'there' }}</span></h1>
+      <div class="ed-search">
+        <span class="material-symbols-outlined ed-search-icon">search</span>
+        <input
+          type="text"
+          class="ed-search-input"
+          placeholder="Search learning paths..."
+          [value]="searchQuery()"
+          (input)="onSearch($event)"
+        />
+        @if (searchQuery()) {
+          <button class="ed-search-clear" (click)="searchQuery.set('')">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        }
+      </div>
     </div>
   </div>
 
@@ -230,4 +212,3 @@
 
     }
   </div>
-</div>

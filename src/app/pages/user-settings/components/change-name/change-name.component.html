@@ -1,0 +1,40 @@
+<div class="settings-card">
+  <div class="settings-card-header">
+    <span class="material-symbols-outlined card-icon">badge</span>
+    <div>
+      <h2 class="card-title">Display Name</h2>
+      <p class="card-subtitle">Update your username shown across the platform.</p>
+    </div>
+  </div>
+
+  <form class="settings-form" (ngSubmit)="onSubmit()" #nameForm="ngForm">
+    <div class="form-group">
+      <label for="newUserName" class="form-label">Username</label>
+      <input
+        id="newUserName"
+        type="text"
+        class="form-input"
+        [(ngModel)]="newUserName"
+        name="newUserName"
+        placeholder="e.g. john.doe"
+        autocomplete="username"
+        required
+      />
+      <span class="form-hint">3–20 chars · letters, numbers, dots, underscores only</span>
+    </div>
+
+    <div class="alert alert-success" *ngIf="successMsg">
+      <span class="material-symbols-outlined">check_circle</span>
+      {{ successMsg }}
+    </div>
+    <div class="alert alert-error" *ngIf="errorMsg">
+      <span class="material-symbols-outlined">error</span>
+      {{ errorMsg }}
+    </div>
+
+    <button type="submit" class="btn-primary" [disabled]="isLoading">
+      <span *ngIf="!isLoading">Save Name</span>
+      <span *ngIf="isLoading" class="spinner"></span>
+    </button>
+  </form>
+</div>

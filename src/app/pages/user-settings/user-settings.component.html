@@ -1,0 +1,24 @@
+<div class="settings-page">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="avatar">{{ getInitial() }}</div>
+      <div>
+        <h1 class="page-title">Account Settings</h1>
+        <p class="page-subtitle">{{ userName }} &bull; {{ userRole }}</p>
+      </div>
+    </div>
+    <a [routerLink]="backRoute" class="back-btn">
+      <span class="material-symbols-outlined">arrow_back</span>
+      Back
+    </a>
+  </div>
+
+  <!-- Settings Sections -->
+  <div class="settings-grid">
+    <app-change-name></app-change-name>
+    <app-change-password></app-change-password>
+  </div>
+
+</div>
