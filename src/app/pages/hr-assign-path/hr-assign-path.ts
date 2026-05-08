@@ -2,9 +2,9 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { debounceTime, distinctUntilChanged, Subject, switchMap, catchError, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, Subject, switchMap, catchError, of, forkJoin, map } from 'rxjs';
 import { LearningPathService, LearningPathResponseDto } from '../../services/learning-path.service';
-import { EnrollmentService, UserSearchResult } from '../../services/enrollment.service';
+import { EnrollmentService, UserInfo, UserSearchResult } from '../../services/enrollment.service';
 import { ActivityService } from '../../services/activity.service';
 import { NotificationBellComponent } from '../../components/notification-bell/notification-bell';
 import { AuthService } from '../../services/auth';
@@ -21,7 +21,8 @@ export class HrAssignPath implements OnInit {
   searchQuery = signal('');
   searchResults = signal<UserSearchResult[]>([]);
   isSearching = signal(false);
-  selectedUser = signal<UserSearchResult | null>(null);
+  isLoadingUserInfo = signal(false);
+  selectedUser = signal<UserInfo | null>(null);
   showDropdown = signal(false);
 
   // Paths
@@ -34,6 +35,7 @@ export class HrAssignPath implements OnInit {
   errorMessage = signal('');
 
   private search$ = new Subject<string>();
+  private userInfoRequestId = 0;
 
   constructor(
     private learningPathService: LearningPathService,
@@ -61,6 +63,25 @@ export class HrAssignPath implements OnInit {
         }
         this.isSearching.set(true);
         return this.enrollmentService.searchUsers(q).pipe(
+          switchMap((users) => {
+            if (users.length === 0) return of([]);
+
+            return forkJoin(
+              users.map((user) =>
+                this.enrollmentService.getUserInfo(user.id).pipe(catchError(() => of(null))),
+              ),
+            ).pipe(
+              map((infos) =>
+                infos
+                  .filter((info): info is UserInfo => info?.role === 'EMPLOYEE')
+                  .map((info) => ({
+                    id: info.id,
+                    userName: info.userName,
+                    email: info.email,
+                  })),
+              ),
+            );
+          }),
           catchError(() => of([]))
         );
       })
@@ -73,6 +94,8 @@ export class HrAssignPath implements OnInit {
 
   onSearchInput(event: Event) {
     const value = (event.target as HTMLInputElement).value;
+    this.userInfoRequestId++;
+    this.isLoadingUserInfo.set(false);
     this.searchQuery.set(value);
     this.selectedUser.set(null);
     this.search$.next(value);
@@ -82,14 +105,46 @@ export class HrAssignPath implements OnInit {
   }
 
   selectUser(user: UserSearchResult) {
-    this.selectedUser.set(user);
+    const requestId = ++this.userInfoRequestId;
+    this.isLoadingUserInfo.set(true);
+    this.selectedUser.set(null);
     this.searchQuery.set(user.userName);
     this.showDropdown.set(false);
     this.searchResults.set([]);
+    this.errorMessage.set('');
+    this.successMessage.set('');
+
+    this.enrollmentService.getUserInfo(user.id).subscribe({
+      next: (info) => {
+        if (requestId !== this.userInfoRequestId) return;
+
+        this.isLoadingUserInfo.set(false);
+
+        if (info.role !== 'EMPLOYEE') {
+          this.searchQuery.set('');
+          this.errorMessage.set(
+            `Only employees can be enrolled. ${info.userName || user.userName} is ${this.roleLabel(info.role)}.`,
+          );
+          return;
+        }
+
+        this.selectedUser.set(info);
+        this.searchQuery.set(info.userName || user.userName);
+      },
+      error: () => {
+        if (requestId !== this.userInfoRequestId) return;
+
+        this.isLoadingUserInfo.set(false);
+        this.searchQuery.set('');
+        this.errorMessage.set('Could not verify this user role. Please try another employee.');
+      },
+    });
   }
 
   clearUser() {
+    this.userInfoRequestId++;
     this.selectedUser.set(null);
+    this.isLoadingUserInfo.set(false);
     this.searchQuery.set('');
     this.searchResults.set([]);
     this.showDropdown.set(false);
@@ -100,7 +155,12 @@ export class HrAssignPath implements OnInit {
   }
 
   canSubmit(): boolean {
-    return !!this.selectedUser() && !!this.selectedPathId() && !this.isSubmitting();
+    return (
+      this.selectedUser()?.role === 'EMPLOYEE' &&
+      !!this.selectedPathId() &&
+      !this.isSubmitting() &&
+      !this.isLoadingUserInfo()
+    );
   }
 
   assign() {
@@ -110,13 +170,22 @@ export class HrAssignPath implements OnInit {
     this.errorMessage.set('');
 
     const managerId = this.authService.getUserId();
-    this.enrollmentService.enroll(this.selectedUser()!.id, this.selectedPathId()!, managerId).subscribe({
+    const selectedUser = this.selectedUser();
+    const selectedPathId = this.selectedPathId();
+
+    if (!selectedUser || selectedUser.role !== 'EMPLOYEE' || !selectedPathId) {
+      this.isSubmitting.set(false);
+      this.errorMessage.set('Only employees can be enrolled in a learning path.');
+      return;
+    }
+
+    this.enrollmentService.enroll(selectedUser.id, selectedPathId, managerId).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        const userName = this.selectedUser()!.userName;
-        const pathTitle = this.paths().find(p => p.id === this.selectedPathId())?.title ?? '';
+        const userName = selectedUser.userName;
+        const pathTitle = this.paths().find(p => p.id === selectedPathId)?.title ?? '';
         this.successMessage.set(`✓ ${userName} has been enrolled in "${pathTitle}"`);
-        this.enrollmentService.incrementEnrollCount(this.selectedPathId()!);
+        this.enrollmentService.incrementEnrollCount(selectedPathId);
         this.activityService.log(
           'assignment_ind',
           `<strong>${userName}</strong> was assigned to the <strong>${pathTitle}</strong> learning path.`,
@@ -130,6 +199,19 @@ export class HrAssignPath implements OnInit {
         this.errorMessage.set(err?.error || 'Enrollment failed. Please try again.');
       },
     });
+  }
+
+  roleLabel(role: string): string {
+    switch ((role ?? '').toUpperCase()) {
+      case 'HR':
+        return 'HR';
+      case 'MANAGER':
+        return 'a manager';
+      case 'EMPLOYEE':
+        return 'an employee';
+      default:
+        return 'not an employee';
+    }
   }
 
   goBack() {

@@ -1,6 +1,6 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
-import { CommonModule, Location } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LessonsApiService } from '../../services/lessons-api.service';
 import { SectionsApiService } from '../../services/sections-api.service';
 import { CoursesApiService } from '../../services/courses-api.service';
@@ -12,11 +12,13 @@ import {
 
 import { LessonSidebarComponent } from './components/lesson-sidebar/lesson-sidebar.component';
 import { LessonContentComponent } from './components/lesson-content/lesson-content.component';
+import { AuthService } from '../../services/auth';
+import { NotificationBellComponent } from '../../components/notification-bell/notification-bell';
 
 @Component({
   selector: 'app-lesson-viewer',
   standalone: true,
-  imports: [CommonModule, LessonSidebarComponent, LessonContentComponent],
+  imports: [CommonModule, RouterLink, LessonSidebarComponent, LessonContentComponent, NotificationBellComponent],
   templateUrl: './lesson-viewer.component.html',
   styleUrl: './lesson-viewer.component.css',
 })
@@ -39,10 +41,10 @@ export class LessonViewerComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private location: Location,
     private lessonsApi: LessonsApiService,
     private sectionsApi: SectionsApiService,
     private coursesApi: CoursesApiService,
+    private authService: AuthService,
   ) {}
 
   ngOnInit() {
@@ -147,6 +149,11 @@ export class LessonViewerComponent implements OnInit {
   }
 
   goBack() {
-    this.location.back();
+    void this.router.navigate(['/employee/dashboard']);
+  }
+
+  logout() {
+    this.authService.logout();
+    void this.router.navigate(['/']);
   }
 }

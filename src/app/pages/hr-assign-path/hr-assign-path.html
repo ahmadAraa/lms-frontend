@@ -39,7 +39,7 @@
                 (input)="onSearchInput($event)"
                 [disabled]="!!selectedUser()"
               />
-              @if (isSearching()) {
+              @if (isSearching() || isLoadingUserInfo()) {
                 <div class="ap-search-spinner"></div>
               }
               @if (selectedUser()) {
@@ -136,7 +136,13 @@
 
         @if (!selectedUser() || !selectedPathId()) {
           <span class="ap-submit-hint">
-            {{ !selectedUser() ? 'Select an employee first' : 'Then pick a learning path' }}
+            {{
+              isLoadingUserInfo()
+                ? 'Checking employee role...'
+                : !selectedUser()
+                  ? 'Select an employee first'
+                  : 'Then pick a learning path'
+            }}
           </span>
         }
       </div>

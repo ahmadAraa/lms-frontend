@@ -1,10 +1,22 @@
 <div class="viewer-wrapper">
   <!-- Topbar -->
   <header class="topbar">
+    <a routerLink="/employee/dashboard" class="student-brand">
+      <span class="material-symbols-outlined">school</span>
+      LearnPath
+    </a>
+
     <div class="left-nav">
       <button class="back-btn" (click)="goBack()">
         <span class="material-symbols-outlined">arrow_back</span>
         Back to Dashboard
+      </button>
+    </div>
+
+    <div class="right-nav">
+      <app-notification-bell></app-notification-bell>
+      <button class="logout-btn" (click)="logout()">
+        <span class="material-symbols-outlined">logout</span>
       </button>
     </div>
   </header>

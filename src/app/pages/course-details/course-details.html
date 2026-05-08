@@ -1,118 +1,126 @@
-<div class="page-container">
+<div class="course-page">
+  <nav class="student-nav">
+    <a routerLink="/employee/dashboard" class="student-brand">
+      <span class="material-symbols-outlined">school</span>
+      LearnPath
+    </a>
 
-  <div class="header">
-    <div class="header-content">
-      <a [routerLink]="backLink()" class="back-btn">
-        <span class="material-symbols-outlined">arrow_back</span>
-      </a>
-      <h1>{{ course()?.title ?? 'Course Details' }}</h1>
+    <div class="student-nav-right">
+      <app-notification-bell></app-notification-bell>
+      <button class="student-logout" (click)="logout()">
+        <span class="material-symbols-outlined">logout</span>
+      </button>
     </div>
-  </div>
+  </nav>
 
-  @if (isLocked()) {
-    <!-- ── Locked state ──────────────────────────────────────── -->
-    <div class="locked-state">
-      <div class="locked-icon-wrap">
-        <span class="material-symbols-outlined locked-icon">lock</span>
+  <div class="page-container">
+    <div class="header">
+      <div class="header-content">
+        <button type="button" class="back-btn" (click)="goDashboard()">
+          <span class="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h1>{{ course()?.title ?? 'Course Details' }}</h1>
       </div>
-      <h2 class="locked-title">Course Locked</h2>
-      <p class="locked-reason">{{ lockReason() }}</p>
-      <div class="locked-progress-hint">
-        <span class="material-symbols-outlined">info</span>
-        You need to reach <strong>85%</strong> completion on the previous course to unlock this one.
-      </div>
-      <a [routerLink]="backLink()" class="btn-back-locked">
-        <span class="material-symbols-outlined">arrow_back</span>
-        Go Back
-      </a>
     </div>
-  } @else if (!course() && !isLoading()) {
-    <div class="empty-state">
-      <span class="material-symbols-outlined empty-icon">menu_book</span>
-      <p>No course data found. Please navigate here from a learning path.</p>
-      <a routerLink="/employee/dashboard" class="btn-primary">Go to Dashboard</a>
-    </div>
-  } @else {
 
-    <!-- Course overview -->
-    @if (course()) {
-      <div class="course-overview">
-        <div class="overview-card">
-          <div class="course-icon-large">
-            <span class="material-symbols-outlined">menu_book</span>
-          </div>
-          <div class="overview-info">
-            <h2>{{ course()!.title }}</h2>
-            <p>{{ course()!.description || 'No description provided.' }}</p>
-          </div>
+    @if (isLocked()) {
+      <div class="locked-state">
+        <div class="locked-icon-wrap">
+          <span class="material-symbols-outlined locked-icon">lock</span>
         </div>
+        <h2 class="locked-title">Course Locked</h2>
+        <p class="locked-reason">{{ lockReason() }}</p>
+        <div class="locked-progress-hint">
+          <span class="material-symbols-outlined">info</span>
+          You need to reach <strong>85%</strong> completion on the previous course to unlock this one.
+        </div>
+        <button type="button" class="btn-back-locked" (click)="goDashboard()">
+          <span class="material-symbols-outlined">arrow_back</span>
+          Go Back
+        </button>
       </div>
-    }
-
-    <!-- Sections & Lessons -->
-    <div class="lessons-section">
-      <div class="section-header">
-        <span class="material-symbols-outlined">list</span>
-        <h2>Course Content</h2>
+    } @else if (!course() && !isLoading()) {
+      <div class="empty-state">
+        <span class="material-symbols-outlined empty-icon">menu_book</span>
+        <p>No course data found. Please navigate here from a learning path.</p>
+        <a routerLink="/employee/dashboard" class="btn-primary">Go to Dashboard</a>
       </div>
-
-      @if (isLoading()) {
-        <div class="empty-state">
-          <div class="spinner"></div>
-        </div>
-      } @else if (error()) {
-        <div class="error-alert">{{ error() }}</div>
-      } @else if (sections().length === 0) {
-        <div class="empty-state">
-          <span class="material-symbols-outlined empty-icon">school</span>
-          <p>No content available yet for this course.</p>
-        </div>
-      } @else {
-        <div class="sections-list">
-          @for (section of sections(); track section.id; let i = $index) {
-            <div class="section-block">
-              <!-- Section header (clickable to expand) -->
-              <div class="section-row" (click)="toggleSection(section.id)">
-                <div class="section-num">{{ i + 1 }}</div>
-                <div class="section-info">
-                  <span class="section-title">{{ section.title }}</span>
-                  @if (section.description) {
-                    <span class="section-desc">{{ section.description }}</span>
-                  }
-                </div>
-                <span class="lesson-count">{{ section.lessons.length }} lessons</span>
-                <span class="material-symbols-outlined section-chevron"
-                      [class.rotated]="isSectionExpanded(section.id)">
-                  expand_more
-                </span>
-              </div>
-
-              <!-- Lessons list (shown when section expanded) -->
-              @if (isSectionExpanded(section.id)) {
-                <div class="lessons-list">
-                  @if (!section.lessons || section.lessons.length === 0) {
-                    <div class="lesson-empty">No lessons in this section yet.</div>
-                  } @else {
-                    @for (lesson of section.lessons; track lesson.id; let j = $index) {
-                      <div class="lesson-row" (click)="openLesson(lesson.id)" style="cursor:pointer">
-                        <span class="lesson-num">{{ j + 1 }}</span>
-                        <span class="material-symbols-outlined lesson-icon">play_circle</span>
-                        <div class="lesson-info">
-                          <span class="lesson-title">{{ lesson.title }}</span>
-                          @if (lesson.description) {
-                            <span class="lesson-desc">{{ lesson.description }}</span>
-                          }
-                        </div>
-                      </div>
-                    }
-                  }
-                </div>
-              }
+    } @else {
+      @if (course()) {
+        <div class="course-overview">
+          <div class="overview-card">
+            <div class="course-icon-large">
+              <span class="material-symbols-outlined">menu_book</span>
             </div>
-          }
+            <div class="overview-info">
+              <h2>{{ course()!.title }}</h2>
+              <p>{{ course()!.description || 'No description provided.' }}</p>
+            </div>
+          </div>
         </div>
       }
-    </div>
-  }
 
+      <div class="lessons-section">
+        <div class="section-header">
+          <span class="material-symbols-outlined">list</span>
+          <h2>Course Content</h2>
+        </div>
+
+        @if (isLoading()) {
+          <div class="empty-state">
+            <div class="spinner"></div>
+          </div>
+        } @else if (error()) {
+          <div class="error-alert">{{ error() }}</div>
+        } @else if (sections().length === 0) {
+          <div class="empty-state">
+            <span class="material-symbols-outlined empty-icon">school</span>
+            <p>No content available yet for this course.</p>
+          </div>
+        } @else {
+          <div class="sections-list">
+            @for (section of sections(); track section.id; let i = $index) {
+              <div class="section-block">
+                <div class="section-row" (click)="toggleSection(section.id)">
+                  <div class="section-num">{{ i + 1 }}</div>
+                  <div class="section-info">
+                    <span class="section-title">{{ section.title }}</span>
+                    @if (section.description) {
+                      <span class="section-desc">{{ section.description }}</span>
+                    }
+                  </div>
+                  <span class="lesson-count">{{ section.lessons.length }} lessons</span>
+                  <span class="material-symbols-outlined section-chevron"
+                        [class.rotated]="isSectionExpanded(section.id)">
+                    expand_more
+                  </span>
+                </div>
+
+                @if (isSectionExpanded(section.id)) {
+                  <div class="lessons-list">
+                    @if (!section.lessons || section.lessons.length === 0) {
+                      <div class="lesson-empty">No lessons in this section yet.</div>
+                    } @else {
+                      @for (lesson of section.lessons; track lesson.id; let j = $index) {
+                        <div class="lesson-row" (click)="openLesson(lesson.id)" style="cursor:pointer">
+                          <span class="lesson-num">{{ j + 1 }}</span>
+                          <span class="material-symbols-outlined lesson-icon">play_circle</span>
+                          <div class="lesson-info">
+                            <span class="lesson-title">{{ lesson.title }}</span>
+                            @if (lesson.description) {
+                              <span class="lesson-desc">{{ lesson.description }}</span>
+                            }
+                          </div>
+                        </div>
+                      }
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
 </div>

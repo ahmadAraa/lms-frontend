@@ -30,7 +30,10 @@
   color: #fff;
   letter-spacing: -0.2px;
   flex-shrink: 0;
+  text-decoration: none;
 }
+
+.ed-nav-brand:hover { color: #fff; }
 
 .ed-nav-brand .material-symbols-outlined {
   font-size: 22px;

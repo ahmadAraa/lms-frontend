@@ -1,13 +1,15 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { CommonModule, Location } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LearningPathService, LearningPathResponseDto, CourseResponseDTO } from '../../services/learning-path.service';
+import { AuthService } from '../../services/auth';
+import { NotificationBellComponent } from '../../components/notification-bell/notification-bell';
 
 @Component({
   selector: 'app-learning-path-details',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink, NotificationBellComponent],
   templateUrl: './learning-path-details.html',
   styleUrl: './learning-path-details.css'
 })
@@ -22,29 +24,32 @@ export class LearningPathDetails implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private location: Location,
-    private learningPathService: LearningPathService
+    private learningPathService: LearningPathService,
+    private authService: AuthService,
   ) {}
 
   goBack() {
-    this.location.back();
+    void this.router.navigate(['/employee/dashboard']);
+  }
+
+  logout() {
+    this.authService.logout();
+    void this.router.navigate(['/']);
   }
 
   openCourse(course: CourseResponseDTO) {
-    // Navigate directly to the first lesson of the first section
     if (course.sections && course.sections.length > 0) {
       for (const section of course.sections) {
         if (section.lessons && section.lessons.length > 0) {
-          const firstLesson = section.lessons[0] as any;
-          if (firstLesson && firstLesson.id) {
-            this.router.navigate(['/lesson', firstLesson.id]);
+          const firstLesson = section.lessons[0] as { id?: number };
+          if (firstLesson.id) {
+            void this.router.navigate(['/lesson', firstLesson.id]);
             return;
           }
         }
       }
     }
-    
-    // Fallback if no lessons exist (or sections not loaded)
+
     this.router.navigate(['/course', course.id], {
       state: { course, pathId: this.pathId() }
     });

@@ -21,13 +21,17 @@
 }
 
 .topbar {
-  height: 56px;
+  height: 64px;
   background: var(--navy);
   color: white;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
+  gap: 18px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .left-nav,
@@ -35,6 +39,30 @@
   display: flex;
   align-items: center;
   gap: 18px;
+}
+
+.student-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--white);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.student-brand .material-symbols-outlined {
+  font-size: 22px;
+  background: rgba(255,255,255,0.15);
+  padding: 6px;
+  border-radius: 8px;
+}
+
+.right-nav {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .back-btn {
@@ -56,19 +84,39 @@
   background: rgba(255,255,255,0.1);
 }
 
+.logout-btn {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 9px;
+  color: rgba(255,255,255,0.85);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.logout-btn:hover { background: rgba(255,255,255,0.2); color: var(--white); }
+.logout-btn .material-symbols-outlined { font-size: 20px; }
+
 .layout {
   display: grid;
   grid-template-columns: 1fr 360px;
-  min-height: calc(100vh - 56px);
+  min-height: calc(100vh - 64px);
 }
 
 .main {
   background: #f7f8fb;
   overflow-y: auto;
-  height: calc(100vh - 56px);
+  height: calc(100vh - 64px);
 }
 
 @media (max-width: 900px) {
+  .topbar { flex-wrap: wrap; height: auto; min-height: 64px; padding: 12px 18px; }
+  .left-nav { order: 3; width: 100%; }
+  .back-btn { width: 100%; justify-content: center; }
   .layout {
     grid-template-columns: 1fr;
   }

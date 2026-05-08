@@ -1,9 +1,23 @@
 <div class="page-wrapper">
+  <nav class="student-nav">
+    <a routerLink="/employee/dashboard" class="student-brand">
+      <span class="material-symbols-outlined">school</span>
+      LearnPath
+    </a>
+
+    <div class="student-nav-right">
+      <app-notification-bell></app-notification-bell>
+      <button class="student-logout" (click)="logout()">
+        <span class="material-symbols-outlined">logout</span>
+      </button>
+    </div>
+  </nav>
+
   <!-- Top Banner -->
   <div class="lp-banner">
     <div class="lp-banner-content">
       <div class="breadcrumb">
-        <a (click)="goBack()" class="breadcrumb-link">Home</a>
+        <a routerLink="/employee/dashboard" class="breadcrumb-link">Home</a>
         <span class="breadcrumb-sep">&gt;</span>
         <span class="breadcrumb-current">{{ path()?.title || 'Loading...' }}</span>
       </div>
