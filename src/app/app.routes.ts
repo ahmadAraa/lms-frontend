@@ -27,24 +27,38 @@ export const routes: Routes = [
 
   // ── Student pages (lazy) ─────────────────────────────────
   {
-    path: '',
+    path: 'learning-path/:id',
     loadComponent: () => import('./layouts/employee-layout/employee-layout.component').then(m => m.EmployeeLayoutComponent),
     canActivate: [authGuard],
     children: [
       {
-        path: 'learning-path/:id',
+        path: '',
         loadComponent: () => import('./pages/learning-path-details/learning-path-details').then(m => m.LearningPathDetails),
         canActivate: [roleGuard],
         data: { roles: ['EMPLOYEE', 'HR'] }
-      },
+      }
+    ]
+  },
+  {
+    path: 'course/:id',
+    loadComponent: () => import('./layouts/employee-layout/employee-layout.component').then(m => m.EmployeeLayoutComponent),
+    canActivate: [authGuard],
+    children: [
       {
-        path: 'course/:id',
+        path: '',
         loadComponent: () => import('./pages/course-details/course-details').then(m => m.CourseDetails),
         canActivate: [roleGuard],
         data: { roles: ['EMPLOYEE', 'HR'] }
-      },
+      }
+    ]
+  },
+  {
+    path: 'lesson/:id',
+    loadComponent: () => import('./layouts/employee-layout/employee-layout.component').then(m => m.EmployeeLayoutComponent),
+    canActivate: [authGuard],
+    children: [
       {
-        path: 'lesson/:id',
+        path: '',
         loadComponent: () => import('./pages/lesson-viewer/lesson-viewer.component').then(m => m.LessonViewerComponent),
         canActivate: [roleGuard],
         data: { roles: ['EMPLOYEE', 'HR'] }

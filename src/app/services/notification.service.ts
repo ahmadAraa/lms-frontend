@@ -71,6 +71,11 @@ function toNumber(value: unknown, fallback = 0): number {
  */
 function normalizeNotification(raw: unknown): AppNotification {
   const node = asObject(raw);
+  const createdAt =
+    getValue(node, 'createdAt', 'CreatedAt') ??
+    getValue(node, 'createdOn', 'CreatedOn') ??
+    getValue(node, 'createdDate', 'CreatedDate') ??
+    getValue(node, 'timestamp', 'Timestamp');
 
   return {
     id: toNumber(getValue(node, 'id', 'Id')),
@@ -78,7 +83,7 @@ function normalizeNotification(raw: unknown): AppNotification {
     body: String(getValue(node, 'body', 'Body') ?? ''),
     type: String(getValue(node, 'type', 'Type') ?? ''),
     isRead: Boolean(getValue(node, 'isRead', 'IsRead') ?? false),
-    createdAt: String(getValue(node, 'createdAt', 'CreatedAt') ?? ''),
+    createdAt: String(createdAt ?? ''),
   };
 }
 
