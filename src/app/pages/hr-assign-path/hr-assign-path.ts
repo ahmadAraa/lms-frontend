@@ -185,7 +185,6 @@ export class HrAssignPath implements OnInit {
         const userName = selectedUser.userName;
         const pathTitle = this.paths().find(p => p.id === selectedPathId)?.title ?? '';
         this.successMessage.set(`✓ ${userName} has been enrolled in "${pathTitle}"`);
-        this.enrollmentService.incrementEnrollCount(selectedPathId);
         this.activityService.log(
           'assignment_ind',
           `<strong>${userName}</strong> was assigned to the <strong>${pathTitle}</strong> learning path.`,

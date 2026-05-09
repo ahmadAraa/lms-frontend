@@ -36,6 +36,21 @@ export interface LearningPathResponseDto {
   courses: CourseResponseDTO[];
 }
 
+export interface LearningPathProgressDto {
+  learningPathId: number;
+  progress: number;
+}
+
+export interface ContinueLearningResponseDto {
+  isCompleted: boolean;
+  data?: {
+    courseId: number | null;
+    lessonId: number | null;
+    sectionId: number | null;
+  };
+  message?: string;
+}
+
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 /**
@@ -75,12 +90,44 @@ function getValue(
   return node[camelCaseKey] ?? node[pascalCaseKey];
 }
 
+function getAnyValue(node: Record<string, unknown>, ...keys: string[]): unknown {
+  for (const key of keys) {
+    if (node[key] !== undefined) return node[key];
+  }
+
+  return undefined;
+}
+
 /**
  * Safely converts a value to a number.
  */
 function toNumber(value: unknown, fallback = 0): number {
   const numberValue = Number(value);
   return Number.isFinite(numberValue) ? numberValue : fallback;
+}
+
+function toNullableNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : null;
+}
+
+function toPercent(value: unknown): number {
+  const n = toNumber(value, 0);
+  const percent = n > 0 && n < 1 ? n * 100 : n;
+  return Math.min(100, Math.max(0, Math.round(percent)));
+}
+
+function toBoolean(value: unknown, fallback = false): boolean {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const lower = value.toLowerCase();
+    if (lower === 'true') return true;
+    if (lower === 'false') return false;
+  }
+
+  return value === undefined || value === null ? fallback : Boolean(value);
 }
 
 /**
@@ -157,6 +204,74 @@ function normalizePath(raw: unknown): LearningPathResponseDto {
   };
 }
 
+function normalizeProgress(raw: unknown, learningPathId: number): LearningPathProgressDto {
+  if (typeof raw === 'number') {
+    return { learningPathId, progress: toPercent(raw) };
+  }
+
+  const node = asObject(raw);
+  const dataNode = asObject(getValue(node, 'data', 'Data'));
+  const progress = getAnyValue(
+    node,
+    'progress',
+    'Progress',
+    'percentage',
+    'Percentage',
+    'percent',
+    'Percent',
+    'progressPercentage',
+    'ProgressPercentage'
+  ) ?? getAnyValue(
+    dataNode,
+    'progress',
+    'Progress',
+    'percentage',
+    'Percentage',
+    'percent',
+    'Percent',
+    'progressPercentage',
+    'ProgressPercentage'
+  );
+
+  return {
+    learningPathId: toNumber(
+      getValue(node, 'learningPathId', 'LearningPathId') ??
+        getValue(dataNode, 'learningPathId', 'LearningPathId'),
+      learningPathId
+    ),
+    progress: toPercent(progress),
+  };
+}
+
+function normalizeContinueLearning(
+  raw: unknown,
+  learningPathId: number
+): ContinueLearningResponseDto {
+  const node = asObject(raw);
+  const dataNode = asObject(getValue(node, 'data', 'Data') ?? raw);
+  const message = toOptionalString(getValue(node, 'message', 'Message'));
+  const lessonId = toNullableNumber(getValue(dataNode, 'lessonId', 'LessonId'));
+  const courseId = toNullableNumber(getValue(dataNode, 'courseId', 'CourseId'));
+  const sectionId = toNullableNumber(getValue(dataNode, 'sectionId', 'SectionId'));
+  const hasTarget = lessonId !== null || courseId !== null || sectionId !== null;
+
+  return {
+    isCompleted: toBoolean(getValue(node, 'isCompleted', 'IsCompleted'), !hasTarget),
+    data: hasTarget
+      ? {
+          courseId,
+          lessonId,
+          sectionId,
+        }
+      : undefined,
+    message:
+      message ??
+      (hasTarget
+        ? undefined
+        : `No lesson is available to continue for learning path ${learningPathId}.`),
+  };
+}
+
 // ── Service ──────────────────────────────────────────────────────────────────
 
 /**
@@ -230,32 +345,18 @@ export class LearningPathService {
    */
   getMyProgress(
     learningPathId: number
-  ): Observable<{ learningPathId: number; progress: number }> {
-    return this.http.get<{ learningPathId: number; progress: number }>(
-      `${this.apiUrl}/MyProgress/${learningPathId}`
-    );
+  ): Observable<LearningPathProgressDto> {
+    return this.http
+      .get<unknown>(`${this.apiUrl}/MyProgress/${learningPathId}`)
+      .pipe(map((data) => normalizeProgress(data, learningPathId)));
   }
 
   /**
    * Gets the next lesson/course/section the user should continue from.
    */
-  getContinueLearning(learningPathId: number): Observable<{
-    isCompleted: boolean;
-    data?: {
-      courseId: number;
-      lessonId: number;
-      sectionId: number;
-    };
-    message?: string;
-  }> {
-    return this.http.get<{
-      isCompleted: boolean;
-      data?: {
-        courseId: number;
-        lessonId: number;
-        sectionId: number;
-      };
-      message?: string;
-    }>(`${this.apiUrl}/ContinueLearning/${learningPathId}`);
+  getContinueLearning(learningPathId: number): Observable<ContinueLearningResponseDto> {
+    return this.http
+      .get<unknown>(`${this.apiUrl}/ContinueLearning/${learningPathId}`)
+      .pipe(map((data) => normalizeContinueLearning(data, learningPathId)));
   }
 }

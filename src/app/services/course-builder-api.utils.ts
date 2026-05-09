@@ -7,7 +7,7 @@ export async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> 
   }
 
   const method = init?.method?.toUpperCase() || 'GET';
-  if (!headers.has('Content-Type') && method !== 'GET' && method !== 'DELETE') {
+  if (!headers.has('Content-Type') && init?.body && method !== 'GET' && method !== 'DELETE') {
     headers.set('Content-Type', 'application/json');
   }
 

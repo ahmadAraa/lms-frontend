@@ -147,12 +147,10 @@ export class LessonsApiService {
    * Sets the completion state of a lesson for the current user.
    *
    * @param lessonId  - Lesson ID
-   * @param isComplete - true to mark complete, false to mark incomplete
    */
-  async completeLesson(lessonId: number, isComplete: boolean): Promise<void> {
+  async completeLesson(lessonId: number): Promise<void> {
     await fetchJson<void>(`${BASE_URL}/api/Lessons/CompleteLesson/${lessonId}`, {
       method: 'POST',
-      body: JSON.stringify({ isComplete }),
     });
   }
 }

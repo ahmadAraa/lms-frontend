@@ -28,11 +28,6 @@ export interface UserInfo {
   progresses: unknown[];
 }
 
-/**
- * LocalStorage key used to store temporary enrollment counters.
- */
-const ENROLL_COUNTS_KEY = 'lms_enrollment_counts';
-
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 /**
@@ -75,6 +70,12 @@ function toOptionalNumber(value: unknown): number | undefined {
   return Number.isFinite(numberValue) ? numberValue : undefined;
 }
 
+function toNumber(value: unknown, fallback = 0): number {
+  const numberValue = Number(value);
+
+  return Number.isFinite(numberValue) ? numberValue : fallback;
+}
+
 /**
  * Normalizes one enrollment object from the backend.
  */
@@ -101,11 +102,7 @@ function normalizeEnrollment(raw: unknown): {
  * - Search users
  * - Fetch detailed user info
  * - Enroll users in learning paths
- * - Track local enrollment count
- *
- * Notes:
- * - Local enrollment count is only frontend-side tracking.
- * - Backend remains the real source of truth for enrollment data.
+ * - Fetch backend enrollment counts
  */
 @Injectable({
   providedIn: 'root',
@@ -160,47 +157,14 @@ export class EnrollmentService {
   }
 
   /**
-   * Increments the locally stored enrollment count for a learning path.
-   *
-   * Use this only after enroll() succeeds.
+   * Fetches how many employees are enrolled in a learning path.
    *
    * @param learningPathId - Learning path ID
    */
-  incrementEnrollCount(learningPathId: number): void {
-    const counts = this.getEnrollCounts();
-
-    counts[learningPathId] = (counts[learningPathId] ?? 0) + 1;
-
-    try {
-      localStorage.setItem(ENROLL_COUNTS_KEY, JSON.stringify(counts));
-    } catch {
-      // Ignore localStorage errors.
-    }
-  }
-
-  /**
-   * Gets the locally tracked enrollment count for one learning path.
-   *
-   * @param learningPathId - Learning path ID
-   */
-  getEnrollCount(learningPathId: number): number {
-    return this.getEnrollCounts()[learningPathId] ?? 0;
-  }
-
-  /**
-   * Gets all locally tracked enrollment counts.
-   *
-   * Returns a map where:
-   * - key = learningPathId
-   * - value = local enrollment count
-   */
-  getEnrollCounts(): Record<number, number> {
-    try {
-      const raw = localStorage.getItem(ENROLL_COUNTS_KEY);
-      return raw ? JSON.parse(raw) : {};
-    } catch {
-      return {};
-    }
+  getLearningPathEmployeesCount(learningPathId: number): Observable<number> {
+    return this.http
+      .get<unknown>(`${this.baseUrl}/api/Enrollment/learningpath/${learningPathId}/employeescount`)
+      .pipe(map((raw) => this.normalizeEmployeesCount(raw)));
   }
 
   /**
@@ -218,5 +182,22 @@ export class EnrollmentService {
       enrollments: readArray(getValue(node, 'enrollments', 'Enrollments')).map(normalizeEnrollment),
       progresses: readArray(getValue(node, 'progresses', 'Progresses')),
     };
+  }
+
+  /**
+   * Normalizes supported count response shapes into a number.
+   */
+  private normalizeEmployeesCount(raw: unknown): number {
+    if (typeof raw === 'number' || typeof raw === 'string') {
+      return toNumber(raw);
+    }
+
+    const node = asObject(raw);
+
+    return toNumber(
+      getValue(node, 'count', 'Count') ??
+        getValue(node, 'employeesCount', 'EmployeesCount') ??
+        getValue(node, 'employeeCount', 'EmployeeCount'),
+    );
   }
 }

@@ -11,7 +11,7 @@
           <span class="material-symbols-outlined">{{ isSectionExpanded(section.id) ? 'expand_more' : 'chevron_right' }}</span> 
           {{ section.title }}
         </div>
-        <small>0/{{ section.lessons.length }}</small>
+        <small>{{ countCompletedLessons(section) }}/{{ section.lessons.length }}</small>
       </div>
 
       @if (isSectionExpanded(section.id)) {

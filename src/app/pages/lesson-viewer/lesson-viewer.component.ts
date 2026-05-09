@@ -118,27 +118,19 @@ export class LessonViewerComponent implements OnInit {
     event.stopPropagation();
 
     const completed = new Set(this.completedLessons());
-    const nowComplete = !completed.has(lessonId);
+    if (completed.has(lessonId)) return;
 
-    // Optimistic update — flip the UI immediately and persist
-    if (nowComplete) {
-      completed.add(lessonId);
-    } else {
-      completed.delete(lessonId);
-    }
+    // Optimistic update: mark complete immediately and persist.
+    completed.add(lessonId);
     this.completedLessons.set(completed);
 
     this.isCompleting.set(true);
     try {
-      await this.lessonsApi.completeLesson(lessonId, nowComplete);
+      await this.lessonsApi.completeLesson(lessonId);
     } catch {
       // Revert optimistic update if the API call failed
       const reverted = new Set(this.completedLessons());
-      if (nowComplete) {
-        reverted.delete(lessonId);
-      } else {
-        reverted.add(lessonId);
-      }
+      reverted.delete(lessonId);
       this.completedLessons.set(reverted);
     } finally {
       this.isCompleting.set(false);

@@ -26,7 +26,6 @@
   padding: 0 36px 0 40px;
   font-size: 14px;
   color: #fff;
-  font-family: inherit;
   outline: none;
   transition: background 0.15s, border-color 0.15s;
 }
@@ -94,22 +93,6 @@
   margin-bottom: 32px;
 }
 
-.ed-eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.5);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.ed-eyebrow .material-symbols-outlined {
-  font-size: 15px;
-  color: #fbbf24;
-}
-
 .ed-hero-content h1 {
   font-size: 32px;
   font-weight: 800;
@@ -120,72 +103,7 @@
 
 .ed-hero-name { color: #93c5fd; }
 
-.ed-hero-sub {
-  font-size: 15px;
-  color: rgba(255, 255, 255, 0.6);
-  max-width: 540px;
-  line-height: 1.55;
-}
-
 /* ── Stats row ───────────────────────────────────── */
-.ed-stats {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  padding-bottom: 40px;
-  position: relative;
-  z-index: 1;
-}
-
-.ed-stat-card {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 14px;
-  padding: 20px 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  transition: background 0.2s, transform 0.2s;
-}
-
-.ed-stat-card:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
-}
-
-.ed-stat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 10px;
-}
-
-.ed-stat-icon .material-symbols-outlined { font-size: 20px; color: #fff; }
-
-.ed-stat-info { display: flex; flex-direction: column; gap: 3px; }
-
-.ed-stat-value {
-  font-size: 30px;
-  font-weight: 800;
-  color: #fff;
-  line-height: 1;
-  letter-spacing: -0.5px;
-}
-
-.ed-stat-label {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.6);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
 /* ── Content ─────────────────────────────────────── */
 .ed-content {
   padding: 40px 48px 52px;
@@ -207,12 +125,6 @@
   gap: 12px;
 }
 
-.ed-search-count {
-  font-size: 13px;
-  font-weight: 500;
-  color: #6b7280;
-}
-
 /* ── Continue Learning widget ────────────────────── */
 .continue-card {
   display: flex;
@@ -222,14 +134,11 @@
   border: 1px solid #e5e7eb;
   border-radius: 14px;
   padding: 24px 28px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
   cursor: pointer;
-  transition: box-shadow 0.25s, border-color 0.25s;
 }
 
 .continue-card:hover {
   border-color: var(--blue);
-  box-shadow: 0 6px 24px rgba(37,99,235,0.15);
 }
 
 .continue-visual {
@@ -260,7 +169,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px rgba(37,99,235,0.35);
 }
 
 .course-icon-wrap .material-symbols-outlined { font-size: 26px; color: #fff; }
@@ -313,7 +221,6 @@
   height: 100%;
   background: linear-gradient(90deg, var(--navy), var(--blue));
   border-radius: 99px;
-  transition: width 0.5s ease;
 }
 
 .progress-pct {
@@ -338,16 +245,85 @@
   font-family: inherit;
   cursor: pointer;
   flex-shrink: 0;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(37,99,235,0.3);
-}
-
-.btn-resume:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(37,99,235,0.42);
 }
 
 .btn-resume .material-symbols-outlined { font-size: 20px; }
+
+/* ── Enrolled course cards ───────────────────────── */
+.course-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.course-mini-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+}
+
+.course-mini-thumb {
+  width: 72px;
+  height: 54px;
+  border-radius: 8px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.course-mini-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.course-mini-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.course-mini-info h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #10182f;
+  line-height: 1.25;
+  margin: 0 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.course-mini-info p {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.2;
+  margin: 0 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.course-mini-progress {
+  width: 100%;
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.course-mini-progress-fill {
+  height: 100%;
+  background: #0f9f90;
+  border-radius: 999px;
+}
 
 /* ── Grid ────────────────────────────────────────── */
 .ed-grid {
@@ -367,10 +343,7 @@
   transition: transform 0.25s, box-shadow 0.25s;
 }
 
-.ed-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-}
+.ed-card:hover { transform: translateY(-2px); }
 
 .ed-card-banner { height: 140px; position: relative; overflow: hidden; }
 
@@ -478,7 +451,7 @@
   color: #6b7280;
 }
 
-/* ── Available (not enrolled) card ───────────────── */
+/* ── Other (not enrolled) card ───────────────── */
 .ed-card--available {
   opacity: 0.88;
 }
@@ -487,48 +460,6 @@
   transform: none;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   cursor: default;
-}
-
-/* ── Enroll button ───────────────────────────────── */
-.ed-card--locked {
-  cursor: default;
-}
-.ed-card--locked:hover {
-  transform: none;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-}
-
-.ed-card-footer--enroll {
-  margin-top: 4px;
-}
-
-.ed-enroll-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 16px;
-  background: var(--navy);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s;
-  white-space: nowrap;
-}
-.ed-enroll-btn:hover:not(:disabled) { opacity: 0.88; }
-.ed-enroll-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-.ed-enroll-btn .material-symbols-outlined { font-size: 17px; }
-
-.ed-enroll-spinner {
-  width: 15px;
-  height: 15px;
-  border: 2px solid rgba(255,255,255,0.4);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  flex-shrink: 0;
 }
 
 /* ── Enrolled badge on card banner ───────────────── */
@@ -548,35 +479,6 @@
   backdrop-filter: blur(4px);
 }
 .ed-enrolled-badge .material-symbols-outlined { font-size: 13px; }
-
-/* ── Toast feedback ──────────────────────────────── */
-.ed-toast {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 18px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 4px;
-  animation: fade-in 0.2s ease;
-}
-.ed-toast--success {
-  background: #dcfce7;
-  color: #15803d;
-  border: 1px solid #bbf7d0;
-}
-.ed-toast--error {
-  background: #fee2e2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
-}
-.ed-toast .material-symbols-outlined { font-size: 20px; }
-
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
 
 /* ── States ──────────────────────────────────────── */
 .ed-loading {
@@ -618,9 +520,8 @@
   .ed-search { max-width: 200px; }
   .ed-hero { padding: 36px 24px 0; }
   .ed-hero-content h1 { font-size: 24px; }
-  .ed-hero-sub { display: none; }
-  .ed-stats { grid-template-columns: 1fr 1fr; padding-bottom: 28px; }
   .ed-content { padding: 28px 20px 40px; }
+  .course-strip { grid-template-columns: 1fr; }
   .ed-grid { grid-template-columns: 1fr; }
   .continue-card { flex-wrap: wrap; padding: 20px; }
   .btn-resume { width: 100%; justify-content: center; }

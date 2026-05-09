@@ -3,17 +3,26 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { AuthService } from '../../services/auth';
-import { LearningPathService, LearningPathResponseDto } from '../../services/learning-path.service';
-import { EnrollmentService } from '../../services/enrollment.service';
+import { CourseResponseDTO, LearningPathService, LearningPathResponseDto } from '../../services/learning-path.service';
+import { ProgressService } from '../../services/progress.service';
+import { SectionsApiService } from '../../services/sections-api.service';
 import { BASE_URL } from '../../types/course-builder.types';
 
 interface ContinueLearningState {
   isCompleted: boolean;
+  pathId: number;
+  pathTitle: string;
   lessonId: number | null;
   courseId: number | null;
   message: string;
+}
+
+interface EnrolledCourse {
+  course: CourseResponseDTO;
+  learningPathId: number;
+  learningPathTitle: string;
 }
 
 @Component({
@@ -29,11 +38,8 @@ export class EmployeeDashboard implements OnInit {
   /** IDs of paths this employee is enrolled in */
   enrolledPathIds = signal<Set<number>>(new Set());
   progressMap = signal<Map<number, number>>(new Map());
+  courseProgressMap = signal<Map<number, number>>(new Map());
   continueState = signal<ContinueLearningState | null>(null);
-
-  enrollingPathId = signal<number | null>(null);
-  enrollError = signal('');
-  enrollSuccess = signal('');
 
   isLoading = signal(true);
   error = signal('');
@@ -45,10 +51,30 @@ export class EmployeeDashboard implements OnInit {
     this.allPaths().filter(p => this.enrolledPathIds().has(p.id))
   );
 
-  /** Paths the employee is NOT enrolled in */
+  /** Other paths the employee is NOT enrolled in */
   availablePaths = computed(() =>
     this.allPaths().filter(p => !this.enrolledPathIds().has(p.id))
   );
+
+  /** Courses inside the employee's enrolled learning paths */
+  enrolledCourses = computed(() => {
+    const seen = new Set<number>();
+    const courses: EnrolledCourse[] = [];
+
+    this.enrolledPaths().forEach(path => {
+      (path.courses ?? []).forEach(course => {
+        if (seen.has(course.id)) return;
+        seen.add(course.id);
+        courses.push({
+          course,
+          learningPathId: path.id,
+          learningPathTitle: path.title,
+        });
+      });
+    });
+
+    return courses;
+  });
 
   /** Enrolled paths filtered by search */
   filteredEnrolled = computed(() => {
@@ -60,7 +86,7 @@ export class EmployeeDashboard implements OnInit {
     );
   });
 
-  /** Available paths filtered by search */
+  /** Other paths filtered by search */
   filteredAvailable = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
     if (!q) return this.availablePaths();
@@ -71,7 +97,14 @@ export class EmployeeDashboard implements OnInit {
   });
 
   firstEnrolledPath = computed(() => this.enrolledPaths()[0] ?? null);
-  lastPathProgress = computed(() => this.getProgress(this.firstEnrolledPath()?.id ?? 0));
+  continuePath = computed(() => {
+    const state = this.continueState();
+    return this.enrolledPaths().find(path => path.id === state?.pathId) ?? this.firstEnrolledPath();
+  });
+  continuePathProgress = computed(() => this.getProgress(this.continuePath()?.id ?? 0));
+  isContinueCompleted = computed(() =>
+    Boolean(this.continueState()?.isCompleted) && this.continuePathProgress() >= 100
+  );
 
   private readonly gradients = [
     'linear-gradient(135deg, #0f1b3d 0%, #1e3a8a 100%)',
@@ -84,7 +117,8 @@ export class EmployeeDashboard implements OnInit {
 
   constructor(
     private learningPathService: LearningPathService,
-    private enrollmentService: EnrollmentService,
+    private progressService: ProgressService,
+    private sectionsApi: SectionsApiService,
     private authService: AuthService,
     private router: Router,
   ) {}
@@ -110,7 +144,8 @@ export class EmployeeDashboard implements OnInit {
 
         if (mine.length > 0) {
           this.loadProgress(mine);
-          this.loadContinueLearning(mine[0].id);
+          this.loadContinueLearning(mine);
+          void this.loadCourseProgress(mine);
         }
       },
       error: () => {
@@ -133,77 +168,55 @@ export class EmployeeDashboard implements OnInit {
     });
   }
 
-  loadContinueLearning(pathId: number) {
-    this.learningPathService.getContinueLearning(pathId).pipe(
-      catchError(() => of(null))
-    ).subscribe(result => {
-      if (!result) return;
-      if (result.isCompleted) {
-        this.continueState.set({
-          isCompleted: true, lessonId: null, courseId: null,
-          message: result.message ?? 'You have completed this learning path!',
-        });
-      } else if (result.data) {
-        this.continueState.set({
-          isCompleted: false,
-          lessonId: result.data.lessonId,
-          courseId: result.data.courseId,
-          message: '',
-        });
-      }
-    });
+  async loadCourseProgress(enrolledPaths: LearningPathResponseDto[]) {
+    const courseIds = [
+      ...new Set(
+        enrolledPaths.flatMap(path => (path.courses ?? []).map(course => course.id))
+      ),
+    ];
+
+    const results = await Promise.all(
+      courseIds.map(courseId => this.progressService.getCourseProgress(courseId))
+    );
+
+    const cMap = new Map<number, number>();
+    results.forEach(result => cMap.set(result.courseId, Math.round(result.progress)));
+    this.courseProgressMap.set(cMap);
   }
 
-  enroll(path: LearningPathResponseDto, event: Event) {
-    event.stopPropagation();
-    const userId = this.authService.getUserId();
-    if (!userId) {
-      this.enrollError.set('Could not identify your account. Please log in again.');
-      return;
-    }
+  loadContinueLearning(enrolledPaths: LearningPathResponseDto[]) {
+    const requests = enrolledPaths.map(path =>
+      this.learningPathService.getContinueLearning(path.id).pipe(
+        map(result => ({ path, result })),
+        catchError(() => of({ path, result: null }))
+      )
+    );
 
-    this.enrollingPathId.set(path.id);
-    this.enrollError.set('');
-    this.enrollSuccess.set('');
+    forkJoin(requests).subscribe(results => {
+      const validResults = results.filter(item => item.result);
+      const incompleteResults = validResults.filter(item => !item.result!.isCompleted);
+      const selected =
+        incompleteResults.sort((a, b) => this.continueScore(b) - this.continueScore(a))[0] ??
+        validResults[0];
 
-    this.enrollmentService.enroll(userId, path.id, userId).subscribe({
-      next: () => {
-        // Add to enrolled set immediately (optimistic UI)
-        const updated = new Set(this.enrolledPathIds());
-        updated.add(path.id);
-        this.enrolledPathIds.set(updated);
-        this.enrollingPathId.set(null);
-        this.enrollSuccess.set(`You are now enrolled in "${path.title}"!`);
-        setTimeout(() => this.enrollSuccess.set(''), 4000);
-        // Start continue-learning for this newly enrolled path
-        this.loadContinueLearning(path.id);
-      },
-      error: (err) => {
-        this.enrollingPathId.set(null);
-        const msg: unknown = err?.error ?? err?.message ?? '';
-        if (typeof msg === 'string' && msg.toLowerCase().includes('already')) {
-          // Already enrolled — sync the UI
-          const updated = new Set(this.enrolledPathIds());
-          updated.add(path.id);
-          this.enrolledPathIds.set(updated);
-          this.enrollSuccess.set(`You are already enrolled in "${path.title}".`);
-          setTimeout(() => this.enrollSuccess.set(''), 4000);
-        } else {
-          this.enrollError.set(
-            typeof msg === 'string' && msg
-              ? msg
-              : 'Enrollment failed. Please contact your HR team.'
-          );
-          setTimeout(() => this.enrollError.set(''), 5000);
-        }
-      },
+      if (!selected) return;
+
+      const { path, result } = selected;
+      this.continueState.set({
+        isCompleted: result!.isCompleted,
+        pathId: path.id,
+        pathTitle: path.title,
+        lessonId: result!.data?.lessonId ?? null,
+        courseId: result!.data?.courseId ?? null,
+        message: result!.message ?? (result!.isCompleted ? 'You have completed this learning path!' : ''),
+      });
     });
   }
 
   resume() {
     const state = this.continueState();
-    const path = this.firstEnrolledPath();
-    if (!state || state.isCompleted) {
+    const path = this.continuePath();
+    if (!state || this.isContinueCompleted()) {
       if (path) this.openPath(path.id);
       return;
     }
@@ -212,16 +225,48 @@ export class EmployeeDashboard implements OnInit {
     } else if (state.courseId) {
       this.router.navigate(['/course', state.courseId]);
     } else {
+      const incompleteCourse = path ? this.getFirstIncompleteCourse(path) : null;
+      if (incompleteCourse && path) {
+        void this.openCourse(incompleteCourse, path.id);
+        return;
+      }
+
       if (path) this.openPath(path.id);
     }
   }
 
-  isEnrolling(pathId: number): boolean {
-    return this.enrollingPathId() === pathId;
+  private continueScore(item: {
+    path: LearningPathResponseDto;
+    result: { data?: { lessonId: number | null; courseId: number | null } } | null;
+  }): number {
+    const hasLesson = item.result?.data?.lessonId ? 1000 : 0;
+    const hasCourse = item.result?.data?.courseId ? 500 : 0;
+    return hasLesson + hasCourse + this.getProgress(item.path.id);
   }
 
   getProgress(pathId: number): number {
+    const path = this.allPaths().find(p => p.id === pathId);
+    const courseProgress = path ? this.getPathProgressFromCourses(path) : null;
+
+    if (courseProgress !== null) return courseProgress;
+
     return this.progressMap().get(pathId) ?? 0;
+  }
+
+  getCourseProgress(courseId: number): number {
+    return this.courseProgressMap().get(courseId) ?? 0;
+  }
+
+  private getPathProgressFromCourses(path: LearningPathResponseDto): number | null {
+    const courses = path.courses ?? [];
+    if (courses.length === 0) return this.progressMap().get(path.id) ?? 0;
+
+    const courseProgressMap = this.courseProgressMap();
+    const hasAllCourseProgress = courses.every(course => courseProgressMap.has(course.id));
+    if (!hasAllCourseProgress) return null;
+
+    const total = courses.reduce((sum, course) => sum + (courseProgressMap.get(course.id) ?? 0), 0);
+    return Math.round(total / courses.length);
   }
 
   getGradient(index: number): string {
@@ -236,10 +281,57 @@ export class EmployeeDashboard implements OnInit {
     this.router.navigate(['/learning-path', id]);
   }
 
+  async openCourse(course: CourseResponseDTO, learningPathId: number) {
+    const lessonId = this.getFirstLessonId(course);
+    if (lessonId) {
+      void this.router.navigate(['/lesson', lessonId]);
+      return;
+    }
+
+    try {
+      const sections = await this.sectionsApi.getSectionsByCourse(course.id);
+      const firstLesson = sections
+        .flatMap(section => section.lessons ?? [])
+        .find(lesson => lesson.id);
+
+      if (firstLesson?.id) {
+        void this.router.navigate(['/lesson', firstLesson.id]);
+        return;
+      }
+    } catch {
+      // Fall back to course details when lessons cannot be loaded.
+    }
+
+    void this.router.navigate(['/course', course.id], {
+      state: { course, pathId: learningPathId }
+    });
+  }
+
+  private getFirstLessonId(course: CourseResponseDTO): number | null {
+    for (const section of course.sections ?? []) {
+      for (const lesson of section.lessons ?? []) {
+        const lessonId = (lesson as { id?: number }).id;
+        if (lessonId) return lessonId;
+      }
+    }
+
+    return null;
+  }
+
+  private getFirstIncompleteCourse(path: LearningPathResponseDto): CourseResponseDTO | null {
+    return (path.courses ?? []).find(course => this.getCourseProgress(course.id) < 100) ?? null;
+  }
+
   getPictureUrl(path: LearningPathResponseDto): string {
     if (!path.image) return '';
     if (path.image.startsWith('http')) return path.image;
     return `${BASE_URL}/${path.image.replace(/^\//, '')}`;
+  }
+
+  getCoursePictureUrl(course: CourseResponseDTO): string {
+    if (!course.image) return '';
+    if (course.image.startsWith('http')) return course.image;
+    return `${BASE_URL}/${course.image.replace(/^\//, '')}`;
   }
 
   onSearch(event: Event) {

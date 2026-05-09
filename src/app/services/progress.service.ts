@@ -28,6 +28,12 @@ function toNumber(value: unknown, fallback = 0): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
+function toPercent(value: unknown): number {
+  const n = toNumber(value, 0);
+  const percent = n > 0 && n < 1 ? n * 100 : n;
+  return Math.min(100, Math.max(0, Math.round(percent)));
+}
+
 function getValue(
   node: Record<string, unknown>,
   camel: string,
@@ -84,10 +90,26 @@ export class ProgressService {
       );
 
       const node = asObject(data);
+      const dataNode = asObject(getValue(node, 'data', 'Data'));
+
+      const progress =
+        typeof data === 'number'
+          ? data
+          : getValue(node, 'progress', 'Progress') ??
+            getValue(node, 'percentage', 'Percentage') ??
+            getValue(node, 'percent', 'Percent') ??
+            getValue(node, 'progressPercentage', 'ProgressPercentage') ??
+            getValue(dataNode, 'progress', 'Progress') ??
+            getValue(dataNode, 'percentage', 'Percentage') ??
+            getValue(dataNode, 'percent', 'Percent') ??
+            getValue(dataNode, 'progressPercentage', 'ProgressPercentage');
 
       return {
-        courseId: toNumber(getValue(node, 'courseId', 'CourseId'), courseId),
-        progress: toNumber(getValue(node, 'progress', 'Progress'), 0),
+        courseId: toNumber(
+          getValue(node, 'courseId', 'CourseId') ?? getValue(dataNode, 'courseId', 'CourseId'),
+          courseId
+        ),
+        progress: toPercent(progress),
       };
 
     } catch {

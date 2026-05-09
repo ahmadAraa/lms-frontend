@@ -25,6 +25,10 @@ export class LessonSidebarComponent {
     return this.sections.reduce((acc, sec) => acc + (sec.lessons?.length || 0), 0);
   }
 
+  countCompletedLessons(section: SectionResponseDTO): number {
+    return (section.lessons ?? []).filter((lesson) => this.isLessonCompleted(lesson.id)).length;
+  }
+
   isSectionExpanded(sectionId: number): boolean {
     return this.expandedSectionIds.includes(sectionId);
   }

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LearningPathService, LearningPathResponseDto, CourseResponseDTO } from '../../services/learning-path.service';
+import { ProgressService } from '../../services/progress.service';
 
 @Component({
   selector: 'app-learning-path-details',
@@ -14,6 +15,7 @@ import { LearningPathService, LearningPathResponseDto, CourseResponseDTO } from 
 export class LearningPathDetails implements OnInit {
   pathId = signal<number | null>(null);
   path = signal<LearningPathResponseDto | null>(null);
+  courseProgressMap = signal<Map<number, number>>(new Map());
   isLoading = signal(true);
   error = signal('');
 
@@ -23,6 +25,7 @@ export class LearningPathDetails implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private learningPathService: LearningPathService,
+    private progressService: ProgressService,
   ) {}
 
   goBack() {
@@ -62,6 +65,17 @@ export class LearningPathDetails implements OnInit {
     return course.sections?.length ?? 0;
   }
 
+  getCourseProgress(courseId: number): number {
+    return this.courseProgressMap().get(courseId) ?? 0;
+  }
+
+  getCourseStatus(courseId: number): string {
+    const progress = this.getCourseProgress(courseId);
+    if (progress >= 100) return 'Completed';
+    if (progress > 0) return 'In Progress';
+    return 'Available';
+  }
+
   ngOnInit() {
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
@@ -81,6 +95,7 @@ export class LearningPathDetails implements OnInit {
       next: (data) => {
         this.path.set(data);
         this.isLoading.set(false);
+        void this.loadCourseProgress(data.courses ?? []);
       },
       error: (err: HttpErrorResponse) => {
         this.error.set(`Error ${err.status}: ${err.message}`);
@@ -88,5 +103,21 @@ export class LearningPathDetails implements OnInit {
         console.error('loadPathDetails failed:', err);
       }
     });
+  }
+
+  async loadCourseProgress(courses: CourseResponseDTO[]) {
+    const courseIds = [...new Set(courses.map((course) => course.id).filter(Boolean))];
+
+    if (courseIds.length === 0) {
+      this.courseProgressMap.set(new Map());
+      return;
+    }
+
+    const results = await Promise.all(
+      courseIds.map((courseId) => this.progressService.getCourseProgress(courseId))
+    );
+    const progressMap = new Map<number, number>();
+    results.forEach((result) => progressMap.set(result.courseId, result.progress));
+    this.courseProgressMap.set(progressMap);
   }
 }

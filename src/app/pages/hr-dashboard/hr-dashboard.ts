@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { catchError, forkJoin, of } from 'rxjs';
 import { AuthService } from '../../services/auth';
 import { Router } from '@angular/router';
 import { LearningPathService, LearningPathResponseDto } from '../../services/learning-path.service';
@@ -19,6 +20,7 @@ import { NotificationBellComponent } from '../../components/notification-bell/no
 export class HrDashboard implements OnInit {
   userName = signal('');
   paths = signal<LearningPathResponseDto[]>([]);
+  enrolledCounts = signal<Record<number, number>>({});
   activities = signal<AdminActivity[]>([]);
 
   constructor(
@@ -33,7 +35,10 @@ export class HrDashboard implements OnInit {
     this.userName.set(this.authService.getUserName());
 
     this.learningPathService.getPaths().subscribe({
-      next: (data) => this.paths.set(data),
+      next: (data) => {
+        this.paths.set(data);
+        this.loadEnrolledCounts(data);
+      },
       error: () => {},
     });
 
@@ -44,16 +49,38 @@ export class HrDashboard implements OnInit {
     return path.courses?.length ?? 0;
   }
 
-  /** Width % for the path bar — scales relative to the max course count */
+  /** Width % for the path bar, scaled relative to the highest enrolled count. */
   getEnrolledCount(pathId: number): number {
-    return this.enrollmentService.getEnrollCount(pathId);
+    return this.enrolledCounts()[pathId] ?? 0;
   }
 
   getBarWidth(path: LearningPathResponseDto): number {
-    const all = this.paths();
-    const max = Math.max(...all.map(p => this.enrollmentService.getEnrollCount(p.id)), 1);
-    const count = this.enrollmentService.getEnrollCount(path.id);
+    const counts = this.enrolledCounts();
+    const max = Math.max(...this.paths().map(p => counts[p.id] ?? 0), 1);
+    const count = counts[path.id] ?? 0;
     return Math.max(Math.round((count / max) * 100), 6);
+  }
+
+  private loadEnrolledCounts(paths: LearningPathResponseDto[]) {
+    if (paths.length === 0) {
+      this.enrolledCounts.set({});
+      return;
+    }
+
+    forkJoin(
+      paths.map(path =>
+        this.enrollmentService.getLearningPathEmployeesCount(path.id).pipe(
+          catchError(() => of(0))
+        )
+      )
+    ).subscribe((counts) => {
+      this.enrolledCounts.set(
+        paths.reduce<Record<number, number>>((acc, path, index) => {
+          acc[path.id] = counts[index] ?? 0;
+          return acc;
+        }, {})
+      );
+    });
   }
 
   timeAgo(iso: string): string {

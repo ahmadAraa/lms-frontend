@@ -36,22 +36,8 @@
       </div>
     } @else {
 
-      <!-- Feedback toasts -->
-      @if (enrollSuccess()) {
-        <div class="ed-toast ed-toast--success">
-          <span class="material-symbols-outlined">check_circle</span>
-          {{ enrollSuccess() }}
-        </div>
-      }
-      @if (enrollError()) {
-        <div class="ed-toast ed-toast--error">
-          <span class="material-symbols-outlined">error_outline</span>
-          {{ enrollError() }}
-        </div>
-      }
-
       <!-- Continue Learning (only when enrolled in at least one path) -->
-      @if (firstEnrolledPath()) {
+      @if (continuePath()) {
         <div class="ed-section">
           <h2 class="ed-section-title">Continue Learning</h2>
           <div class="continue-card" (click)="resume()">
@@ -59,23 +45,23 @@
               <div class="play-ring"></div>
               <div class="course-icon-wrap">
                 <span class="material-symbols-outlined">
-                  {{ continueState()?.isCompleted ? 'emoji_events' : 'play_circle' }}
+                  {{ isContinueCompleted() ? 'emoji_events' : 'play_circle' }}
                 </span>
               </div>
             </div>
             <div class="continue-info">
               <span class="continue-badge">
-                {{ continueState()?.isCompleted ? 'Completed' : 'In Progress' }}
+                {{ isContinueCompleted() ? 'Completed' : 'In Progress' }}
               </span>
-              <h3>{{ firstEnrolledPath()!.title }}</h3>
+              <h3>{{ continuePath()!.title }}</h3>
               <div class="progress-row">
                 <div class="progress-bar">
-                  <div class="progress-fill" [style.width.%]="lastPathProgress()"></div>
+                  <div class="progress-fill" [style.width.%]="continuePathProgress()"></div>
                 </div>
-                <span class="progress-pct">{{ lastPathProgress() }}%</span>
+                <span class="progress-pct">{{ continuePathProgress() }}%</span>
               </div>
               <p class="continue-hint">
-                @if (continueState()?.isCompleted) {
+                @if (isContinueCompleted()) {
                   {{ continueState()!.message }}
                 } @else if (continueState()?.lessonId) {
                   Resume from where you left off
@@ -86,10 +72,45 @@
             </div>
             <button class="btn-resume">
               <span class="material-symbols-outlined">
-                {{ continueState()?.isCompleted ? 'replay' : 'play_arrow' }}
+                {{ isContinueCompleted() ? 'replay' : 'play_arrow' }}
               </span>
-              {{ continueState()?.isCompleted ? 'Review' : 'Resume' }}
+              {{ isContinueCompleted() ? 'Review' : 'Resume' }}
             </button>
+          </div>
+        </div>
+      }
+
+      <!-- Enrolled courses -->
+      @if (enrolledCourses().length > 0) {
+        <div class="ed-section">
+          <h2 class="ed-section-title">
+            My Courses
+            <span class="ed-section-count">{{ enrolledCourses().length }}</span>
+          </h2>
+
+          <div class="course-strip">
+            @for (item of enrolledCourses(); track item.course.id; let i = $index) {
+              <div class="course-mini-card" (click)="openCourse(item.course, item.learningPathId)">
+                <div class="course-mini-thumb" [style.background]="item.course.image ? 'transparent' : getGradient(i)">
+                  @if (item.course.image) {
+                    <img [src]="getCoursePictureUrl(item.course)" alt="" />
+                  } @else {
+                    <span class="material-symbols-outlined">menu_book</span>
+                  }
+                </div>
+
+                <div class="course-mini-info">
+                  <h3>{{ item.course.title }}</h3>
+                  <p>{{ item.learningPathTitle }}</p>
+                  <div class="course-mini-progress">
+                    <div
+                      class="course-mini-progress-fill"
+                      [style.width.%]="getCourseProgress(item.course.id)"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            }
           </div>
         </div>
       }
@@ -147,18 +168,18 @@
         </div>
       }
 
-      <!-- ── Available Learning Paths (not enrolled) ──────── -->
+      <!-- ── Other Learning Paths (not enrolled) ──────── -->
       @if (filteredAvailable().length > 0 || (availablePaths().length > 0 && searchQuery())) {
         <div class="ed-section">
           <h2 class="ed-section-title">
-            Available Paths
+            Other Paths
             <span class="ed-section-count ed-section-count--gray">{{ availablePaths().length }}</span>
           </h2>
 
           @if (filteredAvailable().length === 0) {
             <div class="ed-empty">
               <span class="material-symbols-outlined">search_off</span>
-              <p>No available paths match "{{ searchQuery() }}"</p>
+              <p>No other paths match "{{ searchQuery() }}"</p>
             </div>
           } @else {
             <div class="ed-grid">
@@ -174,24 +195,11 @@
                   <div class="ed-card-body">
                     <h3>{{ path.title }}</h3>
                     <p>{{ path.description || 'No description provided.' }}</p>
-                    <div class="ed-card-footer ed-card-footer--enroll">
+                    <div class="ed-card-footer">
                       <span class="ed-meta">
                         <span class="material-symbols-outlined">menu_book</span>
                         {{ getCourseCount(path) }} courses
                       </span>
-                      <button
-                        class="ed-enroll-btn"
-                        (click)="enroll(path, $event)"
-                        [disabled]="isEnrolling(path.id)"
-                      >
-                        @if (isEnrolling(path.id)) {
-                          <div class="ed-enroll-spinner"></div>
-                          Enrolling...
-                        } @else {
-                          <span class="material-symbols-outlined">add_circle</span>
-                          Enroll
-                        }
-                      </button>
                     </div>
                   </div>
                 </div>
