@@ -1,0 +1,148 @@
+    <div class="ap-content">
+
+      <!-- Success / Error messages -->
+      @if (successMessage()) {
+        <div class="ap-success">
+          <span class="material-symbols-outlined">check_circle</span>
+          {{ successMessage() }}
+        </div>
+      }
+      @if (errorMessage()) {
+        <div class="ap-error">
+          <span class="material-symbols-outlined">error_outline</span>
+          {{ errorMessage() }}
+        </div>
+      }
+
+      <div class="ap-form-grid">
+
+        <!-- Step 1: Search User -->
+        <div class="ap-step-card">
+          <div class="ap-step-header">
+            <div class="ap-step-num">1</div>
+            <div>
+              <h2>Select Employee</h2>
+              <p>Search by name or email</p>
+            </div>
+          </div>
+
+          <div class="ap-search-wrap">
+            <div class="ap-search-box" [class.has-user]="selectedUser()">
+              <span class="material-symbols-outlined ap-search-icon">
+                {{ selectedUser() ? 'person' : 'search' }}
+              </span>
+              <input
+                type="text"
+                class="ap-search-input"
+                placeholder="Type a name or email..."
+                [value]="searchQuery()"
+                (input)="onSearchInput($event)"
+                [disabled]="!!selectedUser()"
+              />
+              @if (isSearching() || isLoadingUserInfo()) {
+                <div class="ap-search-spinner"></div>
+              }
+              @if (selectedUser()) {
+                <button class="ap-clear-btn" (click)="clearUser()">
+                  <span class="material-symbols-outlined">close</span>
+                </button>
+              }
+            </div>
+
+            <!-- Dropdown results -->
+            @if (showDropdown() && searchResults().length > 0) {
+              <div class="ap-dropdown">
+                @for (user of searchResults(); track user.id) {
+                  <div class="ap-dropdown-item" (click)="selectUser(user)">
+                    <div class="ap-user-avatar">{{ user.userName.charAt(0).toUpperCase() }}</div>
+                    <div class="ap-user-info">
+                      <span class="ap-user-name">{{ user.userName }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Selected user chip -->
+          @if (selectedUser()) {
+            <div class="ap-selected-user">
+              <div class="ap-user-avatar large">{{ selectedUser()!.userName.charAt(0).toUpperCase() }}</div>
+              <div class="ap-user-info">
+                <span class="ap-user-name">{{ selectedUser()!.userName }}</span>
+              </div>
+              <span class="material-symbols-outlined ap-check">check_circle</span>
+            </div>
+          }
+        </div>
+
+        <!-- Step 2: Pick Course -->
+        <div class="ap-step-card">
+          <div class="ap-step-header">
+            <div class="ap-step-num">2</div>
+            <div>
+              <h2>Select Course</h2>
+              <p>Choose the course to assign</p>
+            </div>
+          </div>
+
+          @if (courses().length === 0) {
+            <div class="ap-empty">No courses available.</div>
+          } @else {
+            <div class="ap-paths-list">
+              @for (course of courses(); track course.id) {
+                <div
+                  class="ap-path-item"
+                  [class.selected]="selectedCourseId() === course.id"
+                  (click)="selectCourse(course.id)"
+                >
+                  <div class="ap-path-radio">
+                    @if (selectedCourseId() === course.id) {
+                      <span class="material-symbols-outlined">radio_button_checked</span>
+                    } @else {
+                      <span class="material-symbols-outlined">radio_button_unchecked</span>
+                    }
+                  </div>
+                  <div class="ap-path-info">
+                    <span class="ap-path-title">{{ course.title }}</span>
+                    <span class="ap-course-path-badge">{{ course.pathTitle }}</span>
+                  </div>
+                  <span class="ap-path-courses">{{ course.sectionCount }} sections</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+      </div>
+
+      <!-- Submit -->
+      <div class="ap-submit-row">
+        <button
+          class="ap-submit-btn"
+          (click)="assign()"
+          [disabled]="!canSubmit()"
+        >
+          @if (isSubmitting()) {
+            <div class="ap-btn-spinner"></div>
+            Enrolling...
+          } @else {
+            <span class="material-symbols-outlined">assignment_turned_in</span>
+            Assign Course
+          }
+        </button>
+
+        @if (!selectedUser() || !selectedCourseId()) {
+          <span class="ap-submit-hint">
+            {{
+              isLoadingUserInfo()
+                ? 'Checking employee role...'
+                : !selectedUser()
+                  ? 'Select an employee first'
+                  : 'Then pick a course'
+            }}
+          </span>
+        }
+      </div>
+
+    </div>

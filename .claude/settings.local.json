@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:api.github.com)"
+      "WebFetch(domain:api.github.com)",
+      "PowerShell(New-Item -ItemType Directory -Path \"c:\\\\Users\\\\Administrator\\\\New folder\\\\lms-frontend\\\\public\" -Force)",
+      "PowerShell(\"done\")"
     ]
   }
 }

@@ -103,6 +103,12 @@ export const routes: Routes = [
         data: { roles: ['HR', 'MANAGER'] }
       },
       {
+        path: 'hr/assign-course',
+        loadComponent: () => import('./pages/hr-assign-course/hr-assign-course').then(m => m.HrAssignCourse),
+        canActivate: [roleGuard],
+        data: { roles: ['HR', 'MANAGER'] }
+      },
+      {
         path: 'user-settings',
         loadComponent: () => import('./pages/user-settings/user-settings.component').then(m => m.UserSettingsComponent),
         canActivate: [authGuard, roleGuard],

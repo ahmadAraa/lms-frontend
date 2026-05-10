@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, map, catchError, of } from 'rxjs';
 
 /**
  * Basic user data returned when searching for users.
@@ -149,6 +149,45 @@ export class EnrollmentService {
         managerId,
         courseId: 0,
         learningPathId,
+      },
+      {
+        responseType: 'text',
+      },
+    );
+  }
+
+  /**
+   * Returns the IDs of courses the current user is directly enrolled in
+   * (enrollments where courseId is set, not via a learning path).
+   *
+   * @param userId - The current user's own ID
+   */
+  getMyDirectCourseIds(userId: string): Observable<number[]> {
+    return this.getUserInfo(userId).pipe(
+      map(info =>
+        info.enrollments
+          .filter(e => (e.courseId ?? 0) > 0)
+          .map(e => e.courseId as number),
+      ),
+      catchError(() => of([])),
+    );
+  }
+
+  /**
+   * Enrolls a user into a specific course.
+   *
+   * @param userId - User ID
+   * @param courseId - Course ID
+   * @param managerId - ID of the manager performing the enrollment
+   */
+  enrollCourse(userId: string, courseId: number, managerId: string): Observable<string> {
+    return this.http.post(
+      `${this.baseUrl}/api/Enrollment/EnrollUser`,
+      {
+        userId,
+        managerId,
+        courseId,
+        learningPathId: 0,
       },
       {
         responseType: 'text',

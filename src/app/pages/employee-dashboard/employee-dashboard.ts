@@ -2,10 +2,12 @@ import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, of, from } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { AuthService } from '../../services/auth';
 import { CourseResponseDTO, LearningPathService, LearningPathResponseDto } from '../../services/learning-path.service';
+
+import { CoursesApiService } from '../../services/courses-api.service';
 import { ProgressService } from '../../services/progress.service';
 import { SectionsApiService } from '../../services/sections-api.service';
 import { BASE_URL } from '../../types/course-builder.types';
@@ -37,6 +39,8 @@ export class EmployeeDashboard implements OnInit {
   allPaths = signal<LearningPathResponseDto[]>([]);
   /** IDs of paths this employee is enrolled in */
   enrolledPathIds = signal<Set<number>>(new Set());
+  /** Courses directly assigned to this employee (not via a learning path) */
+  directEnrolledCourses = signal<EnrolledCourse[]>([]);
   progressMap = signal<Map<number, number>>(new Map());
   courseProgressMap = signal<Map<number, number>>(new Map());
   continueState = signal<ContinueLearningState | null>(null);
@@ -56,11 +60,19 @@ export class EmployeeDashboard implements OnInit {
     this.allPaths().filter(p => !this.enrolledPathIds().has(p.id))
   );
 
-  /** Courses inside the employee's enrolled learning paths */
+  /** Courses inside the employee's enrolled learning paths + directly assigned courses */
   enrolledCourses = computed(() => {
     const seen = new Set<number>();
     const courses: EnrolledCourse[] = [];
 
+    // Direct course assignments first
+    this.directEnrolledCourses().forEach(item => {
+      if (seen.has(item.course.id)) return;
+      seen.add(item.course.id);
+      courses.push(item);
+    });
+
+    // Then courses from enrolled learning paths
     this.enrolledPaths().forEach(path => {
       (path.courses ?? []).forEach(course => {
         if (seen.has(course.id)) return;
@@ -117,6 +129,7 @@ export class EmployeeDashboard implements OnInit {
 
   constructor(
     private learningPathService: LearningPathService,
+    private coursesApi: CoursesApiService,
     private progressService: ProgressService,
     private sectionsApi: SectionsApiService,
     private authService: AuthService,
@@ -147,6 +160,8 @@ export class EmployeeDashboard implements OnInit {
           this.loadContinueLearning(mine);
           void this.loadCourseProgress(mine);
         }
+
+        this.loadDirectCourseEnrollments(all);
       },
       error: () => {
         this.error.set('Failed to load learning paths. Please try again.');
@@ -211,6 +226,48 @@ export class EmployeeDashboard implements OnInit {
         message: result!.message ?? (result!.isCompleted ? 'You have completed this learning path!' : ''),
       });
     });
+  }
+
+  loadDirectCourseEnrollments(allPaths: LearningPathResponseDto[]) {
+    from(this.coursesApi.getMyCourses()).pipe(
+      catchError(() => of([]))
+    ).subscribe(courses => {
+      const items: EnrolledCourse[] = (courses ?? []).map(raw => {
+        const parentPath = allPaths.find(p => p.id === raw.learningPathId);
+        const course: CourseResponseDTO = {
+          id: raw.id,
+          title: raw.title,
+          description: raw.description ?? undefined,
+          image: (raw as any).image ?? (raw as any).pictureUrl ?? null,
+          sections: ((raw as any).sections ?? []).map((s: any) => ({
+            id: s.id,
+            title: s.title,
+            lessons: s.lessons,
+          })),
+        };
+        return {
+          course,
+          learningPathId: parentPath?.id ?? 0,
+          learningPathTitle: parentPath?.title ?? 'Direct Assignment',
+        };
+      });
+      this.directEnrolledCourses.set(items);
+
+      // Load course progress for directly-enrolled courses
+      if (items.length > 0) {
+        void this.loadDirectCourseProgress(items);
+      }
+    });
+  }
+
+  private async loadDirectCourseProgress(items: EnrolledCourse[]) {
+    const courseIds = items.map(item => item.course.id);
+    const results = await Promise.all(
+      courseIds.map(courseId => this.progressService.getCourseProgress(courseId))
+    );
+    const currentMap = new Map(this.courseProgressMap());
+    results.forEach(result => currentMap.set(result.courseId, Math.round(result.progress)));
+    this.courseProgressMap.set(currentMap);
   }
 
   resume() {

@@ -47,6 +47,14 @@ export class CoursesApiService {
   }
 
   /**
+   * Fetches all courses the current employee is directly enrolled in
+   * (not via a learning path).
+   */
+  async getMyCourses(): Promise<CourseResponseDTO[]> {
+    return fetchJson<CourseResponseDTO[]>(`${BASE_URL}/api/Course/GetMyCourses`);
+  }
+
+  /**
    * Creates a new course.
    *
    * Uses FormData because course image upload requires multipart/form-data.

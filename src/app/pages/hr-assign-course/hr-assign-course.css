@@ -1,0 +1,424 @@
+/* ── Layout ──────────────────────────────────────── */
+.ap-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f4f5f7;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ── Main ────────────────────────────────────────── */
+.ap-main {
+  margin-left: 220px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Content ─────────────────────────────────────── */
+.ap-content {
+  padding: 32px 36px 52px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── Alerts ──────────────────────────────────────── */
+.ap-success,
+.ap-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.ap-success {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.ap-error {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.ap-success .material-symbols-outlined,
+.ap-error .material-symbols-outlined {
+  font-size: 20px;
+}
+
+/* ── Two-column form grid ────────────────────────── */
+.ap-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* ── Step card ───────────────────────────────────── */
+.ap-step-card {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  padding: 24px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ap-step-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.ap-step-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ap-step-header h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 2px;
+}
+
+.ap-step-header p {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* ── Search box ──────────────────────────────────── */
+.ap-search-wrap {
+  position: relative;
+}
+
+.ap-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f9fafb;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0 12px;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.ap-search-box:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: #fff;
+}
+
+.ap-search-box.has-user {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.ap-search-icon {
+  font-size: 18px;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.ap-search-input {
+  flex: 1;
+  height: 42px;
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #111827;
+  font-family: inherit;
+  outline: none;
+}
+
+.ap-search-input::placeholder {
+  color: #9ca3af;
+}
+.ap-search-input:disabled {
+  color: #374151;
+  cursor: default;
+}
+
+.ap-search-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+.ap-clear-btn {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  transition: color 0.15s;
+}
+
+.ap-clear-btn:hover {
+  color: #111827;
+}
+.ap-clear-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
+/* ── Dropdown ────────────────────────────────────── */
+.ap-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  overflow: hidden;
+}
+
+.ap-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.ap-dropdown-item:hover {
+  background: #f9fafb;
+}
+
+/* ── User avatar ─────────────────────────────────── */
+.ap-user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0f1b3d, #2563eb);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ap-user-avatar.large {
+  width: 44px;
+  height: 44px;
+  font-size: 18px;
+}
+
+.ap-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+.ap-user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* ── Selected user chip ──────────────────────────── */
+.ap-selected-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.ap-check {
+  font-size: 22px;
+  color: #16a34a;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ── Courses list ────────────────────────────────── */
+.ap-paths-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.ap-path-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: #fff;
+}
+
+.ap-path-item:hover {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.ap-path-item.selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.ap-path-radio .material-symbols-outlined {
+  font-size: 22px;
+  color: #d1d5db;
+  transition: color 0.15s;
+}
+
+.ap-path-item.selected .ap-path-radio .material-symbols-outlined {
+  color: #3b82f6;
+}
+
+.ap-path-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.ap-path-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ap-course-path-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 5px;
+  padding: 1px 7px;
+  width: fit-content;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.ap-path-courses {
+  font-size: 12px;
+  color: #6b7280;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ap-empty {
+  text-align: center;
+  padding: 32px;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+/* ── Submit row ──────────────────────────────────── */
+.ap-submit-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ap-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 32px;
+  background: linear-gradient(135deg, #0f1b3d, #2563eb);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(15, 27, 61, 0.3);
+  transition: all 0.2s;
+}
+
+.ap-submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(15, 27, 61, 0.4);
+}
+
+.ap-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.ap-submit-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.ap-btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.ap-submit-hint {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Responsive ──────────────────────────────────── */
+@media (max-width: 900px) {
+  .ap-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .ap-content {
+    padding: 24px 20px 40px;
+  }
+}
