@@ -85,6 +85,9 @@ export class CourseManagerPage implements OnInit {
     this.error = '';
     try {
       this.tree = await this.pathsApi.getPathById(this.pathId);
+      if (this.tree && this.tree.courses) {
+        this.tree.courses.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      }
     } catch (error) {
       this.error = (error as Error).message || 'Failed to load learning path.';
       this.toast.error(this.error);
@@ -368,5 +371,43 @@ export class CourseManagerPage implements OnInit {
 
   sectionKey(section: SectionResponseDTO): string {
     return `section-${section.id}`;
+  }
+
+  async moveCourseUp(index: number, event: Event): Promise<void> {
+    event.stopPropagation();
+    if (index === 0 || !this.tree || !this.tree.courses) return;
+
+    const courses = this.tree.courses;
+    const temp = courses[index];
+    courses[index] = courses[index - 1];
+    courses[index - 1] = temp;
+
+    await this.saveCourseOrder(courses);
+  }
+
+  async moveCourseDown(index: number, event: Event): Promise<void> {
+    event.stopPropagation();
+    if (!this.tree || !this.tree.courses || index === this.tree.courses.length - 1) return;
+
+    const courses = this.tree.courses;
+    const temp = courses[index];
+    courses[index] = courses[index + 1];
+    courses[index + 1] = temp;
+
+    await this.saveCourseOrder(courses);
+  }
+
+  private async saveCourseOrder(courses: CourseResponseDTO[]): Promise<void> {
+    // Update order values internally to match visual
+    courses.forEach((c, i) => (c.order = i + 1));
+
+    const dto = courses.map((c) => ({ id: c.id, order: c.order }));
+    try {
+      await this.coursesApi.reorderCourses(dto);
+      this.toast.success('Course order updated');
+    } catch (error) {
+      this.toast.error('Failed to save course order');
+      await this.reload(); // Revert on failure
+    }
   }
 }

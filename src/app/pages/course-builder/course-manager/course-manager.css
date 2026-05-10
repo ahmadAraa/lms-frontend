@@ -307,10 +307,15 @@
   transition: all 0.15s;
 }
 
-.cm-action-btn:hover {
+.cm-action-btn:hover:not(:disabled) {
   background: var(--blue-light, #dbeafe);
   color: var(--blue, #2563eb);
   border-color: var(--blue, #2563eb);
+}
+
+.cm-action-btn:disabled, .cm-action-btn.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .cm-action-btn.cm-action-danger:hover {

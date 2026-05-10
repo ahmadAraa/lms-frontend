@@ -90,6 +90,20 @@ export class CoursesApiService {
   }
 
   /**
+   * Reorders courses within a learning path.
+   */
+  async reorderCourses(dto: { id: number; order: number }[]): Promise<void> {
+    let headers = this.authHeaders();
+    headers = headers.set('Content-Type', 'application/json');
+
+    await firstValueFrom(
+      this.http.post(`${BASE_URL}/api/Course/reorder`, dto, {
+        headers,
+      })
+    );
+  }
+
+  /**
    * Builds FormData for create/update course requests.
    *
    * Important:
