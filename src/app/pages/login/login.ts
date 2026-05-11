@@ -72,8 +72,8 @@ export class Login implements OnInit {
           this.cdr.markForCheck();
         });
       },
-      error: (err) => {
-        this.errorMessage = err.error || 'Login failed. Please check your credentials.';
+      error: () => {
+        this.errorMessage = 'Incorrect email or password';
         this.isLoading = false;
         this.cdr.markForCheck();
       },
