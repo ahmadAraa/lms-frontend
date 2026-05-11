@@ -35,7 +35,7 @@ export const routes: Routes = [
         path: '',
         loadComponent: () => import('./pages/learning-path-details/learning-path-details').then(m => m.LearningPathDetails),
         canActivate: [roleGuard],
-        data: { roles: ['EMPLOYEE', 'HR'] }
+        data: { roles: ['EMPLOYEE', 'HR', 'MANAGER'] }
       }
     ]
   },
@@ -48,7 +48,7 @@ export const routes: Routes = [
         path: '',
         loadComponent: () => import('./pages/course-details/course-details').then(m => m.CourseDetails),
         canActivate: [roleGuard],
-        data: { roles: ['EMPLOYEE', 'HR'] }
+        data: { roles: ['EMPLOYEE', 'HR', 'MANAGER'] }
       }
     ]
   },
@@ -61,7 +61,7 @@ export const routes: Routes = [
         path: '',
         loadComponent: () => import('./pages/lesson-viewer/lesson-viewer.component').then(m => m.LessonViewerComponent),
         canActivate: [roleGuard],
-        data: { roles: ['EMPLOYEE', 'HR'] }
+        data: { roles: ['EMPLOYEE', 'HR', 'MANAGER'] }
       }
     ]
   },

@@ -11,15 +11,23 @@
           <span class="material-symbols-outlined">{{ isSectionExpanded(section.id) ? 'expand_more' : 'chevron_right' }}</span> 
           {{ section.title }}
         </div>
-        <small>{{ countCompletedLessons(section) }}/{{ section.lessons.length }}</small>
+        <small>
+          @if (isPreviewMode) {
+            {{ section.lessons.length }} lessons
+          } @else {
+            {{ countCompletedLessons(section) }}/{{ section.lessons.length }}
+          }
+        </small>
       </div>
 
       @if (isSectionExpanded(section.id)) {
         <div class="lessons-list">
           @for (l of section.lessons; track l.id; let j = $index) {
             <div class="lesson" [class.active-lesson]="l.id === currentLessonId" (click)="onOpenLesson(l.id)">
-              <span class="check" [class.checked]="isLessonCompleted(l.id)" (click)="onToggleCompletion(l.id, $event)">
-                @if (isLessonCompleted(l.id)) {
+              <span class="check" [class.checked]="isLessonCompleted(l.id)" [class.preview]="isPreviewMode" (click)="onToggleCompletion(l.id, $event)">
+                @if (isPreviewMode) {
+                  <span class="material-symbols-outlined" style="font-size: 16px;">play_arrow</span>
+                } @else if (isLessonCompleted(l.id)) {
                   <span class="material-symbols-outlined" style="font-size: 14px;">check</span>
                 }
               </span>

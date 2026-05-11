@@ -1,7 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged, Subject, switchMap, catchError, of, forkJoin, map } from 'rxjs';
 import { LearningPathService } from '../../services/learning-path.service';
 import { EnrollmentService, UserInfo, UserSearchResult } from '../../services/enrollment.service';
@@ -13,8 +13,10 @@ export interface CourseItem {
   id: number;
   title: string;
   description?: string;
+  pathId: number;
   pathTitle: string;
   sectionCount: number;
+  firstLessonId: number | null;
 }
 
 @Component({
@@ -51,6 +53,7 @@ export class HrAssignCourse implements OnInit {
     private location: Location,
     private activityService: ActivityService,
     private authService: AuthService,
+    private router: Router,
   ) {}
 
   ngOnInit() {
@@ -63,8 +66,10 @@ export class HrAssignCourse implements OnInit {
               id: course.id,
               title: course.title,
               description: course.description,
+              pathId: path.id,
               pathTitle: path.title,
               sectionCount: course.sections?.length ?? 0,
+              firstLessonId: this.getFirstLessonId(course),
             });
           }
         }
@@ -168,6 +173,32 @@ export class HrAssignCourse implements OnInit {
 
   selectCourse(id: number) {
     this.selectedCourseId.set(this.selectedCourseId() === id ? null : id);
+  }
+
+  previewCourse(course: CourseItem, event: Event) {
+    event.stopPropagation();
+    if (course.firstLessonId) {
+      void this.router.navigate(['/lesson', course.firstLessonId], {
+        state: { courseId: course.id, pathId: course.pathId },
+      });
+      return;
+    }
+
+    void this.router.navigate(['/course', course.id], {
+      state: { pathId: course.pathId },
+    });
+  }
+
+  private getFirstLessonId(course: { sections?: { lessons?: unknown[] }[] }): number | null {
+    for (const section of course.sections ?? []) {
+      for (const lesson of section.lessons ?? []) {
+        const node = lesson && typeof lesson === 'object' ? lesson as Record<string, unknown> : {};
+        const id = Number(node['id'] ?? node['Id']);
+        if (Number.isFinite(id) && id > 0) return id;
+      }
+    }
+
+    return null;
   }
 
   canSubmit(): boolean {

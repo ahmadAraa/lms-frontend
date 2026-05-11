@@ -108,6 +108,9 @@
                     <span class="ap-course-path-badge">{{ course.pathTitle }}</span>
                   </div>
                   <span class="ap-path-courses">{{ course.sectionCount }} sections</span>
+                  <button type="button" class="ap-preview-btn" title="Preview Course" (click)="previewCourse(course, $event)">
+                    <span class="material-symbols-outlined">visibility</span>
+                  </button>
                 </div>
               }
             </div>

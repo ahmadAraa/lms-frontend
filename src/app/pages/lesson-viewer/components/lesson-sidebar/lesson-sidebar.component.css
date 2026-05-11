@@ -89,6 +89,12 @@
   border-color: var(--blue);
 }
 
+.check.preview {
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.14);
+  pointer-events: none;
+}
+
 .lesson-time {
   color: #7f849c;
   font-size: 12px;

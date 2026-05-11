@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LearningPathService, LearningPathResponseDto, CourseResponseDTO } from '../../services/learning-path.service';
 import { ProgressService } from '../../services/progress.service';
+import { AuthService } from '../../services/auth';
 
 @Component({
   selector: 'app-learning-path-details',
@@ -26,26 +27,43 @@ export class LearningPathDetails implements OnInit {
     private router: Router,
     private learningPathService: LearningPathService,
     private progressService: ProgressService,
+    private authService: AuthService,
   ) {}
 
   goBack() {
-    void this.router.navigate(['/employee/dashboard']);
+    void this.router.navigate(this.isStaffPreview() ? ['/learning-paths'] : ['/employee/dashboard']);
   }
 
-  openCourse(course: CourseResponseDTO) {
+  async openCourse(course: CourseResponseDTO) {
+    if (!this.isStaffPreview()) {
+      const access = await this.progressService.canAccess(course.id);
+      if (!access.canAccess) {
+        void this.router.navigate(['/course', course.id], {
+          state: {
+            course,
+            pathId: this.pathId(),
+            lockReason: access.reason,
+          },
+        });
+        return;
+      }
+    }
+
     if (course.sections && course.sections.length > 0) {
       for (const section of course.sections) {
         if (section.lessons && section.lessons.length > 0) {
           const firstLesson = section.lessons[0] as { id?: number };
           if (firstLesson.id) {
-            void this.router.navigate(['/lesson', firstLesson.id]);
+            void this.router.navigate(['/lesson', firstLesson.id], {
+              state: { courseId: course.id, pathId: this.pathId() },
+            });
             return;
           }
         }
       }
     }
 
-    this.router.navigate(['/course', course.id], {
+    void this.router.navigate(['/course', course.id], {
       state: { course, pathId: this.pathId() }
     });
   }
@@ -106,6 +124,11 @@ export class LearningPathDetails implements OnInit {
   }
 
   async loadCourseProgress(courses: CourseResponseDTO[]) {
+    if (this.isStaffPreview()) {
+      this.courseProgressMap.set(new Map());
+      return;
+    }
+
     const courseIds = [...new Set(courses.map((course) => course.id).filter(Boolean))];
 
     if (courseIds.length === 0) {
@@ -119,5 +142,11 @@ export class LearningPathDetails implements OnInit {
     const progressMap = new Map<number, number>();
     results.forEach((result) => progressMap.set(result.courseId, result.progress));
     this.courseProgressMap.set(progressMap);
+  }
+
+  isStaffPreview(): boolean {
+    const role = this.authService.getUserRole();
+
+    return role === 'HR' || role === 'MANAGER';
   }
 }

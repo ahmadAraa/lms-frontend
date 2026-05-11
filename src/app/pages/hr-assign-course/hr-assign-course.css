@@ -347,6 +347,30 @@
   flex-shrink: 0;
 }
 
+.ap-preview-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #2563eb;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.ap-preview-btn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.ap-preview-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
 .ap-empty {
   text-align: center;
   padding: 32px;

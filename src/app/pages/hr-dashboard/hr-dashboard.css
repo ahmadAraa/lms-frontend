@@ -239,7 +239,6 @@
   background: linear-gradient(90deg, #2563eb, #3b82f6);
   border-radius: 99px;
   transition: width 0.7s ease;
-  min-width: 20px;
 }
 
 /* ── Bottom row ──────────────────────────────────── */

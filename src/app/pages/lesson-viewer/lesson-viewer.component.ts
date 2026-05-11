@@ -4,6 +4,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { LessonsApiService } from '../../services/lessons-api.service';
 import { SectionsApiService } from '../../services/sections-api.service';
 import { CoursesApiService } from '../../services/courses-api.service';
+import { ProgressService } from '../../services/progress.service';
+import { AuthService } from '../../services/auth';
 import {
   LessonResponseDTO,
   SectionResponseDTO,
@@ -35,6 +37,9 @@ export class LessonViewerComponent implements OnInit {
   isLoading = signal(true);
   isCompleting = signal(false);
   error = signal('');
+  pathId: number | null = null;
+  private routeCourseId: number | null = null;
+  isPreviewMode = signal(false);
 
   constructor(
     private route: ActivatedRoute,
@@ -42,9 +47,17 @@ export class LessonViewerComponent implements OnInit {
     private lessonsApi: LessonsApiService,
     private sectionsApi: SectionsApiService,
     private coursesApi: CoursesApiService,
+    private progressService: ProgressService,
+    private authService: AuthService,
   ) {}
 
   ngOnInit() {
+    this.isPreviewMode.set(this.isStaffPreview());
+
+    const state = history.state as Record<string, unknown>;
+    this.pathId = this.toNullableNumber(state?.['pathId']);
+    this.routeCourseId = this.toNullableNumber(state?.['courseId']);
+
     this.route.paramMap.subscribe((params) => {
       const id = Number(params.get('id'));
       if (id) {
@@ -58,7 +71,18 @@ export class LessonViewerComponent implements OnInit {
 
   async loadLessonAndCurriculum(lessonId: number) {
     this.isLoading.set(true);
+    this.error.set('');
+    let courseId = this.routeCourseId;
+
     try {
+      if (courseId && !this.isPreviewMode()) {
+        const access = await this.progressService.canAccess(courseId);
+        if (!access.canAccess) {
+          this.redirectToLockedCourse(courseId, access.reason);
+          return;
+        }
+      }
+
       const lesson = await this.lessonsApi.getLessonById(lessonId);
       this.lesson.set(lesson);
 
@@ -66,7 +90,17 @@ export class LessonViewerComponent implements OnInit {
 
       if (!this.course() || !this.sections().some((s) => s.id === lesson.sectionId)) {
         const section = await this.sectionsApi.getSectionById(lesson.sectionId);
-        const courseId = section.courseId;
+        courseId = section.courseId;
+        this.routeCourseId = courseId;
+
+        if (!this.isPreviewMode()) {
+          const access = await this.progressService.canAccess(courseId);
+          if (!access.canAccess) {
+            this.redirectToLockedCourse(courseId, access.reason);
+            return;
+          }
+        }
+
         const [course, allSections] = await Promise.all([
           this.coursesApi.getCourseById(courseId),
           this.sectionsApi.getSectionsByCourse(courseId),
@@ -92,6 +126,11 @@ export class LessonViewerComponent implements OnInit {
         this.completedLessons.set(completed);
       }
     } catch (e) {
+      if (courseId && !this.isPreviewMode() && this.isAccessDeniedError(e)) {
+        this.redirectToLockedCourse(courseId);
+        return;
+      }
+
       this.error.set('Failed to load lesson or curriculum.');
     } finally {
       this.isLoading.set(false);
@@ -110,12 +149,16 @@ export class LessonViewerComponent implements OnInit {
 
   openLesson(lessonId: number) {
     if (this.lesson()?.id === lessonId) return;
-    this.router.navigate(['/lesson', lessonId]);
+    this.router.navigate(['/lesson', lessonId], {
+      state: { courseId: this.course()?.id ?? this.routeCourseId, pathId: this.pathId },
+    });
   }
 
   async toggleCompletion(eventData: { lessonId: number; event: Event }) {
     const { lessonId, event } = eventData;
     event.stopPropagation();
+
+    if (this.isPreviewMode()) return;
 
     const completed = new Set(this.completedLessons());
     if (completed.has(lessonId)) return;
@@ -138,7 +181,40 @@ export class LessonViewerComponent implements OnInit {
   }
 
   goBack() {
+    if (this.isPreviewMode()) {
+      void this.router.navigate(this.pathId ? ['/learning-paths', this.pathId] : ['/learning-paths']);
+      return;
+    }
+
     void this.router.navigate(['/employee/dashboard']);
+  }
+
+  private redirectToLockedCourse(courseId: number, lockReason?: string) {
+    void this.router.navigate(['/course', courseId], {
+      state: {
+        course: this.course(),
+        pathId: this.pathId,
+        lockReason,
+      },
+    });
+  }
+
+  private isAccessDeniedError(error: unknown): boolean {
+    const message = (error as { message?: string })?.message?.toLowerCase() ?? '';
+
+    return message.includes('403') || message.includes('complete previous');
+  }
+
+  private toNullableNumber(value: unknown): number | null {
+    const numberValue = Number(value);
+
+    return Number.isFinite(numberValue) && numberValue > 0 ? numberValue : null;
+  }
+
+  private isStaffPreview(): boolean {
+    const role = this.authService.getUserRole();
+
+    return role === 'HR' || role === 'MANAGER';
   }
 
 }

@@ -15,6 +15,7 @@ export class LessonSidebarComponent {
   @Input() expandedSectionIds: number[] = [];
   @Input() completedLessonIds: number[] = [];
   @Input() currentLessonId?: number;
+  @Input() isPreviewMode = false;
 
   @Output() toggleSection = new EventEmitter<number>();
   @Output() openLesson = new EventEmitter<number>();

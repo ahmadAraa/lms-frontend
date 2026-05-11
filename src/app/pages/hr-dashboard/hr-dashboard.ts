@@ -18,6 +18,8 @@ import { NotificationBellComponent } from '../../components/notification-bell/no
   styleUrl: './hr-dashboard.css',
 })
 export class HrDashboard implements OnInit {
+  private readonly maxStudentsPerPath = 20;
+
   userName = signal('');
   paths = signal<LearningPathResponseDto[]>([]);
   enrolledCounts = signal<Record<number, number>>({});
@@ -49,16 +51,16 @@ export class HrDashboard implements OnInit {
     return path.courses?.length ?? 0;
   }
 
-  /** Width % for the path bar, scaled relative to the highest enrolled count. */
+  /** Width % for the path bar, scaled against the expected max students per path. */
   getEnrolledCount(pathId: number): number {
     return this.enrolledCounts()[pathId] ?? 0;
   }
 
   getBarWidth(path: LearningPathResponseDto): number {
-    const counts = this.enrolledCounts();
-    const max = Math.max(...this.paths().map(p => counts[p.id] ?? 0), 1);
-    const count = counts[path.id] ?? 0;
-    return Math.max(Math.round((count / max) * 100), 6);
+    const count = this.getEnrolledCount(path.id);
+    if (count <= 0) return 0;
+
+    return Math.min(Math.round((count / this.maxStudentsPerPath) * 100), 100);
   }
 
   private loadEnrolledCounts(paths: LearningPathResponseDto[]) {

@@ -3,7 +3,7 @@
   <div class="lp-banner">
     <div class="lp-banner-content">
       <div class="breadcrumb">
-        <a routerLink="/employee/dashboard" class="breadcrumb-link">Home</a>
+        <a [routerLink]="isStaffPreview() ? '/learning-paths' : '/employee/dashboard'" class="breadcrumb-link">Home</a>
         <span class="breadcrumb-sep">&gt;</span>
         <span class="breadcrumb-current">{{ path()?.title || 'Loading...' }}</span>
       </div>
@@ -76,15 +76,17 @@
                 </div>
 
                 <div class="course-status">
-                  <span class="status-pill" [class.status-pill--complete]="getCourseProgress(course.id) >= 100">
-                    {{ getCourseStatus(course.id) }}
+                  <span class="status-pill" [class.status-pill--complete]="!isStaffPreview() && getCourseProgress(course.id) >= 100">
+                    {{ isStaffPreview() ? 'Preview' : getCourseStatus(course.id) }}
                   </span>
-                  <div class="course-progress">
-                    <div class="course-progress-track">
-                      <div class="course-progress-fill" [style.width.%]="getCourseProgress(course.id)"></div>
+                  @if (!isStaffPreview()) {
+                    <div class="course-progress">
+                      <div class="course-progress-track">
+                        <div class="course-progress-fill" [style.width.%]="getCourseProgress(course.id)"></div>
+                      </div>
+                      <div class="progress-text">{{ getCourseProgress(course.id) }}%</div>
                     </div>
-                    <div class="progress-text">{{ getCourseProgress(course.id) }}%</div>
-                  </div>
+                  }
                 </div>
               </div>
             }

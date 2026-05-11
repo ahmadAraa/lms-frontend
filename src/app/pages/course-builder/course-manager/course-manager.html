@@ -87,6 +87,9 @@
 
               <!-- Course Actions -->
               <div class="cm-course-actions">
+                <button class="cm-action-btn" title="Preview Course" (click)="previewCourse(course); $event.stopPropagation()">
+                  <span class="material-symbols-outlined">visibility</span>
+                </button>
                 <button class="cm-action-btn" title="Move Up" (click)="moveCourseUp(i, $event)" [disabled]="i === 0" [class.disabled]="i === 0">
                   <span class="material-symbols-outlined">arrow_upward</span>
                 </button>
@@ -182,6 +185,9 @@
                                   }
                                 </div>
                                 <div class="cm-lesson-actions">
+                                  <button class="cm-action-btn-sm" (click)="previewLesson(course, lesson.id)" title="Preview Lesson">
+                                    <span class="material-symbols-outlined">visibility</span>
+                                  </button>
                                   <button class="cm-action-btn-sm" (click)="editLessonContent(lesson.id)" title="Edit Content">
                                     <span class="material-symbols-outlined">description</span>
                                   </button>

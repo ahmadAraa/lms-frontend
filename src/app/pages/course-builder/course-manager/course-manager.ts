@@ -121,6 +121,35 @@ export class CourseManagerPage implements OnInit {
   }
 
   // ── Course modal ─────────────────────────────────
+  previewCourse(course: CourseResponseDTO): void {
+    const firstLessonId = this.getFirstLessonId(course);
+    if (firstLessonId) {
+      this.previewLesson(course, firstLessonId);
+      return;
+    }
+
+    void this.router.navigate(['/course', course.id], {
+      state: { course, pathId: this.pathId },
+    });
+  }
+
+  previewLesson(course: CourseResponseDTO, lessonId: number): void {
+    void this.router.navigate(['/lesson', lessonId], {
+      state: { courseId: course.id, pathId: this.pathId },
+    });
+  }
+
+  private getFirstLessonId(course: CourseResponseDTO): number | null {
+    const sections = [...(course.sections ?? [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+    for (const section of sections) {
+      const firstLesson = [...(section.lessons ?? [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))[0];
+      if (firstLesson?.id) return firstLesson.id;
+    }
+
+    return null;
+  }
+
   openAddCourseModal(): void {
     this.editingCourseId = null;
     this.courseTitle = '';

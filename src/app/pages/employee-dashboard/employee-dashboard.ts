@@ -278,9 +278,13 @@ export class EmployeeDashboard implements OnInit {
       return;
     }
     if (state.lessonId) {
-      this.router.navigate(['/lesson', state.lessonId]);
+      this.router.navigate(['/lesson', state.lessonId], {
+        state: { courseId: state.courseId, pathId: state.pathId },
+      });
     } else if (state.courseId) {
-      this.router.navigate(['/course', state.courseId]);
+      this.router.navigate(['/course', state.courseId], {
+        state: { pathId: state.pathId },
+      });
     } else {
       const incompleteCourse = path ? this.getFirstIncompleteCourse(path) : null;
       if (incompleteCourse && path) {
@@ -339,9 +343,23 @@ export class EmployeeDashboard implements OnInit {
   }
 
   async openCourse(course: CourseResponseDTO, learningPathId: number) {
+    const access = await this.progressService.canAccess(course.id);
+    if (!access.canAccess) {
+      void this.router.navigate(['/course', course.id], {
+        state: {
+          course,
+          pathId: learningPathId,
+          lockReason: access.reason,
+        },
+      });
+      return;
+    }
+
     const lessonId = this.getFirstLessonId(course);
     if (lessonId) {
-      void this.router.navigate(['/lesson', lessonId]);
+      void this.router.navigate(['/lesson', lessonId], {
+        state: { courseId: course.id, pathId: learningPathId },
+      });
       return;
     }
 
@@ -352,7 +370,9 @@ export class EmployeeDashboard implements OnInit {
         .find(lesson => lesson.id);
 
       if (firstLesson?.id) {
-        void this.router.navigate(['/lesson', firstLesson.id]);
+        void this.router.navigate(['/lesson', firstLesson.id], {
+          state: { courseId: course.id, pathId: learningPathId },
+        });
         return;
       }
     } catch {

@@ -15,6 +15,7 @@
       [expandedSectionIds]="expandedSectionIds()"
       [completedLessonIds]="completedLessonIds()"
       [currentLessonId]="lesson()?.id"
+      [isPreviewMode]="isPreviewMode()"
       (toggleSection)="toggleSection($event)"
       (openLesson)="openLesson($event)"
       (toggleCompletion)="toggleCompletion($event)"

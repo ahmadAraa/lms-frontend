@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BASE_URL } from '../types/course-builder.types';
 import { fetchJson } from './course-builder-api.utils';
+import { AuthService } from './auth';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -42,22 +43,78 @@ function getValue(
   return node[camel] ?? node[pascal];
 }
 
+function getAnyValue(node: Record<string, unknown>, ...keys: string[]): unknown {
+  for (const key of keys) {
+    if (node[key] !== undefined) return node[key];
+  }
+
+  return undefined;
+}
+
+function toBoolean(value: unknown, fallback = false): boolean {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const lower = value.trim().toLowerCase();
+    if (lower === 'true') return true;
+    if (lower === 'false') return false;
+  }
+  if (typeof value === 'number') return value !== 0;
+
+  return value === undefined || value === null ? fallback : Boolean(value);
+}
+
+function toOptionalString(value: unknown): string | undefined {
+  if (value === null || value === undefined || value === '') return undefined;
+
+  return typeof value === 'string' ? value : String(value);
+}
+
+function isBooleanLike(value: unknown): boolean {
+  if (typeof value === 'boolean' || typeof value === 'number') return true;
+  if (typeof value !== 'string') return false;
+
+  const lower = value.trim().toLowerCase();
+  return lower === 'true' || lower === 'false';
+}
+
 // ── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
 export class ProgressService {
+  constructor(private authService: AuthService) {}
 
   async canAccess(courseId: number): Promise<CanAccessResult> {
+    if (this.isStaffUser()) {
+      return { courseId, canAccess: true };
+    }
+
     try {
       const data = await fetchJson<unknown>(
         `${BASE_URL}/api/Progress/CanAccess/${courseId}`
       );
 
       const node = asObject(data);
+      const wrappedData = getValue(node, 'data', 'Data');
+      const dataNode = asObject(wrappedData ?? data);
+      const canAccessValue =
+        isBooleanLike(data)
+          ? data
+          : isBooleanLike(wrappedData)
+            ? wrappedData
+          : getAnyValue(node, 'canAccess', 'CanAccess', 'allowed', 'Allowed', 'isAllowed', 'IsAllowed') ??
+            getAnyValue(dataNode, 'canAccess', 'CanAccess', 'allowed', 'Allowed', 'isAllowed', 'IsAllowed');
+      const reason = toOptionalString(
+        getAnyValue(node, 'reason', 'Reason', 'message', 'Message', 'error', 'Error') ??
+          getAnyValue(dataNode, 'reason', 'Reason', 'message', 'Message', 'error', 'Error')
+      );
 
       return {
-        courseId: toNumber(getValue(node, 'courseId', 'CourseId'), courseId),
-        canAccess: Boolean(getValue(node, 'canAccess', 'CanAccess') ?? true),
+        courseId: toNumber(
+          getValue(node, 'courseId', 'CourseId') ?? getValue(dataNode, 'courseId', 'CourseId'),
+          courseId
+        ),
+        canAccess: toBoolean(canAccessValue, true),
+        reason,
       };
 
     } catch (err) {
@@ -84,6 +141,10 @@ export class ProgressService {
   }
 
   async getCourseProgress(courseId: number): Promise<CourseProgressResult> {
+    if (this.isStaffUser()) {
+      return { courseId, progress: 0 };
+    }
+
     try {
       const data = await fetchJson<unknown>(
         `${BASE_URL}/api/Progress/${courseId}`
@@ -115,5 +176,11 @@ export class ProgressService {
     } catch {
       return { courseId, progress: 0 };
     }
+  }
+
+  private isStaffUser(): boolean {
+    const role = this.authService.getUserRole();
+
+    return role === 'HR' || role === 'MANAGER';
   }
 }

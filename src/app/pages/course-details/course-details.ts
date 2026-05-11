@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CoursesApiService } from '../../services/courses-api.service';
 import { SectionsApiService } from '../../services/sections-api.service';
 import { ProgressService } from '../../services/progress.service';
+import { AuthService } from '../../services/auth';
 import { CourseResponseDTO, SectionResponseDTO } from '../../types/course-builder.types';
 
 @Component({
@@ -22,6 +23,7 @@ export class CourseDetails implements OnInit {
   error = signal('');
   expandedSections = signal<Set<number>>(new Set());
   pathId: number | null = null;
+  private pendingLockReason = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -29,6 +31,7 @@ export class CourseDetails implements OnInit {
     private coursesApi: CoursesApiService,
     private sectionsApi: SectionsApiService,
     private progressService: ProgressService,
+    private authService: AuthService,
   ) {}
 
   ngOnInit() {
@@ -38,9 +41,12 @@ export class CourseDetails implements OnInit {
       const course = state['course'] as CourseResponseDTO;
       this.course.set(course);
       this.pathId = (state['pathId'] as number) ?? null;
+      this.pendingLockReason = (state['lockReason'] as string) ?? '';
       void this.checkAccessThenLoad(course.id);
     } else {
       const id = Number(this.route.snapshot.paramMap.get('id'));
+      this.pathId = (state?.['pathId'] as number) ?? null;
+      this.pendingLockReason = (state?.['lockReason'] as string) ?? '';
       if (id) {
         void this.loadCourse(id);
       } else {
@@ -55,17 +61,32 @@ export class CourseDetails implements OnInit {
       const course = await this.coursesApi.getCourseById(id);
       this.course.set(course);
       await this.checkAccessThenLoad(id);
-    } catch {
-      this.error.set('Failed to load course.');
+    } catch (err) {
+      if (this.pendingLockReason || this.isAccessDeniedError(err)) {
+        this.isLocked.set(true);
+        this.lockReason.set(
+          this.pendingLockReason
+            ? this.cleanReason(this.pendingLockReason)
+            : 'Complete the previous course to at least 85% to unlock this one.'
+        );
+      } else {
+        this.error.set('Failed to load course.');
+      }
       this.isLoading.set(false);
     }
   }
 
   async checkAccessThenLoad(courseId: number) {
+    if (this.isStaffPreview()) {
+      await this.loadSections(courseId);
+      return;
+    }
+
     const result = await this.progressService.canAccess(courseId);
     if (!result.canAccess) {
       this.isLocked.set(true);
-      if (result.reason) this.lockReason.set(this.cleanReason(result.reason));
+      const reason = result.reason ?? this.pendingLockReason;
+      if (reason) this.lockReason.set(this.cleanReason(reason));
       this.isLoading.set(false);
       return;
     }
@@ -77,6 +98,16 @@ export class CourseDetails implements OnInit {
     try {
       const sections = await this.sectionsApi.getSectionsByCourse(courseId);
       this.sections.set(sections);
+      if (this.isStaffPreview()) {
+        const firstLessonId = this.getFirstLessonId(sections);
+        if (firstLessonId) {
+          void this.router.navigate(['/lesson', firstLessonId], {
+            state: { courseId, pathId: this.pathId },
+            replaceUrl: true,
+          });
+          return;
+        }
+      }
     } catch {
       this.error.set('Failed to load course content.');
     } finally {
@@ -110,15 +141,44 @@ export class CourseDetails implements OnInit {
   }
 
   openLesson(lessonId: number) {
-    this.router.navigate(['/lesson', lessonId]);
+    this.router.navigate(['/lesson', lessonId], {
+      state: { courseId: this.course()?.id, pathId: this.pathId },
+    });
   }
 
   backLink(): string[] {
+    if (this.isStaffPreview()) {
+      return this.pathId ? ['/learning-paths', String(this.pathId)] : ['/learning-paths'];
+    }
+
     return this.pathId ? ['/learning-path', String(this.pathId)] : ['/employee/dashboard'];
   }
 
   goDashboard() {
-    void this.router.navigate(['/employee/dashboard']);
+    void this.router.navigate(this.backLink());
+  }
+
+  private isAccessDeniedError(error: unknown): boolean {
+    const message = (error as { message?: string })?.message?.toLowerCase() ?? '';
+
+    return message.includes('403') || message.includes('complete previous');
+  }
+
+  private isStaffPreview(): boolean {
+    const role = this.authService.getUserRole();
+
+    return role === 'HR' || role === 'MANAGER';
+  }
+
+  private getFirstLessonId(sections: SectionResponseDTO[]): number | null {
+    const sortedSections = [...sections].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+    for (const section of sortedSections) {
+      const firstLesson = [...(section.lessons ?? [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))[0];
+      if (firstLesson?.id) return firstLesson.id;
+    }
+
+    return null;
   }
 
 }
