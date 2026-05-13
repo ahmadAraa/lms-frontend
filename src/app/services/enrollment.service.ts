@@ -21,6 +21,14 @@ export interface EmployeeProgressDto {
   isCompleted: boolean;
 }
 
+export interface EmployeeCourseProgressDto {
+  courseId: number;
+  courseTitle: string;
+  learningPathTitle: string;
+  progressPercentage: number;
+  isCompleted: boolean;
+}
+
 /**
  * Detailed user information returned from the backend.
  */
@@ -224,6 +232,17 @@ export class EnrollmentService {
   getEmployeeProgressWithManagerId(managerId: string): Observable<EmployeeProgressDto[]> {
     return this.http
       .get<EmployeeProgressDto[]>(`${this.baseUrl}/api/Enrollment/GetEmployeeProgressWithManagerId/${managerId}`);
+  }
+
+  /**
+   * Fetches detailed course-level progress for a specific employee in a specific learning path.
+   *
+   * @param employeeId - Employee user ID
+   * @param learningPathId - Learning path ID
+   */
+  getEmployeeCoursesProgress(employeeId: string, learningPathId: number): Observable<EmployeeCourseProgressDto[]> {
+    return this.http
+      .get<EmployeeCourseProgressDto[]>(`${this.baseUrl}/api/Enrollment/GetEmployeeCoursesProgress/${employeeId}/${learningPathId}`);
   }
 
   /**

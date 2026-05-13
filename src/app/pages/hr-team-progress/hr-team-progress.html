@@ -1,66 +1,204 @@
-<div class="page-container">
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Team Progress</h1>
-      <p class="page-subtitle">Monitor the progress of employees you've enrolled in learning paths</p>
-    </div>
-  </div>
-
-  <div class="table-card">
-    <div *ngIf="isLoading" class="loading-state">
-      <span class="material-symbols-outlined spin-icon">sync</span>
-      <p>Loading progress data...</p>
-    </div>
-
-    <div *ngIf="!isLoading && progressList.length === 0" class="empty-state">
-      <span class="material-symbols-outlined empty-icon">analytics</span>
-      <h3>No progress found</h3>
-      <p>You haven't enrolled any employees in learning paths yet, or data is unavailable.</p>
+<div class="cu-content">
+  <!-- ── Main Employee Table ── -->
+  <div class="cu-card">
+    <div class="cu-list-header">
+      <div class="cu-list-header-left">
+        <h2>Team Progress</h2>
+        @if (!isLoading()) {
+          <span class="cu-count">
+            {{ uniqueEmployees().length }} employee{{ uniqueEmployees().length !== 1 ? 's' : '' }}
+          </span>
+        }
+      </div>
     </div>
 
-    <table *ngIf="!isLoading && progressList.length > 0" class="progress-table">
-      <thead>
-        <tr>
-          <th>Employee</th>
-          <th>Learning Path</th>
-          <th>Progress</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let p of progressList">
-          <td>
-            <div class="employee-info">
-              <div class="avatar">{{ getInitials(p.employeeFullName || p.employeeEmail) }}</div>
-              <div class="employee-details">
-                <span class="employee-name">{{ p.employeeFullName || p.employeeEmail.split('@')[0] }}</span>
-                <span class="employee-email">{{ p.employeeEmail }}</span>
-              </div>
-            </div>
-          </td>
-          <td>
-            <span class="path-title">{{ p.learningPathTitle }}</span>
-          </td>
-          <td>
-            <div class="progress-wrapper">
-              <div class="progress-info">
-                <span class="progress-text">{{ p.progressPercentage | number:'1.0-0' }}%</span>
-              </div>
-              <div class="progress-bar-bg">
-                <div class="progress-bar-fill" 
-                     [style.width.%]="p.progressPercentage"
-                     [class.completed]="p.progressPercentage >= 100">
-                </div>
-              </div>
-            </div>
-          </td>
-          <td>
-            <span class="status-badge" [class.completed]="p.isCompleted">
-              {{ p.isCompleted ? 'Completed' : 'In Progress' }}
-            </span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="cu-table-wrap">
+      <table class="cu-table">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Email</th>
+            <th>Enrolled Paths</th>
+            <th style="width: 80px; text-align: right">Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (isLoading()) {
+            <tr>
+              <td colspan="4" class="cu-empty-row">
+                <div class="cu-spinner"></div>
+                Loading team progress…
+              </td>
+            </tr>
+          } @else if (uniqueEmployees().length === 0) {
+            <tr>
+              <td colspan="4" class="cu-empty-row">
+                <span class="material-symbols-outlined">analytics</span>
+                No enrolled employees found
+              </td>
+            </tr>
+          } @for (emp of uniqueEmployees(); track emp.employeeId) {
+            <tr>
+              <td class="cu-name-cell">
+                <div class="cu-avatar">{{ getInitials(emp.employeeFullName || emp.employeeEmail) }}</div>
+                <span>{{ emp.employeeFullName || emp.employeeEmail.split('@')[0] }}</span>
+              </td>
+              <td class="cu-email-cell">{{ emp.employeeEmail }}</td>
+              <td>
+                <span class="cu-enroll-count">
+                  <span class="material-symbols-outlined">route</span>
+                  {{ emp.pathCount }}
+                </span>
+              </td>
+              <td style="text-align: right">
+                <button class="cu-icon-btn" (click)="openEmployeeDetails(emp)" title="View learning path details">
+                  <span class="material-symbols-outlined">open_in_new</span>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- Modal: Learning Paths view  (Level 2)             -->
+<!-- ══════════════════════════════════════════════════ -->
+@if (modalView() === 'paths' && selectedEmployee()) {
+  <div class="cu-modal-overlay" (click)="closeModal()">
+    <div class="cu-modal-content cu-modal-wide" (click)="$event.stopPropagation()">
+
+      <div class="cu-modal-header">
+        <div class="cu-modal-icon-wrap cu-bg-blue-light">
+          <span class="material-symbols-outlined cu-text-blue">person</span>
+        </div>
+        <div class="cu-modal-title">
+          <div>
+            <h3>{{ selectedEmployee()!.employeeFullName || selectedEmployee()!.employeeEmail }}</h3>
+            <p class="cu-modal-subtitle">{{ selectedEmployee()!.employeeEmail }} · Learning Paths</p>
+          </div>
+          <button class="cu-modal-close" (click)="closeModal()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="cu-modal-body">
+        @if (employeePaths().length === 0) {
+          <div class="cu-modal-empty">
+            <span class="material-symbols-outlined">school</span>
+            <p>No learning path enrollments found.</p>
+          </div>
+        } @else {
+          <div class="cu-course-list">
+            @for (path of employeePaths(); track path.learningPathId) {
+              <div class="cu-course-item cu-clickable" (click)="openPathCourses(path)">
+                <div class="cu-course-header">
+                  <div class="cu-course-info">
+                    <span class="cu-course-title">{{ path.learningPathTitle }}</span>
+                  </div>
+                  <div class="cu-course-right">
+                    <span class="cu-badge cu-badge-sm" [class.badge-done]="path.isCompleted" [class.badge-inprogress]="!path.isCompleted">
+                      {{ path.isCompleted ? 'Completed' : 'In Progress' }}
+                    </span>
+                    <span class="material-symbols-outlined cu-chevron">chevron_right</span>
+                  </div>
+                </div>
+                <div class="cu-course-progress-row">
+                  <div class="cu-progress-track">
+                    <div
+                      class="cu-progress-fill"
+                      [style.width.%]="path.progressPercentage"
+                      [class.cu-progress-done]="path.progressPercentage >= 100">
+                    </div>
+                  </div>
+                  <span class="cu-progress-pct">{{ path.progressPercentage | number:'1.0-0' }}%</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="cu-modal-footer">
+        <button class="cu-btn cu-btn-outline" (click)="closeModal()">Close</button>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- Modal: Courses inside a Learning Path  (Level 3)  -->
+<!-- ══════════════════════════════════════════════════ -->
+@if (modalView() === 'courses' && selectedPath()) {
+  <div class="cu-modal-overlay" (click)="closeModal()">
+    <div class="cu-modal-content cu-modal-wide" (click)="$event.stopPropagation()">
+
+      <div class="cu-modal-header">
+        <div class="cu-modal-icon-wrap cu-bg-blue-light">
+          <span class="material-symbols-outlined cu-text-blue">menu_book</span>
+        </div>
+        <div class="cu-modal-title">
+          <div>
+            <h3>{{ selectedPath()!.learningPathTitle }}</h3>
+            <p class="cu-modal-subtitle">{{ selectedEmployee()!.employeeFullName || selectedEmployee()!.employeeEmail }} · Courses</p>
+          </div>
+          <button class="cu-modal-close" (click)="closeModal()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="cu-modal-body">
+        @if (isLoadingCourses()) {
+          <div class="cu-modal-loading">
+            <div class="cu-spinner"></div>
+            Loading courses…
+          </div>
+        } @else if (courseProgress().length === 0) {
+          <div class="cu-modal-empty">
+            <span class="material-symbols-outlined">school</span>
+            <p>No courses found in this learning path.</p>
+          </div>
+        } @else {
+          <div class="cu-course-list">
+            @for (course of courseProgress(); track course.courseId) {
+              <div class="cu-course-item">
+                <div class="cu-course-header">
+                  <div class="cu-course-info">
+                    <span class="cu-course-title">{{ course.courseTitle }}</span>
+                  </div>
+                  <span class="cu-badge cu-badge-sm" [class.badge-done]="course.isCompleted" [class.badge-inprogress]="!course.isCompleted">
+                    {{ course.isCompleted ? 'Completed' : 'In Progress' }}
+                  </span>
+                </div>
+                <div class="cu-course-progress-row">
+                  <div class="cu-progress-track">
+                    <div
+                      class="cu-progress-fill"
+                      [style.width.%]="course.progressPercentage"
+                      [class.cu-progress-done]="course.progressPercentage >= 100">
+                    </div>
+                  </div>
+                  <span class="cu-progress-pct">{{ course.progressPercentage | number:'1.0-0' }}%</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="cu-modal-footer">
+        <button class="cu-btn cu-btn-outline" (click)="backToPaths()">
+          <span class="material-symbols-outlined">arrow_back</span>
+          Back to Paths
+        </button>
+        <button class="cu-btn cu-btn-outline" (click)="closeModal()">Close</button>
+      </div>
+
+    </div>
+  </div>
+}
