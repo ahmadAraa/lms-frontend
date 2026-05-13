@@ -11,6 +11,16 @@ export interface UserSearchResult {
   email?: string;
 }
 
+export interface EmployeeProgressDto {
+  employeeId: string;
+  employeeEmail: string;
+  employeeFullName: string;
+  learningPathId: number;
+  learningPathTitle: string;
+  progressPercentage: number;
+  isCompleted: boolean;
+}
+
 /**
  * Detailed user information returned from the backend.
  */
@@ -204,6 +214,16 @@ export class EnrollmentService {
     return this.http
       .get<unknown>(`${this.baseUrl}/api/Enrollment/learningpath/${learningPathId}/employeescount`)
       .pipe(map((raw) => this.normalizeEmployeesCount(raw)));
+  }
+
+  /**
+   * Fetches employees enrolled by a manager along with their learning path progress.
+   * 
+   * @param managerId - Manager ID
+   */
+  getEmployeeProgressWithManagerId(managerId: string): Observable<EmployeeProgressDto[]> {
+    return this.http
+      .get<EmployeeProgressDto[]>(`${this.baseUrl}/api/Enrollment/GetEmployeeProgressWithManagerId/${managerId}`);
   }
 
   /**

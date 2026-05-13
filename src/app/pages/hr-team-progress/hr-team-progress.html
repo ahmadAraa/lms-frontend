@@ -1,0 +1,66 @@
+<div class="page-container">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Team Progress</h1>
+      <p class="page-subtitle">Monitor the progress of employees you've enrolled in learning paths</p>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div *ngIf="isLoading" class="loading-state">
+      <span class="material-symbols-outlined spin-icon">sync</span>
+      <p>Loading progress data...</p>
+    </div>
+
+    <div *ngIf="!isLoading && progressList.length === 0" class="empty-state">
+      <span class="material-symbols-outlined empty-icon">analytics</span>
+      <h3>No progress found</h3>
+      <p>You haven't enrolled any employees in learning paths yet, or data is unavailable.</p>
+    </div>
+
+    <table *ngIf="!isLoading && progressList.length > 0" class="progress-table">
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th>Learning Path</th>
+          <th>Progress</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of progressList">
+          <td>
+            <div class="employee-info">
+              <div class="avatar">{{ getInitials(p.employeeFullName || p.employeeEmail) }}</div>
+              <div class="employee-details">
+                <span class="employee-name">{{ p.employeeFullName || p.employeeEmail.split('@')[0] }}</span>
+                <span class="employee-email">{{ p.employeeEmail }}</span>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="path-title">{{ p.learningPathTitle }}</span>
+          </td>
+          <td>
+            <div class="progress-wrapper">
+              <div class="progress-info">
+                <span class="progress-text">{{ p.progressPercentage | number:'1.0-0' }}%</span>
+              </div>
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill" 
+                     [style.width.%]="p.progressPercentage"
+                     [class.completed]="p.progressPercentage >= 100">
+                </div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="status-badge" [class.completed]="p.isCompleted">
+              {{ p.isCompleted ? 'Completed' : 'In Progress' }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
