@@ -41,6 +41,7 @@ export class CourseManagerPage implements OnInit {
   imagePreview: string | null = null;
   isDragOver = false;
   isSaving = false;
+  isReordering = false;
 
   // Section modal
   sectionModalOpen = false;
@@ -404,7 +405,7 @@ export class CourseManagerPage implements OnInit {
 
   async moveCourseUp(index: number, event: Event): Promise<void> {
     event.stopPropagation();
-    if (index === 0 || !this.tree || !this.tree.courses) return;
+    if (this.isReordering || index === 0 || !this.tree || !this.tree.courses) return;
 
     const courses = this.tree.courses;
     const temp = courses[index];
@@ -416,7 +417,7 @@ export class CourseManagerPage implements OnInit {
 
   async moveCourseDown(index: number, event: Event): Promise<void> {
     event.stopPropagation();
-    if (!this.tree || !this.tree.courses || index === this.tree.courses.length - 1) return;
+    if (this.isReordering || !this.tree || !this.tree.courses || index === this.tree.courses.length - 1) return;
 
     const courses = this.tree.courses;
     const temp = courses[index];
@@ -427,6 +428,8 @@ export class CourseManagerPage implements OnInit {
   }
 
   private async saveCourseOrder(courses: CourseResponseDTO[]): Promise<void> {
+    this.isReordering = true;
+
     // Update order values internally to match visual
     courses.forEach((c, i) => (c.order = i + 1));
 
@@ -435,8 +438,11 @@ export class CourseManagerPage implements OnInit {
       await this.coursesApi.reorderCourses(dto);
       this.toast.success('Course order updated');
     } catch (error) {
-      this.toast.error('Failed to save course order');
+      this.toast.error((error as Error).message || 'Failed to save course order');
       await this.reload(); // Revert on failure
+    } finally {
+      this.isReordering = false;
+      this.cdr.detectChanges();
     }
   }
 }

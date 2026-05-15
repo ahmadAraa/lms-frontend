@@ -90,10 +90,10 @@
                 <button class="cm-action-btn" title="Preview Course" (click)="previewCourse(course); $event.stopPropagation()">
                   <span class="material-symbols-outlined">visibility</span>
                 </button>
-                <button class="cm-action-btn" title="Move Up" (click)="moveCourseUp(i, $event)" [disabled]="i === 0" [class.disabled]="i === 0">
+                <button class="cm-action-btn" title="Move Up" (click)="moveCourseUp(i, $event)" [disabled]="isReordering || i === 0" [class.disabled]="isReordering || i === 0">
                   <span class="material-symbols-outlined">arrow_upward</span>
                 </button>
-                <button class="cm-action-btn" title="Move Down" (click)="moveCourseDown(i, $event)" [disabled]="i === tree.courses.length - 1" [class.disabled]="i === tree.courses.length - 1">
+                <button class="cm-action-btn" title="Move Down" (click)="moveCourseDown(i, $event)" [disabled]="isReordering || i === tree.courses.length - 1" [class.disabled]="isReordering || i === tree.courses.length - 1">
                   <span class="material-symbols-outlined">arrow_downward</span>
                 </button>
                 <button class="cm-action-btn" title="Edit" (click)="openEditCourseModal(course); $event.stopPropagation()">

@@ -18,9 +18,12 @@ export interface CourseResponseDTO {
   title: string;
   description?: string;
   image?: string | null;
+  order?: number;
+  learningPathId?: number;
   sections?: {
     id: number;
     title: string;
+    order?: number;
     lessons?: unknown[];
   }[];
 }
@@ -106,6 +109,16 @@ function toNumber(value: unknown, fallback = 0): number {
   return Number.isFinite(numberValue) ? numberValue : fallback;
 }
 
+function byOrderThenId<T extends { id?: number; order?: number }>(
+  a: T,
+  b: T
+): number {
+  const orderDiff = (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER);
+  if (orderDiff !== 0) return orderDiff;
+
+  return (a.id ?? Number.MAX_SAFE_INTEGER) - (b.id ?? Number.MAX_SAFE_INTEGER);
+}
+
 function toNullableNumber(value: unknown): number | null {
   if (value === null || value === undefined || value === '') return null;
 
@@ -159,6 +172,7 @@ function toOptionalString(value: unknown): string | undefined {
 function normalizeSection(raw: unknown): {
   id: number;
   title: string;
+  order?: number;
   lessons?: unknown[];
 } {
   const node = asObject(raw);
@@ -166,7 +180,19 @@ function normalizeSection(raw: unknown): {
   return {
     id: toNumber(getValue(node, 'id', 'Id')),
     title: toString(getValue(node, 'title', 'Title')),
-    lessons: readArray(getValue(node, 'lessons', 'Lessons')),
+    order: toNumber(getValue(node, 'order', 'Order'), Number.MAX_SAFE_INTEGER),
+    lessons: readArray(getValue(node, 'lessons', 'Lessons')).sort((a, b) =>
+      byOrderThenId(
+        {
+          id: toNumber(getValue(asObject(a), 'id', 'Id'), Number.MAX_SAFE_INTEGER),
+          order: toNumber(getValue(asObject(a), 'order', 'Order'), Number.MAX_SAFE_INTEGER),
+        },
+        {
+          id: toNumber(getValue(asObject(b), 'id', 'Id'), Number.MAX_SAFE_INTEGER),
+          order: toNumber(getValue(asObject(b), 'order', 'Order'), Number.MAX_SAFE_INTEGER),
+        }
+      )
+    ),
   };
 }
 
@@ -181,9 +207,11 @@ function normalizeCourse(raw: unknown): CourseResponseDTO {
     title: toString(getValue(node, 'title', 'Title')),
     description: toOptionalString(getValue(node, 'description', 'Description')),
     image: toNullableString(getValue(node, 'image', 'Image')),
+    order: toNumber(getValue(node, 'order', 'Order'), Number.MAX_SAFE_INTEGER),
+    learningPathId: toNumber(getValue(node, 'learningPathId', 'LearningPathId')),
     sections: readArray(getValue(node, 'sections', 'Sections')).map(
       normalizeSection
-    ),
+    ).sort(byOrderThenId),
   };
 }
 
@@ -200,7 +228,7 @@ function normalizePath(raw: unknown): LearningPathResponseDto {
     image: toNullableString(getValue(node, 'image', 'Image')),
     courses: readArray(getValue(node, 'courses', 'Courses')).map(
       normalizeCourse
-    ),
+    ).sort(byOrderThenId),
   };
 }
 
