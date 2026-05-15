@@ -122,4 +122,11 @@ export class SectionsApiService {
       method: 'DELETE',
     });
   }
+
+  async reorderSections(dto: { id: number; order: number }[]): Promise<void> {
+    await fetchJson<void>(`${BASE_URL}/api/Sections/reorder`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+  }
 }

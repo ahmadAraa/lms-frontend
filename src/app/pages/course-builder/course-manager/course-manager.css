@@ -415,6 +415,16 @@
   margin-bottom: 8px;
   background: #fff;
   overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s, opacity 0.15s;
+}
+
+.cm-section-block.is-drop-target {
+  border-color: var(--blue, #2563eb);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+}
+
+.cm-section-block.is-dragging {
+  opacity: 0.55;
 }
 
 .cm-section-row {
@@ -440,6 +450,44 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.cm-drag-handle {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gray-400, #9ca3af);
+  cursor: grab;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.cm-drag-handle:hover:not(:disabled) {
+  background: var(--gray-100, #f3f4f6);
+  border-color: var(--gray-200, #e5e7eb);
+  color: var(--blue, #2563eb);
+}
+
+.cm-drag-handle:active:not(:disabled) {
+  cursor: grabbing;
+}
+
+.cm-drag-handle:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.cm-drag-handle .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.cm-drag-handle--lesson {
+  margin-left: -30px;
 }
 
 .cm-section-info {
@@ -540,10 +588,19 @@
   gap: 10px;
   padding: 10px 14px 10px 44px;
   border-top: 1px solid var(--gray-100, #f3f4f6);
-  transition: background 0.15s;
+  transition: background 0.15s, box-shadow 0.15s, opacity 0.15s;
 }
 
 .cm-lesson-row:hover { background: #f3f4f6; }
+
+.cm-lesson-row.is-drop-target {
+  background: #eff6ff;
+  box-shadow: inset 3px 0 0 var(--blue, #2563eb);
+}
+
+.cm-lesson-row.is-dragging {
+  opacity: 0.55;
+}
 
 .cm-lesson-num {
   font-size: 11px;

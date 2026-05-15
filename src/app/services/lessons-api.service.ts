@@ -153,4 +153,11 @@ export class LessonsApiService {
       method: 'POST',
     });
   }
+
+  async reorderLessons(dto: { id: number; order: number }[]): Promise<void> {
+    await fetchJson<void>(`${BASE_URL}/api/Lessons/reorder`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+  }
 }

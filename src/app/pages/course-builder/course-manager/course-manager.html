@@ -127,11 +127,27 @@
                 }
 
                 @for (section of course.sections; track section.id; let si = $index) {
-                  <div class="cm-section-block">
+                  <div class="cm-section-block"
+                       [class.is-dragging]="draggingSection?.sectionId === section.id"
+                       [class.is-drop-target]="dragOverSectionId === section.id"
+                       (dragover)="onSectionDragOver(course, section, $event)"
+                       (dragleave)="onSectionDragLeave(section, $event)"
+                       (drop)="dropSection(course, section, $event)">
                     <div class="cm-section-row" (click)="toggleSection(section.id)">
                       <div class="cm-section-num">{{ si + 1 }}</div>
 
                       @if (editingKey !== sectionKey(section)) {
+                        <button
+                          type="button"
+                          class="cm-drag-handle"
+                          title="Drag to reorder section"
+                          [draggable]="!isReordering"
+                          [disabled]="isReordering"
+                          (click)="$event.stopPropagation()"
+                          (dragstart)="startSectionDrag(course, section, $event)"
+                          (dragend)="endSectionDrag()">
+                          <span class="material-symbols-outlined">drag_indicator</span>
+                        </button>
                         <div class="cm-section-info">
                           <span class="cm-section-title">{{ section.title }}</span>
                           @if (section.description) {
@@ -174,8 +190,24 @@
                           <div class="cm-nested-empty">No lessons in this section yet.</div>
                         } @else {
                           @for (lesson of section.lessons; track lesson.id; let li = $index) {
-                            <div class="cm-lesson-row">
+                            <div class="cm-lesson-row"
+                                 [class.is-dragging]="draggingLesson?.lessonId === lesson.id"
+                                 [class.is-drop-target]="dragOverLessonId === lesson.id"
+                                 (dragover)="onLessonDragOver(section, lesson, $event)"
+                                 (dragleave)="onLessonDragLeave(lesson, $event)"
+                                 (drop)="dropLesson(section, lesson, $event)">
                               @if (editingKey !== 'lesson-' + lesson.id) {
+                                <button
+                                  type="button"
+                                  class="cm-drag-handle cm-drag-handle--lesson"
+                                  title="Drag to reorder lesson"
+                                  [draggable]="!isReordering"
+                                  [disabled]="isReordering"
+                                  (click)="$event.stopPropagation()"
+                                  (dragstart)="startLessonDrag(section, lesson, $event)"
+                                  (dragend)="endLessonDrag()">
+                                  <span class="material-symbols-outlined">drag_indicator</span>
+                                </button>
                                 <span class="cm-lesson-num">{{ li + 1 }}</span>
                                 <span class="material-symbols-outlined cm-lesson-icon">play_circle</span>
                                 <div class="cm-lesson-info">

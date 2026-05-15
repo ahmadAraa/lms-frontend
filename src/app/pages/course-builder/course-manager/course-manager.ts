@@ -16,6 +16,16 @@ import {
   SectionResponseDTO,
 } from '../../../types/course-builder.types';
 
+interface SectionDragState {
+  courseId: number;
+  sectionId: number;
+}
+
+interface LessonDragState {
+  sectionId: number;
+  lessonId: number;
+}
+
 @Component({
   selector: 'app-course-manager-page',
   standalone: true,
@@ -42,6 +52,10 @@ export class CourseManagerPage implements OnInit {
   isDragOver = false;
   isSaving = false;
   isReordering = false;
+  draggingSection: SectionDragState | null = null;
+  dragOverSectionId: number | null = null;
+  draggingLesson: LessonDragState | null = null;
+  dragOverLessonId: number | null = null;
 
   // Section modal
   sectionModalOpen = false;
@@ -86,9 +100,7 @@ export class CourseManagerPage implements OnInit {
     this.error = '';
     try {
       this.tree = await this.pathsApi.getPathById(this.pathId);
-      if (this.tree && this.tree.courses) {
-        this.tree.courses.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-      }
+      this.sortTree();
     } catch (error) {
       this.error = (error as Error).message || 'Failed to load learning path.';
       this.toast.error(this.error);
@@ -403,6 +415,100 @@ export class CourseManagerPage implements OnInit {
     return `section-${section.id}`;
   }
 
+  startSectionDrag(course: CourseResponseDTO, section: SectionResponseDTO, event: DragEvent): void {
+    event.stopPropagation();
+    if (this.isReordering || this.editingKey === this.sectionKey(section)) return;
+
+    this.draggingSection = { courseId: course.id, sectionId: section.id };
+    event.dataTransfer?.setData('text/plain', String(section.id));
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+  }
+
+  onSectionDragOver(course: CourseResponseDTO, section: SectionResponseDTO, event: DragEvent): void {
+    if (!this.draggingSection || this.draggingSection.courseId !== course.id || this.draggingSection.sectionId === section.id) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    this.dragOverSectionId = section.id;
+  }
+
+  onSectionDragLeave(section: SectionResponseDTO, event: DragEvent): void {
+    event.stopPropagation();
+    if (this.dragOverSectionId === section.id) this.dragOverSectionId = null;
+  }
+
+  async dropSection(course: CourseResponseDTO, targetSection: SectionResponseDTO, event: DragEvent): Promise<void> {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const dragState = this.draggingSection;
+    this.dragOverSectionId = null;
+    this.draggingSection = null;
+
+    if (!dragState || dragState.courseId !== course.id || dragState.sectionId === targetSection.id) return;
+
+    const sections = course.sections ?? [];
+    const fromIndex = sections.findIndex((section) => section.id === dragState.sectionId);
+    const toIndex = sections.findIndex((section) => section.id === targetSection.id);
+    if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return;
+
+    this.moveItem(sections, fromIndex, toIndex);
+    await this.saveSectionOrder(sections);
+  }
+
+  endSectionDrag(): void {
+    this.draggingSection = null;
+    this.dragOverSectionId = null;
+  }
+
+  startLessonDrag(section: SectionResponseDTO, lesson: LessonResponseDTO, event: DragEvent): void {
+    event.stopPropagation();
+    if (this.isReordering || this.editingKey === `lesson-${lesson.id}`) return;
+
+    this.draggingLesson = { sectionId: section.id, lessonId: lesson.id };
+    event.dataTransfer?.setData('text/plain', String(lesson.id));
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+  }
+
+  onLessonDragOver(section: SectionResponseDTO, lesson: LessonResponseDTO, event: DragEvent): void {
+    if (!this.draggingLesson || this.draggingLesson.sectionId !== section.id || this.draggingLesson.lessonId === lesson.id) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    this.dragOverLessonId = lesson.id;
+  }
+
+  onLessonDragLeave(lesson: LessonResponseDTO, event: DragEvent): void {
+    event.stopPropagation();
+    if (this.dragOverLessonId === lesson.id) this.dragOverLessonId = null;
+  }
+
+  async dropLesson(section: SectionResponseDTO, targetLesson: LessonResponseDTO, event: DragEvent): Promise<void> {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const dragState = this.draggingLesson;
+    this.dragOverLessonId = null;
+    this.draggingLesson = null;
+
+    if (!dragState || dragState.sectionId !== section.id || dragState.lessonId === targetLesson.id) return;
+
+    const lessons = section.lessons ?? [];
+    const fromIndex = lessons.findIndex((lesson) => lesson.id === dragState.lessonId);
+    const toIndex = lessons.findIndex((lesson) => lesson.id === targetLesson.id);
+    if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return;
+
+    this.moveItem(lessons, fromIndex, toIndex);
+    await this.saveLessonOrder(lessons);
+  }
+
+  endLessonDrag(): void {
+    this.draggingLesson = null;
+    this.dragOverLessonId = null;
+  }
+
   async moveCourseUp(index: number, event: Event): Promise<void> {
     event.stopPropagation();
     if (this.isReordering || index === 0 || !this.tree || !this.tree.courses) return;
@@ -444,5 +550,61 @@ export class CourseManagerPage implements OnInit {
       this.isReordering = false;
       this.cdr.detectChanges();
     }
+  }
+
+  private async saveSectionOrder(sections: SectionResponseDTO[]): Promise<void> {
+    this.isReordering = true;
+    sections.forEach((section, i) => (section.order = i + 1));
+
+    try {
+      await this.sectionsApi.reorderSections(sections.map((section) => ({ id: section.id, order: section.order })));
+      this.toast.success('Section order updated');
+    } catch (error) {
+      this.toast.error((error as Error).message || 'Failed to save section order');
+      await this.reload();
+    } finally {
+      this.isReordering = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  private async saveLessonOrder(lessons: LessonResponseDTO[]): Promise<void> {
+    this.isReordering = true;
+    lessons.forEach((lesson, i) => (lesson.order = i + 1));
+
+    try {
+      await this.lessonsApi.reorderLessons(lessons.map((lesson) => ({ id: lesson.id, order: lesson.order })));
+      this.toast.success('Lesson order updated');
+    } catch (error) {
+      this.toast.error((error as Error).message || 'Failed to save lesson order');
+      await this.reload();
+    } finally {
+      this.isReordering = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  private moveItem<T>(items: T[], fromIndex: number, toIndex: number): void {
+    const [item] = items.splice(fromIndex, 1);
+    items.splice(toIndex, 0, item);
+  }
+
+  private sortTree(): void {
+    if (!this.tree?.courses) return;
+
+    this.tree.courses.sort((a, b) => this.compareOrder(a, b));
+    this.tree.courses.forEach((course) => {
+      course.sections?.sort((a, b) => this.compareOrder(a, b));
+      course.sections?.forEach((section) => {
+        section.lessons?.sort((a, b) => this.compareOrder(a, b));
+      });
+    });
+  }
+
+  private compareOrder<T extends { id: number; order: number }>(a: T, b: T): number {
+    const orderDiff = (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER);
+    if (orderDiff !== 0) return orderDiff;
+
+    return a.id - b.id;
   }
 }
