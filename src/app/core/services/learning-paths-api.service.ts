@@ -5,7 +5,7 @@ import {
   LearningPathResponseDto,
   LessonResponseDTO,
   SectionResponseDTO,
-} from '../types/course-builder.types';
+} from '../../types/course-builder.types';
 import { fetchJson } from './course-builder-api.utils';
 
 /**

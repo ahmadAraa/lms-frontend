@@ -1,0 +1,91 @@
+.hr-section-card {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  padding: 24px 28px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.hr-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.hr-section-header h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.hr-view-link {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2563eb;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.hr-view-link:hover {
+  color: #1d4ed8;
+}
+
+.hr-view-link .material-symbols-outlined {
+  font-size: 17px;
+}
+
+.hr-path-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.hr-path-row {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.hr-path-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hr-path-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.hr-path-enrolled {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.hr-path-bar {
+  width: 100%;
+  height: 8px;
+  background: #f3f4f6;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.hr-path-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2563eb, #3b82f6);
+  border-radius: 99px;
+  transition: width 0.7s ease;
+}
+
+.hr-empty {
+  text-align: center;
+  padding: 32px;
+  color: #9ca3af;
+  font-size: 14px;
+}

@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { EnrollmentService, EmployeeProgressDto, EmployeeCourseProgressDto } from '../../services/enrollment.service';
-import { AuthService } from '../../services/auth';
+import { EnrollmentService, EmployeeProgressDto, EmployeeCourseProgressDto } from '../../core/services/enrollment.service';
+import { AuthService } from '../../core/services/auth';
 
 /** Unique employee entry for the main table */
 interface UniqueEmployee {

@@ -3,8 +3,8 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LearningPathCardComponent } from '../../../components/course-builder/learning-path-card.component';
-import { LearningPathsApiService } from '../../../services/learning-paths-api.service';
-import { ToastService } from '../../../services/toast.service';
+import { LearningPathsApiService } from '../../../core/services/learning-paths-api.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { LearningPathResponseDto } from '../../../types/course-builder.types';
 
 @Component({

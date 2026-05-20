@@ -4,13 +4,17 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { forkJoin, of, from } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { AuthService } from '../../services/auth';
-import { CourseResponseDTO, LearningPathService, LearningPathResponseDto } from '../../services/learning-path.service';
+import { AuthService } from '../../core/services/auth';
+import { CourseResponseDTO, LearningPathService, LearningPathResponseDto } from '../../core/services/learning-path.service';
 
-import { CoursesApiService } from '../../services/courses-api.service';
-import { ProgressService } from '../../services/progress.service';
-import { SectionsApiService } from '../../services/sections-api.service';
+import { CoursesApiService } from '../../core/services/courses-api.service';
+import { ProgressService } from '../../core/services/progress.service';
+import { SectionsApiService } from '../../core/services/sections-api.service';
 import { BASE_URL } from '../../types/course-builder.types';
+
+import { ContinueLearningComponent } from './components/continue-learning/continue-learning.component';
+import { MyCoursesComponent } from './components/my-courses/my-courses.component';
+import { LearningPathCardComponent } from './components/learning-path-card/learning-path-card.component';
 
 interface ContinueLearningState {
   isCompleted: boolean;
@@ -30,7 +34,7 @@ interface EnrolledCourse {
 @Component({
   selector: 'app-employee-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ContinueLearningComponent, MyCoursesComponent, LearningPathCardComponent],
   templateUrl: './employee-dashboard.html',
   styleUrl: './employee-dashboard.css',
 })
@@ -397,18 +401,6 @@ export class EmployeeDashboard implements OnInit {
 
   private getFirstIncompleteCourse(path: LearningPathResponseDto): CourseResponseDTO | null {
     return (path.courses ?? []).find(course => this.getCourseProgress(course.id) < 100) ?? null;
-  }
-
-  getPictureUrl(path: LearningPathResponseDto): string {
-    if (!path.image) return '';
-    if (path.image.startsWith('http')) return path.image;
-    return `${BASE_URL}/${path.image.replace(/^\//, '')}`;
-  }
-
-  getCoursePictureUrl(course: CourseResponseDTO): string {
-    if (!course.image) return '';
-    if (course.image.startsWith('http')) return course.image;
-    return `${BASE_URL}/${course.image.replace(/^\//, '')}`;
   }
 
   onSearch(event: Event) {

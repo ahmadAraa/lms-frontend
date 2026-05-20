@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './guards/auth-guard';
-import { roleGuard } from './guards/role-guard';
+import { authGuard } from './core/guards/auth-guard';
+import { roleGuard } from './core/guards/role-guard';
 import { LearningPathsPage } from './pages/course-builder/learning-paths/learning-paths';
 import { CourseManagerPage } from './pages/course-builder/course-manager/course-manager';
 import { LessonEditorPage } from './pages/course-builder/lesson-editor/lesson-editor';
@@ -28,7 +28,7 @@ export const routes: Routes = [
   // ── Student pages (lazy) ─────────────────────────────────
   {
     path: 'learning-path/:id',
-    loadComponent: () => import('./layouts/employee-layout/employee-layout.component').then(m => m.EmployeeLayoutComponent),
+    loadComponent: () => import('./shared/layouts/employee-layout/employee-layout.component').then(m => m.EmployeeLayoutComponent),
     canActivate: [authGuard],
     children: [
       {
@@ -41,7 +41,7 @@ export const routes: Routes = [
   },
   {
     path: 'course/:id',
-    loadComponent: () => import('./layouts/employee-layout/employee-layout.component').then(m => m.EmployeeLayoutComponent),
+    loadComponent: () => import('./shared/layouts/employee-layout/employee-layout.component').then(m => m.EmployeeLayoutComponent),
     canActivate: [authGuard],
     children: [
       {
@@ -54,7 +54,7 @@ export const routes: Routes = [
   },
   {
     path: 'lesson/:id',
-    loadComponent: () => import('./layouts/employee-layout/employee-layout.component').then(m => m.EmployeeLayoutComponent),
+    loadComponent: () => import('./shared/layouts/employee-layout/employee-layout.component').then(m => m.EmployeeLayoutComponent),
     canActivate: [authGuard],
     children: [
       {
@@ -69,7 +69,7 @@ export const routes: Routes = [
   // ── Admin / HR Layout ────────────────────────────────────
   {
     path: '',
-    loadComponent: () => import('./layouts/admin-layout/admin-layout.component').then(m => m.AdminLayoutComponent),
+    loadComponent: () => import('./shared/layouts/admin-layout/admin-layout.component').then(m => m.AdminLayoutComponent),
     canActivate: [authGuard],
     children: [
       {
@@ -126,7 +126,7 @@ export const routes: Routes = [
   // ── Employee ─────────────────────────────────────────────
   {
     path: 'employee',
-    loadComponent: () => import('./layouts/employee-layout/employee-layout.component').then(m => m.EmployeeLayoutComponent),
+    loadComponent: () => import('./shared/layouts/employee-layout/employee-layout.component').then(m => m.EmployeeLayoutComponent),
     canActivate: [authGuard],
     children: [
       {

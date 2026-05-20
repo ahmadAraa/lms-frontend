@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { BASE_URL } from '../types/course-builder.types';
+import { BASE_URL } from '../../types/course-builder.types';
 
 /**
  * Service responsible for handling password reset flow.

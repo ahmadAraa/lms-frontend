@@ -1,0 +1,53 @@
+@if (isEnrolled) {
+  <div class="ed-card" (click)="clickPath.emit(path.id)">
+    <div class="ed-card-banner" [style.background]="path.image ? 'transparent' : gradient">
+      @if (path.image) {
+        <img [src]="getPictureUrl()" alt="" class="ed-card-banner-img" />
+        <div class="ed-card-banner-overlay"></div>
+      }
+      <span class="ed-badge">{{ getCourseCount() }} COURSES</span>
+      <span class="ed-enrolled-badge">
+        <span class="material-symbols-outlined">check_circle</span>
+        Enrolled
+      </span>
+    </div>
+    <div class="ed-card-body">
+      <h3>{{ path.title }}</h3>
+      <p>{{ path.description || 'No description provided.' }}</p>
+      <div class="ed-progress-bar">
+        <div class="ed-progress-fill" [style.width.%]="progress"></div>
+      </div>
+      <div class="ed-progress-text">{{ progress }}% complete</div>
+      <div class="ed-card-footer">
+        <span class="ed-meta">
+          <span class="material-symbols-outlined">menu_book</span>
+          {{ getCourseCount() }} courses
+        </span>
+        <span class="ed-cta">
+          {{ progress > 0 ? 'Continue' : 'Start' }}
+          <span class="material-symbols-outlined">arrow_forward</span>
+        </span>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="ed-card ed-card--available">
+    <div class="ed-card-banner" [style.background]="path.image ? 'transparent' : gradient">
+      @if (path.image) {
+        <img [src]="getPictureUrl()" alt="" class="ed-card-banner-img" />
+        <div class="ed-card-banner-overlay"></div>
+      }
+      <span class="ed-badge">{{ getCourseCount() }} COURSES</span>
+    </div>
+    <div class="ed-card-body">
+      <h3>{{ path.title }}</h3>
+      <p>{{ path.description || 'No description provided.' }}</p>
+      <div class="ed-card-footer">
+        <span class="ed-meta">
+          <span class="material-symbols-outlined">menu_book</span>
+          {{ getCourseCount() }} courses
+        </span>
+      </div>
+    </div>
+  </div>
+}

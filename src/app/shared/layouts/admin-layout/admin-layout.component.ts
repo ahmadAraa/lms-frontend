@@ -1,17 +1,17 @@
 import { Component, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink, RouterOutlet } from '@angular/router';
-import { AuthService } from '../../services/auth';
-import { NotificationBellComponent } from '../../components/notification-bell/notification-bell';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { AuthService } from '../../../core/services/auth';
+import { NotificationBellComponent } from '../../../components/notification-bell/notification-bell';
 
 @Component({
-  selector: 'app-employee-layout',
+  selector: 'app-admin-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, NotificationBellComponent],
-  templateUrl: './employee-layout.component.html',
-  styleUrl: './employee-layout.component.css',
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent],
+  templateUrl: './admin-layout.component.html',
+  styleUrl: './admin-layout.component.css'
 })
-export class EmployeeLayoutComponent {
+export class AdminLayoutComponent {
   profileOpen = false;
 
   constructor(public authService: AuthService, private router: Router) {}
@@ -33,7 +33,7 @@ export class EmployeeLayoutComponent {
 
   goToSettings(): void {
     this.profileOpen = false;
-    this.router.navigate(['/employee/user-settings']);
+    this.router.navigate(['/user-settings']);
   }
 
   logout(): void {

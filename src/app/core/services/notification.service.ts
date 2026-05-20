@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BASE_URL } from '../types/course-builder.types';
+import { BASE_URL } from '../../types/course-builder.types';
 import { fetchJson } from './course-builder-api.utils';
 
 /**

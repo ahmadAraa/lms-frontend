@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { BASE_URL, CourseResponseDTO } from '../types/course-builder.types';
+import { BASE_URL, CourseResponseDTO } from '../../types/course-builder.types';
 import { fetchJson } from './course-builder-api.utils';
 
 /**

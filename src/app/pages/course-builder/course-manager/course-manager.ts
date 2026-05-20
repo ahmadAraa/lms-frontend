@@ -3,11 +3,11 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { InlineEditComponent } from '../../../components/course-builder/inline-edit.component';
-import { CoursesApiService } from '../../../services/courses-api.service';
-import { LearningPathsApiService } from '../../../services/learning-paths-api.service';
-import { LessonsApiService } from '../../../services/lessons-api.service';
-import { SectionsApiService } from '../../../services/sections-api.service';
-import { ToastService } from '../../../services/toast.service';
+import { CoursesApiService } from '../../../core/services/courses-api.service';
+import { LearningPathsApiService } from '../../../core/services/learning-paths-api.service';
+import { LessonsApiService } from '../../../core/services/lessons-api.service';
+import { SectionsApiService } from '../../../core/services/sections-api.service';
+import { ToastService } from '../../../core/services/toast.service';
 import {
   BASE_URL,
   CourseResponseDTO,

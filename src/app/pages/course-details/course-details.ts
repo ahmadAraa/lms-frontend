@@ -1,10 +1,10 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { CoursesApiService } from '../../services/courses-api.service';
-import { SectionsApiService } from '../../services/sections-api.service';
-import { ProgressService } from '../../services/progress.service';
-import { AuthService } from '../../services/auth';
+import { CoursesApiService } from '../../core/services/courses-api.service';
+import { SectionsApiService } from '../../core/services/sections-api.service';
+import { ProgressService } from '../../core/services/progress.service';
+import { AuthService } from '../../core/services/auth';
 import { CourseResponseDTO, SectionResponseDTO } from '../../types/course-builder.types';
 
 @Component({

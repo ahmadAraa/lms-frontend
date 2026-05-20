@@ -2,9 +2,9 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { LearningPathService, LearningPathResponseDto, CourseResponseDTO } from '../../services/learning-path.service';
-import { ProgressService } from '../../services/progress.service';
-import { AuthService } from '../../services/auth';
+import { LearningPathService, LearningPathResponseDto, CourseResponseDTO } from '../../core/services/learning-path.service';
+import { ProgressService } from '../../core/services/progress.service';
+import { AuthService } from '../../core/services/auth';
 
 @Component({
   selector: 'app-learning-path-details',

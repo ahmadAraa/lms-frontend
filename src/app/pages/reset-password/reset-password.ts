@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink, Router } from '@angular/router';
-import { PasswordResetService } from '../../services/password-reset.service';
+import { PasswordResetService } from '../../core/services/password-reset.service';
 
 @Component({
   selector: 'app-reset-password',

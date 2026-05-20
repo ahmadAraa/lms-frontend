@@ -3,23 +3,33 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
-import { AuthService } from '../../services/auth';
+import { AuthService } from '../../core/services/auth';
 import { Router } from '@angular/router';
-import { LearningPathService, LearningPathResponseDto } from '../../services/learning-path.service';
-import { ActivityService, AdminActivity } from '../../services/activity.service';
-import { EnrollmentService } from '../../services/enrollment.service';
+import { LearningPathService, LearningPathResponseDto } from '../../core/services/learning-path.service';
+import { ActivityService, AdminActivity } from '../../core/services/activity.service';
+import { EnrollmentService } from '../../core/services/enrollment.service';
 import { NotificationBellComponent } from '../../components/notification-bell/notification-bell';
+
+import { LearningPathDistributionComponent } from './components/learning-path-distribution/learning-path-distribution.component';
+import { RecentActivityComponent } from './components/recent-activity/recent-activity.component';
+import { QuickActionsComponent } from './components/quick-actions/quick-actions.component';
 
 @Component({
   selector: 'app-hr-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, NotificationBellComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    NotificationBellComponent,
+    LearningPathDistributionComponent,
+    RecentActivityComponent,
+    QuickActionsComponent,
+  ],
   templateUrl: './hr-dashboard.html',
   styleUrl: './hr-dashboard.css',
 })
 export class HrDashboard implements OnInit {
-  private readonly maxStudentsPerPath = 20;
-
   userName = signal('');
   paths = signal<LearningPathResponseDto[]>([]);
   enrolledCounts = signal<Record<number, number>>({});
@@ -47,22 +57,6 @@ export class HrDashboard implements OnInit {
     this.activities.set(this.activityService.getRecent(8));
   }
 
-  getCourseCount(path: LearningPathResponseDto): number {
-    return path.courses?.length ?? 0;
-  }
-
-  /** Width % for the path bar, scaled against the expected max students per path. */
-  getEnrolledCount(pathId: number): number {
-    return this.enrolledCounts()[pathId] ?? 0;
-  }
-
-  getBarWidth(path: LearningPathResponseDto): number {
-    const count = this.getEnrolledCount(path.id);
-    if (count <= 0) return 0;
-
-    return Math.min(Math.round((count / this.maxStudentsPerPath) * 100), 100);
-  }
-
   private loadEnrolledCounts(paths: LearningPathResponseDto[]) {
     if (paths.length === 0) {
       this.enrolledCounts.set({});
@@ -83,10 +77,6 @@ export class HrDashboard implements OnInit {
         }, {})
       );
     });
-  }
-
-  timeAgo(iso: string): string {
-    return this.activityService.timeAgo(iso);
   }
 
   logout() {

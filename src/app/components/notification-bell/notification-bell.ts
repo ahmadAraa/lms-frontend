@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NotificationService, AppNotification } from '../../services/notification.service';
+import { NotificationService, AppNotification } from '../../core/services/notification.service';
 
 @Component({
   selector: 'app-notification-bell',

@@ -3,8 +3,8 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Location } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-import { LessonsApiService } from '../../../services/lessons-api.service';
-import { ToastService } from '../../../services/toast.service';
+import { LessonsApiService } from '../../../core/services/lessons-api.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-lesson-editor-page',

@@ -4,12 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize, timeout, switchMap, catchError, of, forkJoin } from 'rxjs';
-import { AuthService } from '../../services/auth';
-import { EnrollmentService, UserInfo } from '../../services/enrollment.service';
-import { ActivityService } from '../../services/activity.service';
+import { AuthService } from '../../core/services/auth';
+import { EnrollmentService, UserInfo } from '../../core/services/enrollment.service';
+import { ActivityService } from '../../core/services/activity.service';
 import { NotificationBellComponent } from '../../components/notification-bell/notification-bell';
 
-import { UserRole } from '../../services/auth';
+import { UserRole } from '../../core/services/auth';
 
 @Component({
   selector: 'app-hr-create-user',

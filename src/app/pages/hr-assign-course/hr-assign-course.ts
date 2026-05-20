@@ -3,11 +3,11 @@ import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged, Subject, switchMap, catchError, of, forkJoin, map } from 'rxjs';
-import { LearningPathService } from '../../services/learning-path.service';
-import { EnrollmentService, UserInfo, UserSearchResult } from '../../services/enrollment.service';
-import { ActivityService } from '../../services/activity.service';
+import { LearningPathService } from '../../core/services/learning-path.service';
+import { EnrollmentService, UserInfo, UserSearchResult } from '../../core/services/enrollment.service';
+import { ActivityService } from '../../core/services/activity.service';
 import { NotificationBellComponent } from '../../components/notification-bell/notification-bell';
-import { AuthService } from '../../services/auth';
+import { AuthService } from '../../core/services/auth';
 
 export interface CourseItem {
   id: number;

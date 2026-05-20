@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { UserSettingsService } from '../../../../services/user-settings.service';
-import { ToastService } from '../../../../services/toast.service';
+import { UserSettingsService } from '../../../../core/services/user-settings.service';
+import { ToastService } from '../../../../core/services/toast.service';
 
 @Component({
   selector: 'app-change-password',

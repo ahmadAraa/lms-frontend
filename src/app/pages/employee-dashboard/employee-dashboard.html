@@ -40,79 +40,23 @@
       @if (continuePath()) {
         <div class="ed-section">
           <h2 class="ed-section-title">Continue Learning</h2>
-          <div class="continue-card" (click)="resume()">
-            <div class="continue-visual">
-              <div class="play-ring"></div>
-              <div class="course-icon-wrap">
-                <span class="material-symbols-outlined">
-                  {{ isContinueCompleted() ? 'emoji_events' : 'play_circle' }}
-                </span>
-              </div>
-            </div>
-            <div class="continue-info">
-              <span class="continue-badge">
-                {{ isContinueCompleted() ? 'Completed' : 'In Progress' }}
-              </span>
-              <h3>{{ continuePath()!.title }}</h3>
-              <div class="progress-row">
-                <div class="progress-bar">
-                  <div class="progress-fill" [style.width.%]="continuePathProgress()"></div>
-                </div>
-                <span class="progress-pct">{{ continuePathProgress() }}%</span>
-              </div>
-              <p class="continue-hint">
-                @if (isContinueCompleted()) {
-                  {{ continueState()!.message }}
-                } @else if (continueState()?.lessonId) {
-                  Resume from where you left off
-                } @else {
-                  Pick up where you left off
-                }
-              </p>
-            </div>
-            <button class="btn-resume">
-              <span class="material-symbols-outlined">
-                {{ isContinueCompleted() ? 'replay' : 'play_arrow' }}
-              </span>
-              {{ isContinueCompleted() ? 'Review' : 'Resume' }}
-            </button>
-          </div>
+          <app-continue-learning
+            [continuePath]="continuePath()!"
+            [continuePathProgress]="continuePathProgress()"
+            [isContinueCompleted]="isContinueCompleted()"
+            [continueState]="continueState()"
+            (resume)="resume()"
+          ></app-continue-learning>
         </div>
       }
 
       <!-- Enrolled courses -->
       @if (enrolledCourses().length > 0) {
-        <div class="ed-section">
-          <h2 class="ed-section-title">
-            My Courses
-            <span class="ed-section-count">{{ enrolledCourses().length }}</span>
-          </h2>
-
-          <div class="course-strip">
-            @for (item of enrolledCourses(); track item.course.id; let i = $index) {
-              <div class="course-mini-card" (click)="openCourse(item.course, item.learningPathId)">
-                <div class="course-mini-thumb" [style.background]="item.course.image ? 'transparent' : getGradient(i)">
-                  @if (item.course.image) {
-                    <img [src]="getCoursePictureUrl(item.course)" alt="" />
-                  } @else {
-                    <span class="material-symbols-outlined">menu_book</span>
-                  }
-                </div>
-
-                <div class="course-mini-info">
-                  <h3>{{ item.course.title }}</h3>
-                  <p>{{ item.learningPathTitle }}</p>
-                  <div class="course-mini-progress">
-                    <div
-                      class="course-mini-progress-fill"
-                      [style.width.%]="getCourseProgress(item.course.id)"
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            }
-          </div>
-        </div>
+        <app-my-courses
+          [enrolledCourses]="enrolledCourses()"
+          [courseProgressMap]="courseProgressMap()"
+          (open)="openCourse($event.course, $event.learningPathId)"
+        ></app-my-courses>
       }
 
       <!-- ── My Learning Paths (enrolled) ────────────────── -->
@@ -131,37 +75,13 @@
           } @else {
             <div class="ed-grid">
               @for (path of filteredEnrolled(); track path.id; let i = $index) {
-                <div class="ed-card" (click)="openPath(path.id)">
-                  <div class="ed-card-banner" [style.background]="path.image ? 'transparent' : getGradient(i)">
-                    @if (path.image) {
-                      <img [src]="getPictureUrl(path)" alt="" class="ed-card-banner-img" />
-                      <div class="ed-card-banner-overlay"></div>
-                    }
-                    <span class="ed-badge">{{ getCourseCount(path) }} COURSES</span>
-                    <span class="ed-enrolled-badge">
-                      <span class="material-symbols-outlined">check_circle</span>
-                      Enrolled
-                    </span>
-                  </div>
-                  <div class="ed-card-body">
-                    <h3>{{ path.title }}</h3>
-                    <p>{{ path.description || 'No description provided.' }}</p>
-                    <div class="ed-progress-bar">
-                      <div class="ed-progress-fill" [style.width.%]="getProgress(path.id)"></div>
-                    </div>
-                    <div class="ed-progress-text">{{ getProgress(path.id) }}% complete</div>
-                    <div class="ed-card-footer">
-                      <span class="ed-meta">
-                        <span class="material-symbols-outlined">menu_book</span>
-                        {{ getCourseCount(path) }} courses
-                      </span>
-                      <span class="ed-cta">
-                        {{ getProgress(path.id) > 0 ? 'Continue' : 'Start' }}
-                        <span class="material-symbols-outlined">arrow_forward</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                <app-learning-path-card
+                  [path]="path"
+                  [isEnrolled]="true"
+                  [progress]="getProgress(path.id)"
+                  [gradient]="getGradient(i)"
+                  (clickPath)="openPath($event)"
+                ></app-learning-path-card>
               }
             </div>
           }
@@ -184,25 +104,11 @@
           } @else {
             <div class="ed-grid">
               @for (path of filteredAvailable(); track path.id; let i = $index) {
-                <div class="ed-card ed-card--available">
-                  <div class="ed-card-banner" [style.background]="path.image ? 'transparent' : getGradient(i + enrolledPaths().length)">
-                    @if (path.image) {
-                      <img [src]="getPictureUrl(path)" alt="" class="ed-card-banner-img" />
-                      <div class="ed-card-banner-overlay"></div>
-                    }
-                    <span class="ed-badge">{{ getCourseCount(path) }} COURSES</span>
-                  </div>
-                  <div class="ed-card-body">
-                    <h3>{{ path.title }}</h3>
-                    <p>{{ path.description || 'No description provided.' }}</p>
-                    <div class="ed-card-footer">
-                      <span class="ed-meta">
-                        <span class="material-symbols-outlined">menu_book</span>
-                        {{ getCourseCount(path) }} courses
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                <app-learning-path-card
+                  [path]="path"
+                  [isEnrolled]="false"
+                  [gradient]="getGradient(i + enrolledPaths().length)"
+                ></app-learning-path-card>
               }
             </div>
           }

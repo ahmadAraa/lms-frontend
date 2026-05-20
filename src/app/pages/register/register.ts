@@ -1,7 +1,7 @@
 import { Component, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
-import { AuthService } from '../../services/auth';
+import { AuthService } from '../../core/services/auth';
 
 @Component({
   selector: 'app-register',

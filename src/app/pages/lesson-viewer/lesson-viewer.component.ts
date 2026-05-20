@@ -1,11 +1,11 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { LessonsApiService } from '../../services/lessons-api.service';
-import { SectionsApiService } from '../../services/sections-api.service';
-import { CoursesApiService } from '../../services/courses-api.service';
-import { ProgressService } from '../../services/progress.service';
-import { AuthService } from '../../services/auth';
+import { LessonsApiService } from '../../core/services/lessons-api.service';
+import { SectionsApiService } from '../../core/services/sections-api.service';
+import { CoursesApiService } from '../../core/services/courses-api.service';
+import { ProgressService } from '../../core/services/progress.service';
+import { AuthService } from '../../core/services/auth';
 import {
   LessonResponseDTO,
   SectionResponseDTO,
