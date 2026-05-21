@@ -73,7 +73,7 @@
               <p>No enrolled paths match "{{ searchQuery() }}"</p>
             </div>
           } @else {
-            <div class="ed-grid">
+            <div class="ed-grid stagger-container">
               @for (path of filteredEnrolled(); track path.id; let i = $index) {
                 <app-learning-path-card
                   [path]="path"
@@ -102,7 +102,7 @@
               <p>No other paths match "{{ searchQuery() }}"</p>
             </div>
           } @else {
-            <div class="ed-grid">
+            <div class="ed-grid stagger-container">
               @for (path of filteredAvailable(); track path.id; let i = $index) {
                 <app-learning-path-card
                   [path]="path"

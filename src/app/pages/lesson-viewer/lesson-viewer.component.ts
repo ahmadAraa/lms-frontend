@@ -280,7 +280,7 @@ export class LessonViewerComponent implements OnInit {
       return;
     }
 
-    void this.router.navigate(['/employee/dashboard']);
+    void this.router.navigate(this.pathId ? ['/learning-path', String(this.pathId)] : ['/employee/dashboard']);
   }
 
   /**

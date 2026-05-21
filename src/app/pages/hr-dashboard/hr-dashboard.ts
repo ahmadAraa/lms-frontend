@@ -8,8 +8,6 @@ import { Router } from '@angular/router';
 import { LearningPathService, LearningPathResponseDto } from '../../core/services/learning-path.service';
 import { ActivityService, AdminActivity } from '../../core/services/activity.service';
 import { EnrollmentService } from '../../core/services/enrollment.service';
-import { NotificationBellComponent } from '../../components/notification-bell/notification-bell';
-
 import { LearningPathDistributionComponent } from './components/learning-path-distribution/learning-path-distribution.component';
 import { RecentActivityComponent } from './components/recent-activity/recent-activity.component';
 import { QuickActionsComponent } from './components/quick-actions/quick-actions.component';
@@ -26,7 +24,6 @@ import { QuickActionsComponent } from './components/quick-actions/quick-actions.
     CommonModule,
     FormsModule,
     RouterLink,
-    NotificationBellComponent,
     LearningPathDistributionComponent,
     RecentActivityComponent,
     QuickActionsComponent,

@@ -2,13 +2,19 @@
   <!-- Top Banner -->
   <div class="lp-banner">
     <div class="lp-banner-content">
-      <div class="breadcrumb">
-        <a [routerLink]="isStaffPreview() ? '/learning-paths' : '/employee/dashboard'" class="breadcrumb-link">Home</a>
-        <span class="breadcrumb-sep">&gt;</span>
-        <span class="breadcrumb-current">{{ path()?.title || 'Loading...' }}</span>
+      <div class="lp-header-row">
+        <button type="button" class="back-btn" (click)="goBack()" aria-label="Go Back">
+          <span class="material-symbols-outlined">arrow_back</span>
+        </button>
+        <div class="lp-header-info">
+          <div class="breadcrumb">
+            <a [routerLink]="isStaffPreview() ? '/learning-paths' : '/employee/dashboard'" class="breadcrumb-link">Home</a>
+            <span class="breadcrumb-sep">&gt;</span>
+            <span class="breadcrumb-current">{{ path()?.title || 'Loading...' }}</span>
+          </div>
+          <h1>{{ path()?.title || 'Loading...' }}</h1>
+        </div>
       </div>
-      
-      <h1>{{ path()?.title || 'Loading...' }}</h1>
       <p class="banner-desc">{{ path()?.description || 'A comprehensive learning path.' }}</p>
       
       <div class="banner-meta">

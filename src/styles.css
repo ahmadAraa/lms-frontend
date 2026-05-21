@@ -27,6 +27,25 @@
   --gray-900:    #111827;
   --white:       #ffffff;
 
+  /* Typographic scale */
+  --text-xs:     11px;
+  --text-sm:     13px;
+  --text-md:     14px;
+  --text-lg:     16px;
+  --text-xl:     20px;
+  --text-2xl:    28px;
+
+  /* Spacing scale */
+  --space-1:     4px;
+  --space-2:     8px;
+  --space-3:     12px;
+  --space-4:     16px;
+  --space-5:     20px;
+  --space-6:     24px;
+  --space-8:     32px;
+  --space-10:    40px;
+  --space-12:    48px;
+
   /* Shadows */
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
   --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
@@ -64,13 +83,29 @@ body {
 
 /* Page fade-in animation */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
 .animate-in {
-  animation: fadeInUp 0.35s ease forwards;
+  opacity: 0;
+  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Stagger entrance utility for child elements */
+.stagger-container > * {
+  opacity: 0;
+  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.stagger-container > *:nth-child(1) { animation-delay: 0.04s; }
+.stagger-container > *:nth-child(2) { animation-delay: 0.08s; }
+.stagger-container > *:nth-child(3) { animation-delay: 0.12s; }
+.stagger-container > *:nth-child(4) { animation-delay: 0.16s; }
+.stagger-container > *:nth-child(5) { animation-delay: 0.20s; }
+.stagger-container > *:nth-child(6) { animation-delay: 0.24s; }
+.stagger-container > *:nth-child(7) { animation-delay: 0.28s; }
+.stagger-container > *:nth-child(8) { animation-delay: 0.32s; }
 
 /* Shared profile menu */
 .profile-menu-wrapper {
@@ -210,4 +245,32 @@ body {
 
 .profile-dropdown-item .material-symbols-outlined {
   font-size: 18px;
+}
+
+/* ── Keyboard outline focus ring accessibility standard ── */
+:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* ── Screen reader skip-link standard ── */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 0;
+  background: var(--navy);
+  color: var(--white);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  z-index: 9999;
+  border-radius: 0 0 var(--radius) 0;
+  text-decoration: none;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 0;
+  outline: none;
+  box-shadow: var(--shadow-lg);
 }

@@ -37,6 +37,16 @@ export class Login implements OnInit {
   isLoading = false;
 
   /**
+   * Controls password input visibility toggle.
+   */
+  showPassword = false;
+
+  /**
+   * Controls email local storage credential preservation.
+   */
+  rememberMe = false;
+
+  /**
    * Constructs the Login component.
    *
    * @param authService - The service responsible for sending credential updates and saving local tokens.
@@ -61,6 +71,12 @@ export class Login implements OnInit {
       } else {
         this.router.navigate(['/employee/dashboard']);
       }
+    } else {
+      const savedEmail = localStorage.getItem('remembered_email');
+      if (savedEmail) {
+        this.email = savedEmail;
+        this.rememberMe = true;
+      }
     }
   }
 
@@ -81,6 +97,14 @@ export class Login implements OnInit {
           this.cdr.markForCheck();
           return;
         }
+        
+        // Remember Me Email Preservation
+        if (this.rememberMe) {
+          localStorage.setItem('remembered_email', this.email.trim());
+        } else {
+          localStorage.removeItem('remembered_email');
+        }
+
         this.authService.saveToken(token);
         const role = this.authService.getUserRole();
 

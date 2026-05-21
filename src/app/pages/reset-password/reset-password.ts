@@ -52,6 +52,16 @@ export class ResetPassword implements OnInit {
   isLoading = false;
 
   /**
+   * Controls new password input visibility toggle.
+   */
+  showPassword = false;
+
+  /**
+   * Controls password confirmation input visibility toggle.
+   */
+  showConfirmPassword = false;
+
+  /**
    * Constructs the ResetPassword component.
    *
    * @param route - The ActivatedRoute used to inspect active query parameter fields.

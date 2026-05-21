@@ -921,3 +921,35 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Password eye toggle absolute position overlay */
+.password-toggle-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--gray-400);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.password-toggle-btn:hover {
+  color: var(--navy);
+  background: var(--gray-100);
+}
+
+.password-toggle-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+/* Offset input padding right if there's a password toggle */
+.input-with-toggle {
+  padding-right: 46px !important;
+}

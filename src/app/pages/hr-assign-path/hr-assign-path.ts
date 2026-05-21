@@ -1,12 +1,10 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged, Subject, switchMap, catchError, of, forkJoin, map } from 'rxjs';
 import { LearningPathService, LearningPathResponseDto } from '../../core/services/learning-path.service';
 import { EnrollmentService, UserInfo, UserSearchResult } from '../../core/services/enrollment.service';
 import { ActivityService } from '../../core/services/activity.service';
-import { NotificationBellComponent } from '../../components/notification-bell/notification-bell';
 import { AuthService } from '../../core/services/auth';
 
 /**
@@ -18,7 +16,7 @@ import { AuthService } from '../../core/services/auth';
 @Component({
   selector: 'app-hr-assign-path',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, NotificationBellComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './hr-assign-path.html',
   styleUrl: './hr-assign-path.css',
 })

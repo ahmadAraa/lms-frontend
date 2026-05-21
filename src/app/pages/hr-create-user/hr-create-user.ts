@@ -1,13 +1,12 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize, timeout, switchMap, catchError, of, forkJoin } from 'rxjs';
 import { AuthService } from '../../core/services/auth';
 import { EnrollmentService, UserInfo } from '../../core/services/enrollment.service';
 import { ActivityService } from '../../core/services/activity.service';
-import { NotificationBellComponent } from '../../components/notification-bell/notification-bell';
 
 import { UserRole } from '../../core/services/auth';
 
@@ -20,7 +19,7 @@ import { UserRole } from '../../core/services/auth';
 @Component({
   selector: 'app-hr-create-user',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, NotificationBellComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './hr-create-user.html',
   styleUrl: './hr-create-user.css',
 })
@@ -77,6 +76,16 @@ export class HrCreateUser implements OnInit {
    * Form binding property to confirm entered passwords.
    */
   confirmPassword = '';
+
+  /**
+   * Controls password input visibility toggle in the creation form.
+   */
+  showPassword = false;
+
+  /**
+   * Controls password confirmation input visibility toggle in the creation form.
+   */
+  showConfirmPassword = false;
 
   /**
    * Form binding property for user's full name.

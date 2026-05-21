@@ -32,12 +32,28 @@
           <span class="material-symbols-outlined input-icon-left">lock_person</span>
           <input
             id="password"
-            type="password"
+            [type]="showPassword ? 'text' : 'password'"
             [(ngModel)]="password"
             name="password"
             placeholder="••••••••••••"
+            class="input-with-toggle"
           />
+          <button
+            type="button"
+            class="password-toggle-btn"
+            (click)="showPassword = !showPassword"
+            [aria-label]="showPassword ? 'Hide password' : 'Show password'"
+          >
+            <span class="material-symbols-outlined">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
+          </button>
         </div>
+      </div>
+
+      <div class="checkbox-row">
+        <label class="checkbox-container">
+          <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe" />
+          Remember me on this device
+        </label>
       </div>
 
       @if (errorMessage) {

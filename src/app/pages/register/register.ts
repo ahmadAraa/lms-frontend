@@ -57,6 +57,16 @@ export class Register {
   isLoading = false;
 
   /**
+   * Controls password input visibility toggle.
+   */
+  showPassword = false;
+
+  /**
+   * Controls password confirmation input visibility toggle.
+   */
+  showConfirmPassword = false;
+
+  /**
    * Constructs the Register component.
    *
    * @param authService - The service responsible for submitting registration data payloads.
