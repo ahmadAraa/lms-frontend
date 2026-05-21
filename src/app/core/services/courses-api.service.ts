@@ -5,29 +5,37 @@ import { BASE_URL, CourseResponseDTO } from '../../types/course-builder.types';
 import { fetchJson } from './course-builder-api.utils';
 
 /**
- * Payload used when creating or updating a course.
+ * Data payload format representing the form model when creating or updating a course.
  */
 interface CourseFormDto {
+  /** The course title */
   title: string;
+  /** Detailed course description, or null if empty */
   description: string | null;
+  /** The unique ID of the parent learning path this course belongs to */
   learningPathId: number;
+  /** An optional picture/banner cover image file associated with the course */
   picture?: File | null;
 }
 
+/**
+ * Data payload used to represent a new ordering placement of a course in a path.
+ */
 interface ReorderCourseDto {
+  /** The unique course identifier */
   id: number;
+  /** The new 0-indexed relative display position order */
   order: number;
 }
 
 /**
- * Service responsible for managing courses.
+ * Service responsible for managing all course-related CRUD and administration operations.
  *
- * Features:
- * - Fetch courses by learning path
- * - Fetch a single course by ID
- * - Create course with optional image upload
- * - Update course with optional image upload
- * - Delete course
+ * Facilitates:
+ * - Fetching course listings by learning path or active enrollment
+ * - Retrieval of a single course by unique identifier
+ * - Course addition and revision with multipart FormData cover image handling
+ * - Course deletion and sequencing within a learning path
  */
 @Injectable({
   providedIn: 'root',
@@ -36,7 +44,10 @@ export class CoursesApiService {
   constructor(private http: HttpClient) {}
 
   /**
-   * Fetches all courses that belong to a specific learning path.
+   * Retrieves all courses assigned under a specific learning path.
+   *
+   * @param learningPathId - The unique ID of the target learning path.
+   * @returns A promise resolving to an array of courses (`CourseResponseDTO[]`).
    */
   async getCoursesByPath(learningPathId: number): Promise<CourseResponseDTO[]> {
     return fetchJson<CourseResponseDTO[]>(
@@ -45,15 +56,20 @@ export class CoursesApiService {
   }
 
   /**
-   * Fetches one course by ID.
+   * Retrieves details of a single course.
+   *
+   * @param id - The unique ID of the course.
+   * @returns A promise resolving to the matching `CourseResponseDTO`.
    */
   async getCourseById(id: number): Promise<CourseResponseDTO> {
     return fetchJson<CourseResponseDTO>(`${BASE_URL}/api/Course/${id}`);
   }
 
   /**
-   * Fetches all courses the current employee is directly enrolled in
-   * (not via a learning path).
+   * Retrieves all courses that the currently logged-in employee is enrolled in directly,
+   * bypassing learning path associations.
+   *
+   * @returns A promise resolving to an array of matching `CourseResponseDTO[]` elements.
    */
   async getMyCourses(): Promise<CourseResponseDTO[]> {
     return fetchJson<CourseResponseDTO[]>(`${BASE_URL}/api/Course/GetMyCourses`);
@@ -62,7 +78,11 @@ export class CoursesApiService {
   /**
    * Creates a new course.
    *
-   * Uses FormData because course image upload requires multipart/form-data.
+   * Because course creation optionally accepts an image file, the payload is structured
+   * as a multipart/form-data payload via browser `FormData`.
+   *
+   * @param dto - Object detailing the course input values.
+   * @returns A promise that resolves when the course creation is complete.
    */
   async createCourse(dto: CourseFormDto): Promise<void> {
     const formData = this.buildFormData(dto);
@@ -79,7 +99,11 @@ export class CoursesApiService {
   /**
    * Updates an existing course.
    *
-   * Uses FormData to support optional image replacement.
+   * Structures the update fields and optional updated image into multipart `FormData`.
+   *
+   * @param id - The unique ID of the course to update.
+   * @param dto - Object detailing the modified course properties.
+   * @returns A promise that resolves when the backend updates are saved.
    */
   async updateCourse(id: number, dto: CourseFormDto): Promise<void> {
     const formData = this.buildFormData(dto);
@@ -94,7 +118,10 @@ export class CoursesApiService {
   }
 
   /**
-   * Deletes a course by ID.
+   * Deletes a course from the system.
+   *
+   * @param id - The unique course identifier.
+   * @returns A promise resolving when the deletion is completed.
    */
   async deleteCourse(id: number): Promise<void> {
     await fetchJson<void>(`${BASE_URL}/api/Course/DeleteCourse/${id}`, {
@@ -103,7 +130,10 @@ export class CoursesApiService {
   }
 
   /**
-   * Reorders courses within a learning path.
+   * Submits a list of courses and their updated sequence numbers to save re-ordering.
+   *
+   * @param dto - Array containing course IDs and their target order index values.
+   * @returns A promise that resolves once the sequence is persisted.
    */
   async reorderCourses(dto: ReorderCourseDto[]): Promise<void> {
     await fetchJson<void>(`${BASE_URL}/api/Course/reorder`, {
@@ -113,11 +143,11 @@ export class CoursesApiService {
   }
 
   /**
-   * Builds FormData for create/update course requests.
+   * Helper method that transforms a course form data object into a standard `FormData` payload.
+   * Excludes optional values like descriptions or cover pictures if they are not provided.
    *
-   * Important:
-   * - Do NOT manually set Content-Type.
-   * - Browser automatically sets multipart/form-data boundary.
+   * @param dto - The source course form transfer object.
+   * @returns An configured browser `FormData` instance.
    */
   private buildFormData(dto: CourseFormDto): FormData {
     const formData = new FormData();
@@ -137,10 +167,10 @@ export class CoursesApiService {
   }
 
   /**
-   * Builds authorization headers for protected course endpoints.
+   * Utility helper compiling standard authentication bearer headers from browser local storage.
+   * Avoids defining Content-Type headers explicitly to prevent breaking multipart boundaries.
    *
-   * Only Authorization is set.
-   * Content-Type is intentionally omitted for FormData requests.
+   * @returns An `HttpHeaders` instance configured with the active token or empty.
    */
   private authHeaders(): HttpHeaders {
     const token = localStorage.getItem('token');

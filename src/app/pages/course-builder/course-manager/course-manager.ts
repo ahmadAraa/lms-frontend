@@ -16,16 +16,42 @@ import {
   SectionResponseDTO,
 } from '../../../types/course-builder.types';
 
+/**
+ * Drag state tracking information for section reordering.
+ */
 interface SectionDragState {
+  /**
+   * The ID of the course in which the section resides.
+   */
   courseId: number;
+
+  /**
+   * The ID of the section currently being dragged.
+   */
   sectionId: number;
 }
 
+/**
+ * Drag state tracking information for lesson reordering.
+ */
 interface LessonDragState {
+  /**
+   * The ID of the section in which the lesson resides.
+   */
   sectionId: number;
+
+  /**
+   * The ID of the lesson currently being dragged.
+   */
   lessonId: number;
 }
 
+/**
+ * Course Builder Orchestrator Page.
+ * Implements full course curriculum management (CRUD courses, sections, and lessons)
+ * for a designated learning path. Features drag-and-drop hierarchy sorting, modal-based
+ * asset uploads (images for courses, video files for lessons), and responsive inline edit text inputs.
+ */
 @Component({
   selector: 'app-course-manager-page',
   standalone: true,
@@ -34,45 +60,181 @@ interface LessonDragState {
   styleUrl: './course-manager.css',
 })
 export class CourseManagerPage implements OnInit {
+  /**
+   * ID of the active learning path.
+   */
   pathId = 0;
+
+  /**
+   * The full hierarchical learning path, course, section, and lesson tree.
+   */
   tree: LearningPathResponseDto | null = null;
+
+  /**
+   * Signifies if data load is active.
+   */
   loading = true;
+
+  /**
+   * Captures load failure error messages.
+   */
   error = '';
+
+  /**
+   * Set containing course IDs currently expanded/opened in the list view.
+   */
   expandedCourseIds = new Set<number>();
+
+  /**
+   * Set containing section IDs currently expanded/opened in the accordion.
+   */
   expandedSectionIds = new Set<number>();
+
+  /**
+   * Current inline editor edit identifier (e.g. `section-{id}` or `lesson-{id}`).
+   */
   editingKey = '';
 
   // Course modal
+  /**
+   * Flag indicating if the course create/edit modal window is open.
+   */
   courseModalOpen = false;
+
+  /**
+   * ID of the course currently being edited (null signifies adding a new course).
+   */
   editingCourseId: number | null = null;
+
+  /**
+   * Course modal input binding for title.
+   */
   courseTitle = '';
+
+  /**
+   * Course modal input binding for description.
+   */
   courseDescription = '';
+
+  /**
+   * Chosen course picture file.
+   */
   selectedFile: File | null = null;
+
+  /**
+   * Image file data-URL string for visual cover preview in the modal.
+   */
   imagePreview: string | null = null;
+
+  /**
+   * Flag indicating if a file is hovering over the modal drag-and-drop container.
+   */
   isDragOver = false;
+
+  /**
+   * Flag indicating if a modal action is saving on the server.
+   */
   isSaving = false;
+
+  /**
+   * Flag indicating if a reordering API call is active.
+   */
   isReordering = false;
+
+  /**
+   * Current section drag transaction state.
+   */
   draggingSection: SectionDragState | null = null;
+
+  /**
+   * Section ID currently being hovered over during a section drag.
+   */
   dragOverSectionId: number | null = null;
+
+  /**
+   * Current lesson drag transaction state.
+   */
   draggingLesson: LessonDragState | null = null;
+
+  /**
+   * Lesson ID currently being hovered over during a lesson drag.
+   */
   dragOverLessonId: number | null = null;
 
   // Section modal
+  /**
+   * Flag indicating if the section create/edit modal window is open.
+   */
   sectionModalOpen = false;
+
+  /**
+   * ID of the course in which the new section will be created.
+   */
   sectionTargetCourseId: number | null = null;
+
+  /**
+   * Section modal input binding for title.
+   */
   sectionTitle = '';
+
+  /**
+   * Section modal input binding for description.
+   */
   sectionDescription = '';
 
   // Lesson modal
+  /**
+   * Flag indicating if the lesson create/edit modal window is open.
+   */
   lessonModalOpen = false;
+
+  /**
+   * ID of the section in which the new lesson will be created.
+   */
   lessonTargetSectionId: number | null = null;
+
+  /**
+   * Lesson modal input binding for title.
+   */
   lessonTitle = '';
+
+  /**
+   * Lesson modal input binding for description.
+   */
   lessonDescription = '';
+
+  /**
+   * Uploaded lesson video file.
+   */
   lessonVideoFile: File | null = null;
+
+  /**
+   * Lesson modal input binding for external URLs (for link material types).
+   */
   lessonLinkUrl = '';
+
+  /**
+   * Material type selector: 0 for Video file, 3 for Link.
+   */
   lessonMaterialType = 0; // default to Video (0)
+
+  /**
+   * Lesson sorting sequence order value.
+   */
   lessonOrder = 1;
 
+  /**
+   * Constructs the CourseManagerPage component.
+   *
+   * @param route - Active route configuration to read query arguments.
+   * @param router - Navigation router.
+   * @param pathsApi - API service to fetch path details trees.
+   * @param coursesApi - API service to manage course records.
+   * @param sectionsApi - API service to manage section records.
+   * @param lessonsApi - API service to manage lesson records.
+   * @param toast - Toast notification manager.
+   * @param cdr - Change detector utility.
+   */
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,
@@ -84,6 +246,9 @@ export class CourseManagerPage implements OnInit {
     private readonly cdr: ChangeDetectorRef,
   ) {}
 
+  /**
+   * Initial page hook. Resolves path identity parameter and triggers initial data pull.
+   */
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('learningPathId'));
     if (!id) {
@@ -95,6 +260,10 @@ export class CourseManagerPage implements OnInit {
     void this.reload();
   }
 
+  /**
+   * Reloads the complete curriculum structure for the current learning path.
+   * Re-evaluates visual order and notifies user on failures.
+   */
   async reload(): Promise<void> {
     this.loading = true;
     this.error = '';
@@ -110,30 +279,64 @@ export class CourseManagerPage implements OnInit {
     }
   }
 
+  /**
+   * Toggles the open/collapsed layout display state of a course card.
+   *
+   * @param id - The course ID.
+   */
   toggleCourse(id: number): void {
     this.expandedCourseIds.has(id) ? this.expandedCourseIds.delete(id) : this.expandedCourseIds.add(id);
   }
 
+  /**
+   * Toggles the open/collapsed layout display state of a section accordion.
+   *
+   * @param id - The section ID.
+   */
   toggleSection(id: number): void {
     this.expandedSectionIds.has(id) ? this.expandedSectionIds.delete(id) : this.expandedSectionIds.add(id);
   }
 
   // ── Course Image helpers ─────────────────────────
+  /**
+   * Normalizes course cover art URLs, prepending local base URLs if necessary.
+   *
+   * @param course - The course object.
+   * @returns Fully-formed image URL or empty string.
+   */
   getCourseImageUrl(course: CourseResponseDTO): string {
     if (!course.pictureUrl) return '';
     if (course.pictureUrl.startsWith('http')) return course.pictureUrl;
     return `${BASE_URL}/${course.pictureUrl.replace(/^\//, '')}`;
   }
 
+  /**
+   * Aggregates the total number of lessons inside a course's sections.
+   *
+   * @param course - The course object.
+   * @returns Total count of lessons.
+   */
   getLessonCount(course: CourseResponseDTO): number {
     return (course.sections ?? []).reduce((sum, s) => sum + (s.lessons?.length ?? 0), 0);
   }
 
+  /**
+   * Returns the count of sections under a course.
+   *
+   * @param course - The course object.
+   * @returns Section count.
+   */
   getSectionCount(course: CourseResponseDTO): number {
     return course.sections?.length ?? 0;
   }
 
   // ── Course modal ─────────────────────────────────
+  /**
+   * Navigates administrators to a student-facing visual preview of the course.
+   * Automatically targets the first lesson inside the course if available, or redirects to course details.
+   *
+   * @param course - The course object.
+   */
   previewCourse(course: CourseResponseDTO): void {
     const firstLessonId = this.getFirstLessonId(course);
     if (firstLessonId) {
@@ -146,12 +349,24 @@ export class CourseManagerPage implements OnInit {
     });
   }
 
+  /**
+   * Deep-links and opens the Lesson Viewer interface for a specific lesson preview.
+   *
+   * @param course - The course context.
+   * @param lessonId - The lesson ID.
+   */
   previewLesson(course: CourseResponseDTO, lessonId: number): void {
     void this.router.navigate(['/lesson', lessonId], {
       state: { courseId: course.id, pathId: this.pathId },
     });
   }
 
+  /**
+   * Helper that traverses and finds the first chronological lesson ID in a course.
+   *
+   * @param course - The course context.
+   * @returns Numeric lesson ID or null.
+   */
   private getFirstLessonId(course: CourseResponseDTO): number | null {
     const sections = [...(course.sections ?? [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
@@ -163,6 +378,9 @@ export class CourseManagerPage implements OnInit {
     return null;
   }
 
+  /**
+   * Resets form values and opens the course creation modal dialog.
+   */
   openAddCourseModal(): void {
     this.editingCourseId = null;
     this.courseTitle = '';
@@ -172,6 +390,11 @@ export class CourseManagerPage implements OnInit {
     this.courseModalOpen = true;
   }
 
+  /**
+   * Loads existing details and opens the course edit modal dialog.
+   *
+   * @param course - The course object to modify.
+   */
   openEditCourseModal(course: CourseResponseDTO): void {
     this.editingCourseId = course.id;
     this.courseTitle = course.title;
@@ -182,6 +405,11 @@ export class CourseManagerPage implements OnInit {
   }
 
   // ── File selection / drag-drop ──────────────────
+  /**
+   * Handles keyboard/input file selections, loading the chosen file for upload.
+   *
+   * @param event - The input change event.
+   */
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
@@ -189,18 +417,33 @@ export class CourseManagerPage implements OnInit {
     }
   }
 
+  /**
+   * Triggers dragover visuals when a file is hovered over the drop area.
+   *
+   * @param event - The drag event.
+   */
   onDragOver(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
     this.isDragOver = true;
   }
 
+  /**
+   * Removes hover visuals when drag leaves.
+   *
+   * @param event - The drag event.
+   */
   onDragLeave(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
     this.isDragOver = false;
   }
 
+  /**
+   * Extracts dropped files and validates that they are images.
+   *
+   * @param event - The drop event.
+   */
   onDrop(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
@@ -216,11 +459,19 @@ export class CourseManagerPage implements OnInit {
     }
   }
 
+  /**
+   * Clears the current image selection from the course modal.
+   */
   removeImage(): void {
     this.selectedFile = null;
     this.imagePreview = null;
   }
 
+  /**
+   * Validates file size (max 5MB) and converts the image to a reader preview data string.
+   *
+   * @param file - The chosen picture file.
+   */
   private setFile(file: File): void {
     if (file.size > 5 * 1024 * 1024) {
       this.toast.error('Image must be under 5 MB.');
@@ -235,6 +486,10 @@ export class CourseManagerPage implements OnInit {
     reader.readAsDataURL(file);
   }
 
+  /**
+   * Submits the course modal form, initiating either course creation or modification.
+   * Triggers reload and toasts status updates.
+   */
   async submitCourseModal(): Promise<void> {
     if (!this.courseTitle.trim()) return;
     this.isSaving = true;
@@ -267,6 +522,11 @@ export class CourseManagerPage implements OnInit {
   }
 
   // ── Section modal ────────────────────────────────
+  /**
+   * Configures target context parameters and opens the section addition modal.
+   *
+   * @param courseId - The ID of the course in which the section will be added.
+   */
   openAddSectionModal(courseId: number): void {
     this.sectionTargetCourseId = courseId;
     this.sectionTitle = '';
@@ -274,6 +534,9 @@ export class CourseManagerPage implements OnInit {
     this.sectionModalOpen = true;
   }
 
+  /**
+   * Submits the section creation form, linking the new section to the target course.
+   */
   async submitSectionModal(): Promise<void> {
     if (!this.sectionTitle.trim() || this.sectionTargetCourseId === null) return;
     this.isSaving = true;
@@ -295,6 +558,11 @@ export class CourseManagerPage implements OnInit {
   }
 
   // ── Lesson modal ─────────────────────────────────
+  /**
+   * Resets form states, calculates the sequential order index, and opens the lesson addition modal.
+   *
+   * @param sectionId - The ID of the section in which the lesson will be added.
+   */
   openAddLessonModal(sectionId: number): void {
     this.lessonTargetSectionId = sectionId;
     this.lessonTitle = '';
@@ -310,6 +578,11 @@ export class CourseManagerPage implements OnInit {
     this.lessonModalOpen = true;
   }
 
+  /**
+   * Handles lesson video file selection updates.
+   *
+   * @param event - The input change event.
+   */
   onLessonVideoSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
@@ -317,6 +590,10 @@ export class CourseManagerPage implements OnInit {
     }
   }
 
+  /**
+   * Validates type settings, verifies that necessary assets (video files vs. external URLs)
+   * exist, and submits a lesson creation request to the LessonsApiService.
+   */
   async submitLessonModal(): Promise<void> {
     if (!this.lessonTitle.trim() || this.lessonTargetSectionId === null) return;
     
@@ -359,6 +636,12 @@ export class CourseManagerPage implements OnInit {
   }
 
   // ── Inline editing (sections/lessons) ────────────
+  /**
+   * Processes inline title and description updates for a specific section.
+   *
+   * @param sectionId - The section ID.
+   * @param event - Object holding new text inputs.
+   */
   async updateSection(sectionId: number, event: { title: string; description: string }): Promise<void> {
     try {
       await this.sectionsApi.updateSection(sectionId, { title: event.title, description: event.description || null });
@@ -370,6 +653,12 @@ export class CourseManagerPage implements OnInit {
     }
   }
 
+  /**
+   * Processes inline title and description updates for a specific lesson.
+   *
+   * @param lesson - The lesson object.
+   * @param event - Object holding new text inputs.
+   */
   async updateLesson(lesson: LessonResponseDTO, event: { title: string; description: string }): Promise<void> {
     try {
       await this.lessonsApi.updateLesson(lesson.id, { title: event.title, description: event.description || null, content: lesson.content || '' });
@@ -382,25 +671,51 @@ export class CourseManagerPage implements OnInit {
   }
 
   // ── Deletes ──────────────────────────────────────
+  /**
+   * Prompts user and deletes a course record.
+   *
+   * @param id - The course ID.
+   */
   async removeCourse(id: number): Promise<void> {
     if (!confirm('Delete this course?')) return;
     await this.safeDelete(async () => this.coursesApi.deleteCourse(id), 'Course deleted');
   }
 
+  /**
+   * Prompts user and deletes a section record.
+   *
+   * @param id - The section ID.
+   */
   async removeSection(id: number): Promise<void> {
     if (!confirm('Delete this section?')) return;
     await this.safeDelete(async () => this.sectionsApi.deleteSection(id), 'Section deleted');
   }
 
+  /**
+   * Prompts user and deletes a lesson record.
+   *
+   * @param id - The lesson ID.
+   */
   async removeLesson(id: number): Promise<void> {
     if (!confirm('Delete this lesson?')) return;
     await this.safeDelete(async () => this.lessonsApi.deleteLesson(id), 'Lesson deleted');
   }
 
+  /**
+   * Routes the browser to the rich text markdown content editor page for a specific lesson.
+   *
+   * @param id - The lesson ID.
+   */
   editLessonContent(id: number): void {
     void this.router.navigate(['/lessons', id, 'edit']);
   }
 
+  /**
+   * Wraps delete operations, triggers toasts on completion, and reloads active lists.
+   *
+   * @param action - Async delete action delegate.
+   * @param successMessage - Toast message on success.
+   */
   private async safeDelete(action: () => Promise<void>, successMessage: string): Promise<void> {
     try {
       await action();
@@ -411,10 +726,24 @@ export class CourseManagerPage implements OnInit {
     }
   }
 
+  /**
+   * Computes a unique string key identifier for section items.
+   *
+   * @param section - The section object.
+   * @returns Key identifier.
+   */
   sectionKey(section: SectionResponseDTO): string {
     return `section-${section.id}`;
   }
 
+  // Drag-and-drop section methods
+  /**
+   * Sets up drag data transfer when an administrator initiates dragging a section.
+   *
+   * @param course - The parent course.
+   * @param section - The dragged section.
+   * @param event - The drag event.
+   */
   startSectionDrag(course: CourseResponseDTO, section: SectionResponseDTO, event: DragEvent): void {
     event.stopPropagation();
     if (this.isReordering || this.editingKey === this.sectionKey(section)) return;
@@ -424,6 +753,13 @@ export class CourseManagerPage implements OnInit {
     if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
   }
 
+  /**
+   * Intercepts dragover events to support target move drops within the same course.
+   *
+   * @param course - The parent course.
+   * @param section - The section hovered over.
+   * @param event - The drag event.
+   */
   onSectionDragOver(course: CourseResponseDTO, section: SectionResponseDTO, event: DragEvent): void {
     if (!this.draggingSection || this.draggingSection.courseId !== course.id || this.draggingSection.sectionId === section.id) return;
 
@@ -433,11 +769,25 @@ export class CourseManagerPage implements OnInit {
     this.dragOverSectionId = section.id;
   }
 
+  /**
+   * Clears hover indicators when dragging section leaves a target row.
+   *
+   * @param section - The section left.
+   * @param event - The drag event.
+   */
   onSectionDragLeave(section: SectionResponseDTO, event: DragEvent): void {
     event.stopPropagation();
     if (this.dragOverSectionId === section.id) this.dragOverSectionId = null;
   }
 
+  /**
+   * Handles dropping sections, calculating new visual index allocations,
+   * updating local order fields, and dispatching structural reorders to the database.
+   *
+   * @param course - The parent course.
+   * @param targetSection - The section acting as target.
+   * @param event - The drag event.
+   */
   async dropSection(course: CourseResponseDTO, targetSection: SectionResponseDTO, event: DragEvent): Promise<void> {
     event.preventDefault();
     event.stopPropagation();
@@ -457,11 +807,22 @@ export class CourseManagerPage implements OnInit {
     await this.saveSectionOrder(sections);
   }
 
+  /**
+   * Clears dragging state metadata on drag termination.
+   */
   endSectionDrag(): void {
     this.draggingSection = null;
     this.dragOverSectionId = null;
   }
 
+  // Drag-and-drop lesson methods
+  /**
+   * Sets up drag data transfer when an administrator initiates dragging a lesson.
+   *
+   * @param section - The parent section.
+   * @param lesson - The dragged lesson.
+   * @param event - The drag event.
+   */
   startLessonDrag(section: SectionResponseDTO, lesson: LessonResponseDTO, event: DragEvent): void {
     event.stopPropagation();
     if (this.isReordering || this.editingKey === `lesson-${lesson.id}`) return;
@@ -471,6 +832,13 @@ export class CourseManagerPage implements OnInit {
     if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
   }
 
+  /**
+   * Intercepts dragover events to support lesson drops inside the same section boundary.
+   *
+   * @param section - The parent section.
+   * @param lesson - The lesson hovered over.
+   * @param event - The drag event.
+   */
   onLessonDragOver(section: SectionResponseDTO, lesson: LessonResponseDTO, event: DragEvent): void {
     if (!this.draggingLesson || this.draggingLesson.sectionId !== section.id || this.draggingLesson.lessonId === lesson.id) return;
 
@@ -480,11 +848,24 @@ export class CourseManagerPage implements OnInit {
     this.dragOverLessonId = lesson.id;
   }
 
+  /**
+   * Clears hover indicators when dragging lesson leaves a target row.
+   *
+   * @param lesson - The lesson left.
+   * @param event - The drag event.
+   */
   onLessonDragLeave(lesson: LessonResponseDTO, event: DragEvent): void {
     event.stopPropagation();
     if (this.dragOverLessonId === lesson.id) this.dragOverLessonId = null;
   }
 
+  /**
+   * Handles dropping lessons, calculating new visual index allocations, and updating database orders.
+   *
+   * @param section - The parent section.
+   * @param targetLesson - The lesson acting as target.
+   * @param event - The drag event.
+   */
   async dropLesson(section: SectionResponseDTO, targetLesson: LessonResponseDTO, event: DragEvent): Promise<void> {
     event.preventDefault();
     event.stopPropagation();
@@ -504,11 +885,20 @@ export class CourseManagerPage implements OnInit {
     await this.saveLessonOrder(lessons);
   }
 
+  /**
+   * Clears dragging state metadata on drag termination.
+   */
   endLessonDrag(): void {
     this.draggingLesson = null;
     this.dragOverLessonId = null;
   }
 
+  /**
+   * Shifts course order index upwards in the UI list, saving updates.
+   *
+   * @param index - Current index inside tree arrays.
+   * @param event - Click event.
+   */
   async moveCourseUp(index: number, event: Event): Promise<void> {
     event.stopPropagation();
     if (this.isReordering || index === 0 || !this.tree || !this.tree.courses) return;
@@ -521,6 +911,12 @@ export class CourseManagerPage implements OnInit {
     await this.saveCourseOrder(courses);
   }
 
+  /**
+   * Shifts course order index downwards in the UI list, saving updates.
+   *
+   * @param index - Current index inside tree arrays.
+   * @param event - Click event.
+   */
   async moveCourseDown(index: number, event: Event): Promise<void> {
     event.stopPropagation();
     if (this.isReordering || !this.tree || !this.tree.courses || index === this.tree.courses.length - 1) return;
@@ -533,6 +929,11 @@ export class CourseManagerPage implements OnInit {
     await this.saveCourseOrder(courses);
   }
 
+  /**
+   * Dispatches bulk course sorting indexes updates to the backend API.
+   *
+   * @param courses - List of courses.
+   */
   private async saveCourseOrder(courses: CourseResponseDTO[]): Promise<void> {
     this.isReordering = true;
 
@@ -552,6 +953,11 @@ export class CourseManagerPage implements OnInit {
     }
   }
 
+  /**
+   * Dispatches bulk section sorting indexes updates to the backend API.
+   *
+   * @param sections - List of sections.
+   */
   private async saveSectionOrder(sections: SectionResponseDTO[]): Promise<void> {
     this.isReordering = true;
     sections.forEach((section, i) => (section.order = i + 1));
@@ -568,6 +974,11 @@ export class CourseManagerPage implements OnInit {
     }
   }
 
+  /**
+   * Dispatches bulk lesson sorting indexes updates to the backend API.
+   *
+   * @param lessons - List of lessons.
+   */
   private async saveLessonOrder(lessons: LessonResponseDTO[]): Promise<void> {
     this.isReordering = true;
     lessons.forEach((lesson, i) => (lesson.order = i + 1));
@@ -584,11 +995,21 @@ export class CourseManagerPage implements OnInit {
     }
   }
 
+  /**
+   * Modifies array indices to shift items.
+   *
+   * @param items - Target array.
+   * @param fromIndex - Origin array index.
+   * @param toIndex - Destination array index.
+   */
   private moveItem<T>(items: T[], fromIndex: number, toIndex: number): void {
     const [item] = items.splice(fromIndex, 1);
     items.splice(toIndex, 0, item);
   }
 
+  /**
+   * Sorts path, course, section, and lesson records in compliance with sequential order variables.
+   */
   private sortTree(): void {
     if (!this.tree?.courses) return;
 
@@ -601,6 +1022,13 @@ export class CourseManagerPage implements OnInit {
     });
   }
 
+  /**
+   * Sorting comparator delegate.
+   *
+   * @param a - Left comparison operand.
+   * @param b - Right comparison operand.
+   * @returns Sorting indicator integer.
+   */
   private compareOrder<T extends { id: number; order: number }>(a: T, b: T): number {
     const orderDiff = (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER);
     if (orderDiff !== 0) return orderDiff;

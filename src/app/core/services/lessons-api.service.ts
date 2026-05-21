@@ -3,25 +3,21 @@ import { BASE_URL, LessonResponseDTO } from '../../types/course-builder.types';
 import { fetchJson } from './course-builder-api.utils';
 
 /**
- * Service responsible for managing lessons.
+ * Service responsible for managing lesson items inside course sections.
  *
- * Features:
- * - Fetch lessons by section
- * - Fetch single lesson
- * - Create lesson (with file upload support)
- * - Update lesson
- * - Delete lesson
- * - Mark lesson as completed
+ * Provides CRUD capabilities for lessons, sequences them, supports file uploads
+ * for video content via multi-part form requests, and allows users to check
+ * off lesson completion states.
  */
 @Injectable({
   providedIn: 'root',
 })
 export class LessonsApiService {
   /**
-   * Fetch all lessons for a specific section.
+   * Retrieves all lessons associated under a specific course section.
    *
-   * @param sectionId - Section ID
-   * @returns Promise<LessonResponseDTO[]>
+   * @param sectionId - The unique section ID.
+   * @returns A promise resolving to an array of `LessonResponseDTO` elements.
    */
   async getLessonsBySection(sectionId: number): Promise<LessonResponseDTO[]> {
     return fetchJson<LessonResponseDTO[]>(
@@ -30,26 +26,31 @@ export class LessonsApiService {
   }
 
   /**
-   * Fetch a single lesson by its ID.
+   * Retrieves full details of a single lesson.
    *
-   * @param id - Lesson ID
-   * @returns Promise<LessonResponseDTO>
+   * @param id - Unique database ID of the lesson.
+   * @returns A promise resolving to the corresponding `LessonResponseDTO` details.
    */
   async getLessonById(id: number): Promise<LessonResponseDTO> {
     return fetchJson<LessonResponseDTO>(`${BASE_URL}/api/Lessons/GetLessonById/${id}`);
   }
 
   /**
-   * Creates a new lesson.
+   * Publishes a new lesson.
    *
-   * Supports:
-   * - Video file upload
-   * - External link
-   * - Text content
+   * Accommodates text content, video uploads, or reference hyperlinks.
+   * Compiles elements into browser `FormData` multi-part structure to properly upload video files.
    *
-   * Uses FormData because backend expects multipart/form-data.
-   *
-   * @param dto - Lesson creation payload
+   * @param dto - Configuration arguments for lesson addition.
+   * @param dto.title - Desired lesson title.
+   * @param dto.description - Optional lesson description.
+   * @param dto.content - Optional text content of the lesson.
+   * @param dto.videoUrl - Optional video file for streaming lessons.
+   * @param dto.linkUrl - Optional external hyperlink reference.
+   * @param dto.materialType - Numerical enum ID representing material type (e.g. video, article, link).
+   * @param dto.sectionId - Target section ID this lesson belongs to.
+   * @param dto.order - Sequential order position index.
+   * @returns A promise resolving once the lesson is added.
    */
   async createLesson(dto: {
     title: string;
@@ -113,10 +114,12 @@ export class LessonsApiService {
   }
 
   /**
-   * Updates an existing lesson.
+   * Updates text properties (title, description, content) of an existing lesson.
+   * Does not support re-uploading video files here.
    *
-   * @param id - Lesson ID
-   * @param dto - Updated lesson data
+   * @param id - Unique database identifier of the lesson.
+   * @param dto - Object detailing updated text properties.
+   * @returns A promise resolving when the lesson update is complete.
    */
   async updateLesson(
     id: number,
@@ -133,9 +136,10 @@ export class LessonsApiService {
   }
 
   /**
-   * Deletes a lesson.
+   * Deletes a lesson from the section database.
    *
-   * @param id - Lesson ID
+   * @param id - Unique database ID of the lesson.
+   * @returns A promise resolving once the deletion completes.
    */
   async deleteLesson(id: number): Promise<void> {
     await fetchJson<void>(`${BASE_URL}/api/Lessons/${id}`, {
@@ -144,9 +148,10 @@ export class LessonsApiService {
   }
 
   /**
-   * Sets the completion state of a lesson for the current user.
+   * Sets the completion state of a lesson to true for the currently logged-in user.
    *
-   * @param lessonId  - Lesson ID
+   * @param lessonId - Unique database ID of the lesson completed.
+   * @returns A promise resolving when the completion is successfully updated.
    */
   async completeLesson(lessonId: number): Promise<void> {
     await fetchJson<void>(`${BASE_URL}/api/Lessons/CompleteLesson/${lessonId}`, {
@@ -154,6 +159,12 @@ export class LessonsApiService {
     });
   }
 
+  /**
+   * Submits a batch of lesson sequences to save the updated ordering.
+   *
+   * @param dto - List containing lesson IDs and their target order indices.
+   * @returns A promise resolving once the sequencing is completed.
+   */
   async reorderLessons(dto: { id: number; order: number }[]): Promise<void> {
     await fetchJson<void>(`${BASE_URL}/api/Lessons/reorder`, {
       method: 'POST',

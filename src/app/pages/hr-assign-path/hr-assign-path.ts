@@ -9,6 +9,12 @@ import { ActivityService } from '../../core/services/activity.service';
 import { NotificationBellComponent } from '../../components/notification-bell/notification-bell';
 import { AuthService } from '../../core/services/auth';
 
+/**
+ * HR Assign Path Component.
+ * Enables HR staff to assign learning paths to individual employees.
+ * Features an autocomplete employee search box with RxJS debounce/concurrency protections,
+ * selective role filters (only role === 'EMPLOYEE' allowed), catalog selection, and assignment logging.
+ */
 @Component({
   selector: 'app-hr-assign-path',
   standalone: true,
@@ -18,25 +24,82 @@ import { AuthService } from '../../core/services/auth';
 })
 export class HrAssignPath implements OnInit {
   // User search
+  /**
+   * Signal storing the current user-typed search string.
+   */
   searchQuery = signal('');
+
+  /**
+   * Signal containing the list of search results matching the query.
+   */
   searchResults = signal<UserSearchResult[]>([]);
+
+  /**
+   * Signal indicating if a search query is actively processing on the server.
+   */
   isSearching = signal(false);
+
+  /**
+   * Signal indicating if detailed user profile query is in flight.
+   */
   isLoadingUserInfo = signal(false);
+
+  /**
+   * Signal holding the currently selected employee's UserInfo details.
+   */
   selectedUser = signal<UserInfo | null>(null);
+
+  /**
+   * Signal determining if the autocomplete dropdown list should be visible.
+   */
   showDropdown = signal(false);
 
   // Paths
+  /**
+   * Signal storing the complete catalog of active learning paths.
+   */
   paths = signal<LearningPathResponseDto[]>([]);
+
+  /**
+   * Signal holding the ID of the selected learning path.
+   */
   selectedPathId = signal<number | null>(null);
 
   // Submit state
+  /**
+   * Signal tracking if the path enrollment request is actively submitting.
+   */
   isSubmitting = signal(false);
+
+  /**
+   * Signal capturing successful enrollment notifications.
+   */
   successMessage = signal('');
+
+  /**
+   * Signal capturing errors encountered during assignments.
+   */
   errorMessage = signal('');
 
+  /**
+   * Subject pipeline routing typed search queries to debounce/switchMap operators.
+   */
   private search$ = new Subject<string>();
+
+  /**
+   * Concurrency ID to discard out-of-order asynchronous user profile details responses.
+   */
   private userInfoRequestId = 0;
 
+  /**
+   * Constructs the HrAssignPath component.
+   *
+   * @param learningPathService - Service to fetch available learning paths.
+   * @param enrollmentService - Service to fetch user info, search directories, and perform enrollments.
+   * @param location - Angular location provider to perform back browser navigations.
+   * @param activityService - Local mock or service logging system activities.
+   * @param authService - Service to extract current manager/administrator ID.
+   */
   constructor(
     private learningPathService: LearningPathService,
     private enrollmentService: EnrollmentService,
@@ -45,6 +108,10 @@ export class HrAssignPath implements OnInit {
     private authService: AuthService,
   ) {}
 
+  /**
+   * Initial component hook. Queries available learning paths, and boots up
+   * the reactive user search stream with debounce, filter-by-role, and autocomplete dropdown flags.
+   */
   ngOnInit() {
     this.learningPathService.getPaths().subscribe({
       next: (data) => this.paths.set(data),
@@ -92,6 +159,12 @@ export class HrAssignPath implements OnInit {
     });
   }
 
+  /**
+   * Handler dispatched when a user types into the search box.
+   * Invalidates outdated user profile requests and updates the search query pipe.
+   *
+   * @param event - The input event.
+   */
   onSearchInput(event: Event) {
     const value = (event.target as HTMLInputElement).value;
     this.userInfoRequestId++;
@@ -104,6 +177,12 @@ export class HrAssignPath implements OnInit {
     }
   }
 
+  /**
+   * Selects an employee from the autocomplete drop-down, loading their profile info.
+   * Asserts that only regular employees can receive learning paths, raising errors otherwise.
+   *
+   * @param user - The chosen search result item.
+   */
   selectUser(user: UserSearchResult) {
     const requestId = ++this.userInfoRequestId;
     this.isLoadingUserInfo.set(true);
@@ -141,6 +220,9 @@ export class HrAssignPath implements OnInit {
     });
   }
 
+  /**
+   * Clears the autocomplete search box and resets active employee selections.
+   */
   clearUser() {
     this.userInfoRequestId++;
     this.selectedUser.set(null);
@@ -150,10 +232,21 @@ export class HrAssignPath implements OnInit {
     this.showDropdown.set(false);
   }
 
+  /**
+   * Selects or deselects a learning path card in the selection panel.
+   *
+   * @param id - The learning path ID.
+   */
   selectPath(id: number) {
     this.selectedPathId.set(this.selectedPathId() === id ? null : id);
   }
 
+  /**
+   * Assesses if form state meets submission prerequisites (i.e. valid employee selected,
+   * path selected, and no operations are currently in-flight).
+   *
+   * @returns True if submit button should be enabled.
+   */
   canSubmit(): boolean {
     return (
       this.selectedUser()?.role === 'EMPLOYEE' &&
@@ -163,6 +256,10 @@ export class HrAssignPath implements OnInit {
     );
   }
 
+  /**
+   * Enrolls the selected employee into the selected learning path.
+   * Triggers a logging transaction in the activity panel and clears form selections upon success.
+   */
   assign() {
     if (!this.canSubmit()) return;
     this.isSubmitting.set(true);
@@ -200,6 +297,12 @@ export class HrAssignPath implements OnInit {
     });
   }
 
+  /**
+   * Converts raw database role strings into reader-friendly terminology labels.
+   *
+   * @param role - The raw role.
+   * @returns Dynamic label string.
+   */
   roleLabel(role: string): string {
     switch ((role ?? '').toUpperCase()) {
       case 'HR':
@@ -213,6 +316,9 @@ export class HrAssignPath implements OnInit {
     }
   }
 
+  /**
+   * Navigates back one step in browser window history.
+   */
   goBack() {
     this.location.back();
   }

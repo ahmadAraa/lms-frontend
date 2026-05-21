@@ -9,22 +9,19 @@ import {
 import { fetchJson } from './course-builder-api.utils';
 
 /**
- * Service responsible for managing learning paths.
+ * Service responsible for managing administrative learning path CRUD operations.
  *
- * Features:
- * - Fetch all learning paths
- * - Fetch one learning path by ID
- * - Create learning path with optional image upload
- * - Update learning path with optional image upload
- * - Delete learning path
- * - Normalize backend response shapes
+ * Utilizes native `fetch` requests with manual headers to handle file uploads
+ * via `FormData` templates, and wraps response payloads into normalized type-safe structures.
  */
 @Injectable({
   providedIn: 'root',
 })
 export class LearningPathsApiService {
   /**
-   * Fetches all learning paths.
+   * Fetches all learning paths in the system.
+   *
+   * @returns A promise resolving to an array of normalized `LearningPathResponseDto` objects.
    */
   async getPaths(): Promise<LearningPathResponseDto[]> {
     const data = await fetchJson<unknown>(`${BASE_URL}/api/LearningPath/GetPaths`);
@@ -33,11 +30,11 @@ export class LearningPathsApiService {
   }
 
   /**
-   * Fetches a learning path by ID.
+   * Fetches a single learning path details by ID.
+   * Supports wrapped collections or plain object responses.
    *
-   * Handles both:
-   * - Direct object response
-   * - Wrapped/list response
+   * @param id - The unique database identifier of the learning path.
+   * @returns A promise resolving to the normalized `LearningPathResponseDto` details.
    */
   async getPathById(id: number): Promise<LearningPathResponseDto> {
     const data = await fetchJson<unknown>(`${BASE_URL}/api/LearningPath/GetPathById/${id}`);
@@ -52,9 +49,13 @@ export class LearningPathsApiService {
   }
 
   /**
-   * Creates a new learning path.
+   * Submits a request to create a new learning path.
    *
-   * Uses FormData because image upload requires multipart/form-data.
+   * @param dto - Container object representing form configurations.
+   * @param dto.title - Desired learning path title.
+   * @param dto.description - Optional description text, or null.
+   * @param dto.picture - Optional banner/cover image file.
+   * @returns A promise resolving when the path is successfully created.
    */
   async addPath(dto: {
     title: string;
@@ -65,9 +66,14 @@ export class LearningPathsApiService {
   }
 
   /**
-   * Updates an existing learning path.
+   * Submits a request to update an existing learning path.
    *
-   * Uses FormData to support optional image replacement.
+   * @param id - Unique database ID of the learning path to revise.
+   * @param dto - Object representing updated configurations.
+   * @param dto.title - Updated title.
+   * @param dto.description - Updated description, or null.
+   * @param dto.picture - Optional replacement banner/cover image file.
+   * @returns A promise resolving when the update is complete.
    */
   async updatePath(
     id: number,
@@ -81,7 +87,10 @@ export class LearningPathsApiService {
   }
 
   /**
-   * Deletes a learning path by ID.
+   * Deletes a learning path from the database.
+   *
+   * @param id - The unique database ID of the path to remove.
+   * @returns A promise resolving once the deletion succeeds.
    */
   async deletePath(id: number): Promise<void> {
     await fetchJson<void>(`${BASE_URL}/api/LearningPath/DeletePath/${id}`, {
@@ -90,11 +99,12 @@ export class LearningPathsApiService {
   }
 
   /**
-   * Sends a FormData request for creating/updating learning paths.
+   * Private utility method dispatching multipart FormData requests for creation/updation endpoints.
+   * Automatically sets active Bearer tokens and handles fetch responses.
    *
-   * Important:
-   * - Do NOT manually set Content-Type.
-   * - Browser automatically adds multipart/form-data boundary.
+   * @param url - Destination endpoint API string.
+   * @param method - HTTP verb method (POST or PUT).
+   * @param dto - Configuration input details.
    */
   private async sendFormData(
     url: string,
@@ -136,7 +146,10 @@ export class LearningPathsApiService {
   }
 
   /**
-   * Converts raw backend learning path data into LearningPathResponseDto.
+   * Normalizes raw backend learning path records, mapping nested course records.
+   *
+   * @param raw - Unprocessed candidate record.
+   * @returns Formatted type-safe LearningPathResponseDto.
    */
   private normalizePath(raw: unknown): LearningPathResponseDto {
     const node = asObject(raw);
@@ -153,7 +166,10 @@ export class LearningPathsApiService {
   }
 
   /**
-   * Converts raw backend course data into CourseResponseDTO.
+   * Normalizes raw backend course structures into clean CourseResponseDTO models.
+   *
+   * @param raw - Unprocessed course record.
+   * @returns Formatted course object.
    */
   private normalizeCourse(raw: unknown): CourseResponseDTO {
     const node = asObject(raw);
@@ -172,7 +188,10 @@ export class LearningPathsApiService {
   }
 
   /**
-   * Converts raw backend section data into SectionResponseDTO.
+   * Normalizes raw backend section records, mapping nested lessons.
+   *
+   * @param raw - Unprocessed section payload.
+   * @returns Formatted section object.
    */
   private normalizeSection(raw: unknown): SectionResponseDTO {
     const node = asObject(raw);
@@ -190,7 +209,10 @@ export class LearningPathsApiService {
   }
 
   /**
-   * Converts raw backend lesson data into LessonResponseDTO.
+   * Normalizes raw backend lesson records.
+   *
+   * @param raw - Unprocessed lesson record.
+   * @returns Structured LessonResponseDTO object.
    */
   private normalizeLesson(raw: unknown): LessonResponseDTO {
     const node = asObject(raw);
@@ -210,7 +232,10 @@ export class LearningPathsApiService {
 }
 
 /**
- * Reads arrays from normal or .NET-wrapped responses.
+ * Utility helper extracting lists from collections or wrapped .NET structures.
+ *
+ * @param value - Candidate input.
+ * @returns Clean list.
  */
 function readArray(value: unknown): unknown[] {
   if (Array.isArray(value)) return value;
@@ -223,14 +248,22 @@ function readArray(value: unknown): unknown[] {
 }
 
 /**
- * Safely converts any unknown value into an object.
+ * Safely converts any unknown value into a record object.
+ *
+ * @param value - Candidate variable.
+ * @returns Struct block.
  */
 function asObject(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
 }
 
 /**
- * Reads both camelCase and PascalCase backend keys.
+ * Key lookup reading support for camelCase and PascalCase backend configurations.
+ *
+ * @param node - Container record object.
+ * @param camelCaseKey - Ideal camelCase string.
+ * @param pascalCaseKey - Backup PascalCase string.
+ * @returns Value or undefined.
  */
 function getValue(
   node: Record<string, unknown>,
@@ -241,7 +274,10 @@ function getValue(
 }
 
 /**
- * Safely converts a value into a number.
+ * Numerical cast utility, returning a fallback 0 if mapping fails.
+ *
+ * @param value - Raw candidate.
+ * @returns Safe parsed number.
  */
 function toNumber(value: unknown): number {
   const numberValue = Number(value ?? 0);
@@ -249,14 +285,20 @@ function toNumber(value: unknown): number {
 }
 
 /**
- * Safely converts a value into a string.
+ * Safe conversion utility mapping candidates into strings.
+ *
+ * @param value - Candidate raw variable.
+ * @returns Safe string fallback.
  */
 function toString(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
 
 /**
- * Converts a value into a nullable string.
+ * Converts inputs into valid strings or null.
+ *
+ * @param value - Candidate variable.
+ * @returns Parsed string or null.
  */
 function toNullableString(value: unknown): string | null {
   if (value === null || value === undefined) return null;
@@ -264,7 +306,10 @@ function toNullableString(value: unknown): string | null {
 }
 
 /**
- * Extracts a useful error message from a failed fetch response.
+ * Parses and maps error descriptions from failed Fetch response payloads.
+ *
+ * @param response - Active failed fetch response block.
+ * @returns Decoded clear message string.
  */
 async function readErrorMessage(response: Response): Promise<string> {
   let errorMessage = `HTTP Error ${response.status}: ${response.statusText}`;

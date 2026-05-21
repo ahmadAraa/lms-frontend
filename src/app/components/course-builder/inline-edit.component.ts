@@ -1,6 +1,12 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+/**
+ * Reusable inline editor component for titles and descriptions.
+ *
+ * Implements two-way bound input/textarea elements with confirmation/cancel event triggers.
+ * Highly integrated into the admin course builder and sections configuration pages.
+ */
 @Component({
   selector: 'app-inline-edit',
   standalone: true,
@@ -29,9 +35,28 @@ import { FormsModule } from '@angular/forms';
   ],
 })
 export class InlineEditComponent {
+  /**
+   * The text value of the title.
+   */
   @Input() title = '';
+
+  /**
+   * The text value of the description.
+   */
   @Input() description = '';
+
+  /**
+   * Flag determining whether to show the description textarea field.
+   */
   @Input() showDescription = true;
+
+  /**
+   * Event emitter firing when the user clicks confirm, providing sanitized title and description values.
+   */
   @Output() confirm = new EventEmitter<{ title: string; description: string }>();
+
+  /**
+   * Event emitter firing when the user cancels the edit operation.
+   */
   @Output() cancel = new EventEmitter<void>();
 }

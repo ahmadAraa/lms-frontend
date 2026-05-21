@@ -4,38 +4,39 @@ import { Observable } from 'rxjs';
 import { BASE_URL } from '../../types/course-builder.types';
 
 /**
- * Service responsible for handling password reset flow.
+ * Service responsible for managing user password reset flows.
  *
- * Flow:
- * 1. User requests password reset → forgotPassword(email)
- * 2. Backend sends email with reset token
- * 3. User submits new password with token → resetPassword(...)
+ * Coordinates request dispatches for forgotten passwords (initiating email token dispatches)
+ * and finalizes changes by submitting new passwords along with verification tokens.
  */
 @Injectable({
   providedIn: 'root',
 })
 export class PasswordResetService {
+  /** API path representing password reset endpoint host */
   private readonly apiUrl = `${BASE_URL}/api/Password`;
 
   constructor(private http: HttpClient) {}
 
   /**
-   * Sends a password reset email to the user.
+   * Triggers a password reset request. Instructs the backend to send a verification
+   * token link to the specified email address if the account exists.
    *
-   * @param email - User's email address
-   * @returns Observable<void> (backend usually returns 200 OK)
+   * @param email - The registered email address of the user who forgot their password.
+   * @returns An `Observable` representing the backend response.
    */
   forgotPassword(email: string): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/forgot-password`, { email });
   }
 
   /**
-   * Resets the user's password using a token received via email.
+   * Finalizes the password reset operation by submitting the target verification token
+   * alongside the new password credential.
    *
-   * @param email - User's email
-   * @param token - Reset token from email link
-   * @param newPassword - New password chosen by user
-   * @returns Observable<string> (backend returns confirmation message)
+   * @param email - The user's primary email address.
+   * @param token - The unique authorization code token received via reset email link.
+   * @param newPassword - The new password chosen by the user.
+   * @returns An `Observable` emitting the backend text/string confirmation message.
    */
   resetPassword(
     email: string,

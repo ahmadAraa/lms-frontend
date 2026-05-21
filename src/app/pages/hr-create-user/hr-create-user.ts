@@ -11,6 +11,12 @@ import { NotificationBellComponent } from '../../components/notification-bell/no
 
 import { UserRole } from '../../core/services/auth';
 
+/**
+ * HR User Management Component.
+ * Implements a dual-pane administrative layout: a user directory listing with filtering,
+ * role badge generation, and secure delete actions, alongside a standard user registration form
+ * with client-side password matching, fallback request timers, and automatic event logging.
+ */
 @Component({
   selector: 'app-hr-create-user',
   standalone: true,
@@ -20,11 +26,29 @@ import { UserRole } from '../../core/services/auth';
 })
 export class HrCreateUser implements OnInit {
   // ── Employee list ────────────────────────────────────────
+  /**
+   * Private internal signal storing the full list of all system users.
+   */
   private allUsers = signal<UserInfo[]>([]);
+
+  /**
+   * Signal indicating if user directories are actively loading from the API.
+   */
   isLoadingUsers = signal(false);
+
+  /**
+   * Signal capturing errors occurring while fetching user records.
+   */
   listError = signal('');
+
+  /**
+   * Signal holding the user-inputted search query.
+   */
   userSearch = signal('');
 
+  /**
+   * Computed signal filtering `allUsers` by username or email according to `userSearch`.
+   */
   users = computed(() => {
     const q = this.userSearch().trim().toLowerCase();
     if (!q) return this.allUsers();
@@ -34,20 +58,74 @@ export class HrCreateUser implements OnInit {
   });
 
   // ── Create user form ─────────────────────────────────────
+  /**
+   * Form binding property for user credentials login-handle.
+   */
   userName = '';
+
+  /**
+   * Form binding property for user email address.
+   */
   email = '';
+
+  /**
+   * Form binding property for user passwords.
+   */
   password = '';
+
+  /**
+   * Form binding property to confirm entered passwords.
+   */
   confirmPassword = '';
+
+  /**
+   * Form binding property for user's full name.
+   */
   fullName = '';
+
+  /**
+   * Form binding property for selecting the target authorization role.
+   */
   role: UserRole = 'EMPLOYEE';
+
+  /**
+   * Signal representing the role of the logged in administrator.
+   */
   currentUserRole = signal<UserRole | null>(null);
+
+  /**
+   * Signal storing the ID of the logged in administrator.
+   */
   currentUserId = signal('');
+
+  /**
+   * Signal capturing input errors or creation failures.
+   */
   errorMessage = signal('');
+
+  /**
+   * Signal containing form submission success messages.
+   */
   successMessage = signal('');
+
+  /**
+   * Signal tracking when a user creation request is in flight.
+   */
   isSubmitting = signal(false);
 
+  /**
+   * Timeout handle fallback to clear submission status in case of network suspension.
+   */
   private submitFallbackTimer: ReturnType<typeof setTimeout> | null = null;
 
+  /**
+   * Constructs the HrCreateUser component.
+   *
+   * @param authService - Authorization service to manage registration, deletion, and role verification.
+   * @param enrollmentService - Service to fetch complete user info records and search directories.
+   * @param activityService - Administration logging system.
+   * @param router - Navigation controller to process session timeouts.
+   */
   constructor(
     private authService: AuthService,
     private enrollmentService: EnrollmentService,
@@ -55,12 +133,20 @@ export class HrCreateUser implements OnInit {
     private router: Router,
   ) {}
 
+  /**
+   * Initial component hook. Resolves administrator role credentials
+   * and initiates loading the active user directory.
+   */
   ngOnInit() {
     this.currentUserRole.set(this.authService.getUserRole());
     this.currentUserId.set(this.authService.getUserId());
     this.loadAllUsers();
   }
 
+  /**
+   * Fetches all registered system users via EnrollmentService,
+   * querying basic info and resolving their profiles in parallel with forkJoin.
+   */
   loadAllUsers() {
     this.isLoadingUsers.set(true);
     this.listError.set('');
@@ -96,10 +182,21 @@ export class HrCreateUser implements OnInit {
       });
   }
 
+  /**
+   * Captures search keyboard input events and updates the search query signal.
+   *
+   * @param event - The input DOM event.
+   */
   onUserSearch(event: Event) {
     this.userSearch.set((event.target as HTMLInputElement).value);
   }
 
+  /**
+   * Formats ISO date strings into readable British calendar formatting.
+   *
+   * @param iso - The ISO date-time string.
+   * @returns Formatted date string, or a placeholder dash if empty.
+   */
   formatDate(iso: string): string {
     if (!iso) return '—';
     return new Date(iso).toLocaleDateString('en-GB', {
@@ -109,6 +206,10 @@ export class HrCreateUser implements OnInit {
     });
   }
 
+  /**
+   * Performs client validation checks and sends a request to register a new user account.
+   * On success, logs the creation event in the activity list and re-fetches the user directory.
+   */
   onCreateUser() {
     if (this.isSubmitting()) return;
 
@@ -180,11 +281,17 @@ export class HrCreateUser implements OnInit {
       });
   }
 
+  /**
+   * Resets authorized sessions upon receiving 401 unauthorized errors, redirecting to login.
+   */
   private sessionExpired() {
     this.authService.logout();
     void this.router.navigate(['/']);
   }
 
+  /**
+   * Clears form input fields to default values after successful submissions.
+   */
   private resetForm() {
     this.userName = '';
     this.email = '';
@@ -194,21 +301,49 @@ export class HrCreateUser implements OnInit {
   }
 
   // ── Delete User Modal ──────────────────────────────────────
+  /**
+   * Signal referencing the UserInfo record queued for deletion in the modal.
+   */
   userToDelete = signal<UserInfo | null>(null);
+
+  /**
+   * Text inputted in the confirm field (requires matching literal 'delete').
+   */
   deleteConfirmationText = signal('');
+
+  /**
+   * Signal indicating if a deletion request is currently executing on the server.
+   */
   isDeleting = signal(false);
 
+  /**
+   * Triggers the opening of the deletion verification modal for a specific user.
+   *
+   * @param user - The user record intended for deletion.
+   */
   openDeleteModal(user: UserInfo) {
     this.userToDelete.set(user);
     this.deleteConfirmationText.set('');
   }
 
+  /**
+   * Closes the deletion verification modal and resets validation states.
+   */
   closeDeleteModal() {
     this.userToDelete.set(null);
     this.deleteConfirmationText.set('');
     this.isDeleting.set(false);
   }
 
+  /**
+   * Implements strict server/client privilege safety filters:
+   * 1. A user cannot delete their own account.
+   * 2. HR professionals can delete employees and managers (but not other HRs).
+   * 3. Managers can only delete employees.
+   *
+   * @param user - The target user record.
+   * @returns True if deletion is allowed, false otherwise.
+   */
   canDelete(user: UserInfo): boolean {
     // Never allow deleting yourself
     if (user.id === this.currentUserId()) return false;
@@ -229,6 +364,12 @@ export class HrCreateUser implements OnInit {
     return false;
   }
 
+  /**
+   * Matches system roles to standard CSS styling badge selectors.
+   *
+   * @param role - The string authorization role.
+   * @returns CSS class badge styling string.
+   */
   roleBadgeClass(role: string): string {
     switch ((role ?? '').toUpperCase()) {
       case 'HR':
@@ -242,6 +383,12 @@ export class HrCreateUser implements OnInit {
     }
   }
 
+  /**
+   * Converts raw database role strings into user-friendly display labels.
+   *
+   * @param role - The raw role.
+   * @returns Friendly display label.
+   */
   roleLabel(role: string): string {
     switch ((role ?? '').toUpperCase()) {
       case 'HR':
@@ -255,6 +402,10 @@ export class HrCreateUser implements OnInit {
     }
   }
 
+  /**
+   * Dispatches the delete request to the AuthService on confirmed confirmation string matching.
+   * On success, filters the deleted user from the local view array and closes the modal window.
+   */
   confirmDeleteUser() {
     const user = this.userToDelete();
     if (!user || this.deleteConfirmationText().trim().toLowerCase() !== 'delete') return;

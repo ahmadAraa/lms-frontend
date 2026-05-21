@@ -15,6 +15,12 @@ import {
 import { LessonSidebarComponent } from './components/lesson-sidebar/lesson-sidebar.component';
 import { LessonContentComponent } from './components/lesson-content/lesson-content.component';
 
+/**
+ * Component representing the rich Lesson Viewer layout view.
+ *
+ * Implements sidebar accordions with curriculum layout navigation, marks lessons complete,
+ * performs live API authorization lock checks, and plays video files inside the content frame.
+ */
 @Component({
   selector: 'app-lesson-viewer',
   standalone: true,
@@ -23,24 +29,83 @@ import { LessonContentComponent } from './components/lesson-content/lesson-conte
   styleUrl: './lesson-viewer.component.css',
 })
 export class LessonViewerComponent implements OnInit {
+  /**
+   * Signal carrying the currently active lesson response payload.
+   */
   lesson = signal<LessonResponseDTO | null>(null);
+
+  /**
+   * Signal carrying the parent course details metadata structure.
+   */
   course = signal<CourseResponseDTO | null>(null);
+
+  /**
+   * Signal storing the list of sections and their associated lessons under the active course.
+   */
   sections = signal<SectionResponseDTO[]>([]);
 
+  /**
+   * Signal holding the set of expanded section ID values in the sidebar.
+   */
   expandedSections = signal<Set<number>>(new Set());
+
+  /**
+   * Signal holding the set of unique IDs of completed lessons in the course curriculum.
+   */
   completedLessons = signal<Set<number>>(new Set());
 
-  // Computed arrays for dumb components
+  /**
+   * Computed signal mapping expanded section IDs into a standard array format.
+   */
   expandedSectionIds = computed(() => Array.from(this.expandedSections()));
+
+  /**
+   * Computed signal mapping completed lesson IDs into a standard array format.
+   */
   completedLessonIds = computed(() => Array.from(this.completedLessons()));
 
+  /**
+   * Signal indicating if a curriculum load transaction is currently active in the background.
+   */
   isLoading = signal(true);
+
+  /**
+   * Signal indicating if a lesson completion update submission is active.
+   */
   isCompleting = signal(false);
+
+  /**
+   * Signal carrying active API transaction error messages.
+   */
   error = signal('');
+
+  /**
+   * Parent learning path ID context (can be null if directly assigned).
+   */
   pathId: number | null = null;
+
+  /**
+   * Cached parent course ID parsed from routing parameters.
+   * @private
+   */
   private routeCourseId: number | null = null;
+
+  /**
+   * Signal representing whether the viewer is running as a staff preview mode (HR or MANAGER).
+   */
   isPreviewMode = signal(false);
 
+  /**
+   * Constructs the LessonViewerComponent.
+   *
+   * @param route - ActivatedRoute to read parameter snapshot IDs.
+   * @param router - Router to trigger path redirects.
+   * @param lessonsApi - Service managing lesson detail queries and toggles.
+   * @param sectionsApi - Service managing section data.
+   * @param coursesApi - Service managing course data.
+   * @param progressService - Service managing dynamic course locks.
+   * @param authService - Service managing local authentication contexts.
+   */
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -51,6 +116,10 @@ export class LessonViewerComponent implements OnInit {
     private authService: AuthService,
   ) {}
 
+  /**
+   * Angular initialization hook. Identifies preview status contexts, decodes parameter states,
+   * and triggers the reactive curriculum loader subscription stream.
+   */
   ngOnInit() {
     this.isPreviewMode.set(this.isStaffPreview());
 
@@ -69,6 +138,12 @@ export class LessonViewerComponent implements OnInit {
     });
   }
 
+  /**
+   * Loads the specified lesson detail and its full sibling course curriculum in parallel.
+   * Conducts critical access checks for employees and marks lessons as completed in the sidebar.
+   *
+   * @param lessonId - The unique identifier of the lesson to load.
+   */
   async loadLessonAndCurriculum(lessonId: number) {
     this.isLoading.set(true);
     this.error.set('');
@@ -137,6 +212,11 @@ export class LessonViewerComponent implements OnInit {
     }
   }
 
+  /**
+   * Toggles the visible expanded state of a section accordion.
+   *
+   * @param sectionId - The unique section ID to toggle.
+   */
   toggleSection(sectionId: number) {
     const current = new Set(this.expandedSections());
     if (current.has(sectionId)) {
@@ -147,6 +227,11 @@ export class LessonViewerComponent implements OnInit {
     this.expandedSections.set(current);
   }
 
+  /**
+   * Routes the viewer directly to a sibling lesson screen.
+   *
+   * @param lessonId - The unique identifier of the lesson to open.
+   */
   openLesson(lessonId: number) {
     if (this.lesson()?.id === lessonId) return;
     this.router.navigate(['/lesson', lessonId], {
@@ -154,6 +239,12 @@ export class LessonViewerComponent implements OnInit {
     });
   }
 
+  /**
+   * Optimistically marks a lesson as completed in the UI and pushes the update to the database.
+   * Reverts changes in the UI should the network operation fail.
+   *
+   * @param eventData - Object containing the unique lesson ID and the mouse trigger event.
+   */
   async toggleCompletion(eventData: { lessonId: number; event: Event }) {
     const { lessonId, event } = eventData;
     event.stopPropagation();
@@ -180,6 +271,9 @@ export class LessonViewerComponent implements OnInit {
     }
   }
 
+  /**
+   * Navigates back to the parent learning path details or employee dashboard view.
+   */
   goBack() {
     if (this.isPreviewMode()) {
       void this.router.navigate(this.pathId ? ['/learning-paths', this.pathId] : ['/learning-paths']);
@@ -189,6 +283,13 @@ export class LessonViewerComponent implements OnInit {
     void this.router.navigate(['/employee/dashboard']);
   }
 
+  /**
+   * Redirects the user directly to the Course locked detail page.
+   *
+   * @param courseId - The locked course ID.
+   * @param lockReason - The detailed locking explanation message.
+   * @private
+   */
   private redirectToLockedCourse(courseId: number, lockReason?: string) {
     void this.router.navigate(['/course', courseId], {
       state: {
@@ -199,22 +300,42 @@ export class LessonViewerComponent implements OnInit {
     });
   }
 
+  /**
+   * Checks if an error object represents an HTTP 403 authorization block.
+   *
+   * @param error - The raw error details.
+   * @returns True if denied, otherwise false.
+   * @private
+   */
   private isAccessDeniedError(error: unknown): boolean {
     const message = (error as { message?: string })?.message?.toLowerCase() ?? '';
 
     return message.includes('403') || message.includes('complete previous');
   }
 
+  /**
+   * Converts an unknown value to a nullable number.
+   *
+   * @param value - The input value.
+   * @returns The parsed finite number, or null.
+   * @private
+   */
   private toNullableNumber(value: unknown): number | null {
     const numberValue = Number(value);
 
     return Number.isFinite(numberValue) && numberValue > 0 ? numberValue : null;
   }
 
+  /**
+   * Returns whether the active user possesses administrative permissions (HR or MANAGER),
+   * enabling full course unlocking previews.
+   *
+   * @returns True if the user is staff, otherwise false.
+   * @private
+   */
   private isStaffPreview(): boolean {
     const role = this.authService.getUserRole();
 
     return role === 'HR' || role === 'MANAGER';
   }
-
 }

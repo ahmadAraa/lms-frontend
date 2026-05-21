@@ -3,6 +3,10 @@ import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { LessonResponseDTO, CourseResponseDTO } from '../../../../types/course-builder.types';
 
+/**
+ * Component responsible for rendering the active lesson content, including video players,
+ * text/markdown files, external resource links, and loading/error states.
+ */
 @Component({
   selector: 'app-lesson-content',
   standalone: true,
@@ -11,13 +15,40 @@ import { LessonResponseDTO, CourseResponseDTO } from '../../../../types/course-b
   styleUrl: './lesson-content.component.css'
 })
 export class LessonContentComponent {
+  /**
+   * The currently active lesson to display.
+   */
   @Input() lesson: LessonResponseDTO | null = null;
+
+  /**
+   * The parent course context to which this lesson belongs.
+   */
   @Input() course: CourseResponseDTO | null = null;
+
+  /**
+   * Signifies if a lesson payload is currently loading from the backend service.
+   */
   @Input() isLoading: boolean = false;
+
+  /**
+   * A string containing error messages encountered during lesson retrieval.
+   */
   @Input() error: string = '';
 
+  /**
+   * Constructs the LessonContentComponent.
+   *
+   * @param sanitizer - Angular service to bypass security checks and trust dynamic iframe/video resources.
+   */
   constructor(private sanitizer: DomSanitizer) {}
 
+  /**
+   * Evaluates if the lesson has a valid YouTube link and parses its ID,
+   * returning a sanitized URL formatted for a responsive iframe embedded player.
+   *
+   * @param lesson - The lesson information containing the URL.
+   * @returns A trusted SafeResourceUrl object if valid, or null.
+   */
   getYouTubeEmbedUrl(lesson: LessonResponseDTO | null): SafeResourceUrl | null {
     if (!lesson || lesson.type !== 3 || !lesson.videoUrl) return null;
     
@@ -31,6 +62,13 @@ export class LessonContentComponent {
     return null;
   }
 
+  /**
+   * Formats the media source URL depending on whether the lesson is an external hyperlink
+   * (type 3 or http(s) prefixed) or an uploaded file stored on the local media server.
+   *
+   * @param lesson - The lesson object.
+   * @returns The fully-formed media path string, or null.
+   */
   getMediaUrl(lesson: LessonResponseDTO | null): string | null {
     if (!lesson || !lesson.videoUrl) return null;
     

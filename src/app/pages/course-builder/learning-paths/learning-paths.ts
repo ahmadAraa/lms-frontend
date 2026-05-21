@@ -7,6 +7,12 @@ import { LearningPathsApiService } from '../../../core/services/learning-paths-a
 import { ToastService } from '../../../core/services/toast.service';
 import { LearningPathResponseDto } from '../../../types/course-builder.types';
 
+/**
+ * Learning Paths Roster Page Component.
+ * Acts as the entry point for the Course Builder panel. Lists all active learning paths,
+ * allows creating new paths or editing properties (with visual cover art drag-and-drop file support),
+ * and handles routing administrators to course catalogs.
+ */
 @Component({
   selector: 'app-learning-paths-page',
   standalone: true,
@@ -15,20 +21,70 @@ import { LearningPathResponseDto } from '../../../types/course-builder.types';
   styleUrl: './learning-paths.css',
 })
 export class LearningPathsPage implements OnInit {
+  /**
+   * Flag indicating if learning paths list is currently fetching.
+   */
   loading = true;
+
+  /**
+   * Error message string populated on API load failure.
+   */
   error = '';
+
+  /**
+   * Directory of all learning paths fetched from database.
+   */
   paths: LearningPathResponseDto[] = [];
+
+  /**
+   * Modal view visibility toggle.
+   */
   modalOpen = false;
+
+  /**
+   * ID of the learning path currently selected for updates (null signifies path addition).
+   */
   editingId: number | null = null;
+
+  /**
+   * Title text string bound to the modal form.
+   */
   title = '';
+
+  /**
+   * Description text string bound to the modal form.
+   */
   description = '';
+
+  /**
+   * Flag indicating if a creation/update transaction is processing.
+   */
   isSaving = false;
 
   // Image upload
+  /**
+   * The binary File object chosen for visual cover art.
+   */
   selectedFile: File | null = null;
+
+  /**
+   * Reader data-url string representing the image preview shown in the modal.
+   */
   imagePreview: string | null = null;
+
+  /**
+   * Visual indicator signaling if a file is hovering inside the drag drop target.
+   */
   isDragOver = false;
 
+  /**
+   * Constructs the LearningPathsPage component.
+   *
+   * @param api - API service targeting learning path endpoints.
+   * @param toast - System toast notification manager.
+   * @param router - Navigation router.
+   * @param cdr - Change detector utility.
+   */
   constructor(
     private readonly api: LearningPathsApiService,
     private readonly toast: ToastService,
@@ -36,10 +92,16 @@ export class LearningPathsPage implements OnInit {
     private readonly cdr: ChangeDetectorRef,
   ) {}
 
+  /**
+   * Initial page hook. Triggers a request to fetch existing paths.
+   */
   ngOnInit(): void {
     void this.loadPaths();
   }
 
+  /**
+   * Fetches learning paths from the backend server and refreshes the local roster.
+   */
   async loadPaths(): Promise<void> {
     this.loading = true;
     this.error = '';
@@ -53,6 +115,9 @@ export class LearningPathsPage implements OnInit {
     }
   }
 
+  /**
+   * Configures form values and launches the creation dialog modal.
+   */
   openCreateModal(): void {
     this.editingId = null;
     this.title = '';
@@ -62,6 +127,11 @@ export class LearningPathsPage implements OnInit {
     this.modalOpen = true;
   }
 
+  /**
+   * Populates properties and launches the modification dialog modal.
+   *
+   * @param path - The chosen learning path to update.
+   */
   openEditModal(path: LearningPathResponseDto): void {
     this.editingId = path.id;
     this.title = path.title;
@@ -72,6 +142,11 @@ export class LearningPathsPage implements OnInit {
   }
 
   // ── File selection / drag-drop ──────────────────────
+  /**
+   * Processes manual file additions, extracting the chosen file.
+   *
+   * @param event - The input change event.
+   */
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
@@ -79,18 +154,33 @@ export class LearningPathsPage implements OnInit {
     }
   }
 
+  /**
+   * Prevents standard browser behaviors to enable custom drop handlers.
+   *
+   * @param event - The drag event.
+   */
   onDragOver(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
     this.isDragOver = true;
   }
 
+  /**
+   * Resets indicators when file leaves the drag-zone.
+   *
+   * @param event - The drag event.
+   */
   onDragLeave(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
     this.isDragOver = false;
   }
 
+  /**
+   * Intercepts dropped image files and verifies their type.
+   *
+   * @param event - The drop event.
+   */
   onDrop(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
@@ -106,11 +196,19 @@ export class LearningPathsPage implements OnInit {
     }
   }
 
+  /**
+   * Discards the currently selected cover image file and clears visual previews.
+   */
   removeImage(): void {
     this.selectedFile = null;
     this.imagePreview = null;
   }
 
+  /**
+   * Asserts image file sizes (max 5MB) and processes binary payloads into Base64 read strings.
+   *
+   * @param file - The picture file.
+   */
   private setFile(file: File): void {
     if (file.size > 5 * 1024 * 1024) {
       this.toast.error('Image must be under 5 MB.');
@@ -126,6 +224,9 @@ export class LearningPathsPage implements OnInit {
   }
 
   // ── Submit ──────────────────────────────────────────
+  /**
+   * Submits the modal dialog forms to the server, processing either path creations or modifications.
+   */
   async submitModal(): Promise<void> {
     if (!this.title.trim()) return;
     this.isSaving = true;
@@ -155,6 +256,11 @@ export class LearningPathsPage implements OnInit {
     }
   }
 
+  /**
+   * Prompts visual confirm overlays and triggers learning path deletion.
+   *
+   * @param id - The learning path ID.
+   */
   async deletePath(id: number): Promise<void> {
     if (!confirm('Delete this learning path?')) return;
     try {
@@ -166,6 +272,11 @@ export class LearningPathsPage implements OnInit {
     }
   }
 
+  /**
+   * Triggers navigation redirect to the course management editor for a specific path ID.
+   *
+   * @param id - The learning path ID.
+   */
   manageCourses(id: number): void {
     void this.router.navigate(['/learning-paths', id]);
   }

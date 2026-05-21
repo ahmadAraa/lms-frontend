@@ -3,14 +3,38 @@ import { CommonModule } from '@angular/common';
 import { EnrollmentService, EmployeeProgressDto, EmployeeCourseProgressDto } from '../../core/services/enrollment.service';
 import { AuthService } from '../../core/services/auth';
 
-/** Unique employee entry for the main table */
+/**
+ * Unique employee entry representing a single row in the main team list.
+ */
 interface UniqueEmployee {
+  /**
+   * The unique employee user GUID.
+   */
   employeeId: string;
+
+  /**
+   * The employee's full display name.
+   */
   employeeFullName: string;
+
+  /**
+   * The employee's primary email address.
+   */
   employeeEmail: string;
+
+  /**
+   * Count of active learning paths the employee is enrolled in.
+   */
   pathCount: number;
 }
 
+/**
+ * HR/Manager Team Progress Tracking Component.
+ * Implements a hierarchical tracking system for employee progress:
+ * - Level 1: Main deduplicated roster showing active paths count.
+ * - Level 2: Detailed modal view showing a breakdown of each path the employee is in (overall percentage).
+ * - Level 3: Drill-down view into a specific path showing completion percentages for each of its child courses.
+ */
 @Component({
   selector: 'app-hr-team-progress',
   standalone: true,
@@ -19,27 +43,50 @@ interface UniqueEmployee {
   styleUrl: './hr-team-progress.css'
 })
 export class HrTeamProgress implements OnInit {
-  /** All enrollments from the backend */
+  /**
+   * Signal storing all enrollments and path progress entries returned by the API.
+   */
   readonly progressList = signal<EmployeeProgressDto[]>([]);
+
+  /**
+   * Signal indicating if initial enrollment list is loading from backend services.
+   */
   readonly isLoading = signal(true);
 
-  /** Modal state: which view are we on? */
+  /**
+   * Signal representing the current state/level of the progress drill-down modal interface.
+   */
   readonly modalView = signal<'closed' | 'paths' | 'courses'>('closed');
 
-  /** The employee currently selected */
+  /**
+   * Signal holding the UniqueEmployee record currently clicked and loaded in the modal context.
+   */
   readonly selectedEmployee = signal<UniqueEmployee | null>(null);
 
-  /** Learning paths for the selected employee */
+  /**
+   * Signal containing the list of learning path progress records for the selected employee.
+   */
   readonly employeePaths = signal<EmployeeProgressDto[]>([]);
 
-  /** The learning path currently drilled into */
+  /**
+   * Signal representing the learning path drilled into in the course progress details view.
+   */
   readonly selectedPath = signal<EmployeeProgressDto | null>(null);
 
-  /** Courses for the selected path */
+  /**
+   * Signal storing the specific course completion progress objects under the drilled path.
+   */
   readonly courseProgress = signal<EmployeeCourseProgressDto[]>([]);
+
+  /**
+   * Signal indicating if courses completion list is loading from backend.
+   */
   readonly isLoadingCourses = signal(false);
 
-  /** Deduplicated employee list for the main table */
+  /**
+   * Computed signal that analyzes `progressList` and deduplicates individual employee accounts
+   * to prepare an aggregate roster mapping their corresponding path enrollment counts.
+   */
   readonly uniqueEmployees = computed<UniqueEmployee[]>(() => {
     const map = new Map<string, UniqueEmployee>();
     for (const p of this.progressList()) {
@@ -56,15 +103,28 @@ export class HrTeamProgress implements OnInit {
     return Array.from(map.values());
   });
 
+  /**
+   * Constructs the HrTeamProgress component.
+   *
+   * @param enrollmentService - Service providing endpoint calls to query and drill-down into employee progress.
+   * @param authService - Service to resolve the manager ID.
+   */
   constructor(
     private enrollmentService: EnrollmentService,
     private authService: AuthService
   ) {}
 
+  /**
+   * Initial component hook. Resolves manager identity and queries employee progress.
+   */
   ngOnInit(): void {
     this.loadProgress();
   }
 
+  /**
+   * Triggers the service request to retrieve all enrollments and completions for employees
+   * managed by the currently logged in supervisor.
+   */
   loadProgress(): void {
     const managerId = this.authService.getUserId();
     if (!managerId) {
@@ -83,7 +143,12 @@ export class HrTeamProgress implements OnInit {
     });
   }
 
-  /** Level 1 → 2: Click employee row → open modal showing their learning paths */
+  /**
+   * Handles Level 1 → Level 2 drill-down.
+   * Clicking on an employee row initializes details and shifts modal to the paths index list.
+   *
+   * @param emp - The selected employee row data.
+   */
   openEmployeeDetails(emp: UniqueEmployee): void {
     this.selectedEmployee.set(emp);
     this.employeePaths.set(
@@ -94,7 +159,12 @@ export class HrTeamProgress implements OnInit {
     this.modalView.set('paths');
   }
 
-  /** Level 2 → 3: Click a learning path → drill into its courses */
+  /**
+   * Handles Level 2 → Level 3 drill-down.
+   * Clicking a path in the modal opens course breakdowns and queries course completion metrics.
+   *
+   * @param path - The chosen learning path progress data.
+   */
   openPathCourses(path: EmployeeProgressDto): void {
     this.selectedPath.set(path);
     this.isLoadingCourses.set(true);
@@ -115,14 +185,18 @@ export class HrTeamProgress implements OnInit {
       });
   }
 
-  /** Level 3 → 2: Go back to learning paths view */
+  /**
+   * Navigates back from course progress details (Level 3) to paths list (Level 2).
+   */
   backToPaths(): void {
     this.selectedPath.set(null);
     this.courseProgress.set([]);
     this.modalView.set('paths');
   }
 
-  /** Close modal entirely */
+  /**
+   * Closes the progress modal window and resets active drill-down references.
+   */
   closeModal(): void {
     this.modalView.set('closed');
     this.selectedEmployee.set(null);
@@ -131,6 +205,12 @@ export class HrTeamProgress implements OnInit {
     this.employeePaths.set([]);
   }
 
+  /**
+   * Parses initials (e.g. "John Doe" -> "JD") to populate visual letter avatar bubbles.
+   *
+   * @param name - The full name string.
+   * @returns Initials string (upper-cased).
+   */
   getInitials(name: string): string {
     if (!name) return '?';
     const parts = name.trim().split(' ');

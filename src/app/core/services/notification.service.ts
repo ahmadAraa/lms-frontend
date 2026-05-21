@@ -3,22 +3,31 @@ import { BASE_URL } from '../../types/course-builder.types';
 import { fetchJson } from './course-builder-api.utils';
 
 /**
- * Represents a notification sent to the user.
+ * Represents a notification model item delivered to a user.
  */
 export interface AppNotification {
+  /** Unique database identifier of the notification */
   id: number;
+  /** Title header summarizing the notification source or action */
   title: string;
+  /** Descriptive body paragraph containing the notification message details */
   body: string;
+  /** Graphic category indicator class (e.g. system alert, info) */
   type: string;
+  /** Completion flag checking if the notification has been marked as read */
   isRead: boolean;
+  /** Account creation timestamp string representation */
   createdAt: string;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
- * Safely converts any value to an object.
- * Prevents runtime crashes when backend returns unexpected shapes.
+ * Safely converts any unknown value input into a structured record object block.
+ * Prevents runtime crashes when backend returns unexpected data shapes.
+ *
+ * @param value - Candidate input.
+ * @returns Structured record object.
  */
 function asObject(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object'
@@ -27,9 +36,10 @@ function asObject(value: unknown): Record<string, unknown> {
 }
 
 /**
- * Extracts array data from:
- * - normal arrays
- * - .NET wrapped arrays ($values, Items, etc.)
+ * Extracts array collections from plain lists or wrapped .NET serialized object structures.
+ *
+ * @param value - Unprocessed candidate input.
+ * @returns Safe list of parsed elements.
  */
 function readArray(value: unknown): unknown[] {
   if (Array.isArray(value)) return value;
@@ -46,8 +56,13 @@ function readArray(value: unknown): unknown[] {
 }
 
 /**
- * Gets a value supporting both camelCase and PascalCase keys.
- * Useful for inconsistent backend naming.
+ * Key lookup reading support for camelCase and PascalCase backend configurations.
+ * Useful for resolving inconsistent casing from API layers.
+ *
+ * @param node - Container record object.
+ * @param camelCaseKey - Ideal camelCase string.
+ * @param pascalCaseKey - Backup PascalCase string.
+ * @returns Value or undefined.
  */
 function getValue(
   node: Record<string, unknown>,
@@ -58,8 +73,11 @@ function getValue(
 }
 
 /**
- * Safely converts a value to a number.
- * Returns fallback if conversion fails.
+ * Safely translates candidate variables to numbers, returning default fallbacks if mapping fails.
+ *
+ * @param value - Candidate raw variable.
+ * @param fallback - The numeric default value (defaults to 0).
+ * @returns Safe numeric value.
  */
 function toNumber(value: unknown, fallback = 0): number {
   const numberValue = Number(value);
@@ -67,7 +85,10 @@ function toNumber(value: unknown, fallback = 0): number {
 }
 
 /**
- * Normalizes raw backend data into AppNotification model.
+ * Transforms raw notification items from the API layer into formatted, robust `AppNotification` structures.
+ *
+ * @param raw - Unprocessed JSON payload item.
+ * @returns The structured and safe `AppNotification`.
  */
 function normalizeNotification(raw: unknown): AppNotification {
   const node = asObject(raw);
@@ -90,17 +111,8 @@ function normalizeNotification(raw: unknown): AppNotification {
 // ── Service ──────────────────────────────────────────────────────────────────
 
 /**
- * Service responsible for handling user notifications.
- *
- * Features:
- * - Fetch user notifications
- * - Get unread count
- * - Mark single notification as read
- * - Mark all notifications as read
- *
- * Notes:
- * - Handles inconsistent backend responses (.NET wrapping)
- * - Safely normalizes all data
+ * Service responsible for fetching user notifications, tracking unread counts,
+ * and marking alert items as read in the database.
  */
 @Injectable({
   providedIn: 'root',
@@ -108,9 +120,9 @@ function normalizeNotification(raw: unknown): AppNotification {
 export class NotificationService {
 
   /**
-   * Fetch all notifications for the current user.
+   * Retrieves all notifications assigned to the currently authenticated employee.
    *
-   * @returns Promise<AppNotification[]>
+   * @returns A promise resolving to an array of normalized `AppNotification` logs.
    */
   async getMyNotifications(): Promise<AppNotification[]> {
     const data = await fetchJson<unknown>(`${BASE_URL}/api/Notification/my`);
@@ -118,9 +130,9 @@ export class NotificationService {
   }
 
   /**
-   * Fetch the number of unread notifications.
+   * Retrieves the count of unread notifications for the currently logged-in user.
    *
-   * @returns Promise<number>
+   * @returns A promise resolving to the total integer unread headcount count.
    */
   async getUnreadCount(): Promise<number> {
     const data = await fetchJson<unknown>(`${BASE_URL}/api/Notification/count`);
@@ -128,9 +140,10 @@ export class NotificationService {
   }
 
   /**
-   * Marks a specific notification as read.
+   * Submits a request to mark a specific notification item as read.
    *
-   * @param id - Notification ID
+   * @param id - Unique database ID of the target notification.
+   * @returns A promise resolving once the completion status is persisted.
    */
   async markRead(id: number): Promise<void> {
     await fetchJson<void>(`${BASE_URL}/api/Notification/read/${id}`, {
@@ -139,7 +152,9 @@ export class NotificationService {
   }
 
   /**
-   * Marks all notifications as read.
+   * Submits a request to mark all active notifications as read.
+   *
+   * @returns A promise resolving once the bulk read statuses are persisted.
    */
   async markAllRead(): Promise<void> {
     await fetchJson<void>(`${BASE_URL}/api/Notification/read-all`, {

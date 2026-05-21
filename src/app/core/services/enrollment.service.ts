@@ -3,53 +3,85 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, map, catchError, of } from 'rxjs';
 
 /**
- * Basic user data returned when searching for users.
+ * Basic user data structure returned when executing user search queries.
  */
 export interface UserSearchResult {
+  /** The unique GUID or database identifier of the user */
   id: string;
+  /** The registered login username of the user */
   userName: string;
+  /** The optional registered email address of the user */
   email?: string;
 }
 
+/**
+ * Progress details representing an employee's status within an assigned learning path.
+ */
 export interface EmployeeProgressDto {
+  /** The unique database identifier of the employee */
   employeeId: string;
+  /** The email address of the employee */
   employeeEmail: string;
+  /** The complete full name of the employee */
   employeeFullName: string;
+  /** The unique identifier of the assigned learning path */
   learningPathId: number;
+  /** The title name of the learning path */
   learningPathTitle: string;
+  /** Completion progress of the employee represented as a percentage (0 to 100) */
   progressPercentage: number;
-  isCompleted: boolean;
-}
-
-export interface EmployeeCourseProgressDto {
-  courseId: number;
-  courseTitle: string;
-  learningPathTitle: string;
-  progressPercentage: number;
+  /** Status indicating whether the employee has fully completed the learning path */
   isCompleted: boolean;
 }
 
 /**
- * Detailed user information returned from the backend.
+ * Detailed progress information for an employee on an individual course level.
+ */
+export interface EmployeeCourseProgressDto {
+  /** The unique identifier of the course */
+  courseId: number;
+  /** The title name of the course */
+  courseTitle: string;
+  /** The title name of the parent learning path this course belongs to */
+  learningPathTitle: string;
+  /** Completion progress of the employee in this course as a percentage (0 to 100) */
+  progressPercentage: number;
+  /** Status indicating whether the employee has completed all lessons in this course */
+  isCompleted: boolean;
+}
+
+/**
+ * Detailed comprehensive user profile records fetched from the database.
  */
 export interface UserInfo {
+  /** The unique GUID or identifier of the user */
   id: string;
+  /** The login username of the user */
   userName: string;
+  /** The user's primary email address */
   email: string;
+  /** The system authorization role assigned to this user */
   role: string;
+  /** The account creation timestamp ISO string */
   createdAt: string;
+  /** Listing of active course and learning path enrollments associated with this user */
   enrollments: {
     id?: number;
     learningPathId?: number;
     courseId?: number;
   }[];
+  /** Raw progressive records retrieved for specific lessons or courses */
   progresses: unknown[];
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 /**
- * Reads arrays from normal arrays or .NET wrapped responses.
+ * Utility helper to safely extract arrays from standard lists or backend .NET wrapped collections.
+ * Handles nested JSON structures with metadata fields like `$values` or `items`.
+ *
+ * @param value - The raw candidate value to parse.
+ * @returns A safe TypeScript array of items.
  */
 function readArray(value: unknown): unknown[] {
   if (Array.isArray(value)) return value;
@@ -62,14 +94,22 @@ function readArray(value: unknown): unknown[] {
 }
 
 /**
- * Safely converts unknown values into objects.
+ * Safely casts or converts an unknown input value into a typed record object.
+ *
+ * @param value - Candidate input.
+ * @returns A structured record object mapping keys to values or an empty object fallback.
  */
 function asObject(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
 }
 
 /**
- * Reads both camelCase and PascalCase backend keys.
+ * Multi-case key reading utility supporting both camelCase and PascalCase backend models.
+ *
+ * @param node - The data record object.
+ * @param camelCaseKey - The expected key string in camelCase.
+ * @param pascalCaseKey - The expected key string in PascalCase.
+ * @returns The associated value or undefined.
  */
 function getValue(
   node: Record<string, unknown>,
@@ -80,7 +120,10 @@ function getValue(
 }
 
 /**
- * Safely converts a value to a number or undefined.
+ * Conversational numeric helper converting unknown values into valid numbers or undefined.
+ *
+ * @param value - Raw input value.
+ * @returns A valid number if parsing succeeded, else undefined.
  */
 function toOptionalNumber(value: unknown): number | undefined {
   const numberValue = Number(value);
@@ -88,6 +131,13 @@ function toOptionalNumber(value: unknown): number | undefined {
   return Number.isFinite(numberValue) ? numberValue : undefined;
 }
 
+/**
+ * Numeric fallback helper converting inputs into numbers, defaulting to the fallback if invalid.
+ *
+ * @param value - Candidate raw input.
+ * @param fallback - The numeric default value (defaults to 0).
+ * @returns The resulting number.
+ */
 function toNumber(value: unknown, fallback = 0): number {
   const numberValue = Number(value);
 
@@ -95,7 +145,10 @@ function toNumber(value: unknown, fallback = 0): number {
 }
 
 /**
- * Normalizes one enrollment object from the backend.
+ * Normalizes a single enrollment node from the backend.
+ *
+ * @param raw - Raw enrollment record object.
+ * @returns Normalized enrollment structure.
  */
 function normalizeEnrollment(raw: unknown): {
   id?: number;
@@ -114,26 +167,24 @@ function normalizeEnrollment(raw: unknown): {
 // ── Service ─────────────────────────────────────────────────────────────────
 
 /**
- * Service responsible for user enrollment operations.
- *
- * Features:
- * - Search users
- * - Fetch detailed user info
- * - Enroll users in learning paths
- * - Fetch backend enrollment counts
+ * Service responsible for user enrollment, employee directory queries,
+ * progress tracking, and assigning employees to courses and learning paths.
  */
 @Injectable({
   providedIn: 'root',
 })
 export class EnrollmentService {
+  /** API Base URL representing backend server host */
   private readonly baseUrl = 'http://localhost:5232';
 
   constructor(private http: HttpClient) {}
 
   /**
-   * Searches users by name, username, or email.
+   * Searches active users by full name, login username, or email address.
+   * Useful for managers or HR selecting users to enroll.
    *
-   * @param value - Search text entered by the admin/HR
+   * @param value - Search text query entered by the user.
+   * @returns An `Observable` emitting matching user search results.
    */
   searchUsers(value: string): Observable<UserSearchResult[]> {
     return this.http.get<UserSearchResult[]>(
@@ -142,9 +193,10 @@ export class EnrollmentService {
   }
 
   /**
-   * Fetches full user information by user ID.
+   * Retrieves detailed profile, enrollment, and progress listings of a single user.
    *
-   * @param id - User ID
+   * @param id - The unique identifier of the target user.
+   * @returns An `Observable` emitting the normalized `UserInfo` profile.
    */
   getUserInfo(id: string): Observable<UserInfo> {
     return this.http
@@ -153,11 +205,12 @@ export class EnrollmentService {
   }
 
   /**
-   * Enrolls a user into a learning path.
+   * Enrolls a user/employee into a specific learning path.
    *
-   * @param userId - User ID
-   * @param learningPathId - Learning path ID
-   * @param managerId - ID of the manager performing the enrollment
+   * @param userId - The unique identifier of the user to enroll.
+   * @param learningPathId - The unique ID of the learning path.
+   * @param managerId - The unique ID of the manager performing the enrollment.
+   * @returns An `Observable` of the backend text/string response.
    */
   enroll(userId: string, learningPathId: number, managerId: string): Observable<string> {
     return this.http.post(
@@ -175,10 +228,10 @@ export class EnrollmentService {
   }
 
   /**
-   * Returns the IDs of courses the current user is directly enrolled in
-   * (enrollments where courseId is set, not via a learning path).
+   * Fetches the array of course IDs that the user is directly enrolled in (not via paths).
    *
-   * @param userId - The current user's own ID
+   * @param userId - The user's unique identifier.
+   * @returns An `Observable` emitting an array of enrolled course IDs.
    */
   getMyDirectCourseIds(userId: string): Observable<number[]> {
     return this.getUserInfo(userId).pipe(
@@ -192,11 +245,12 @@ export class EnrollmentService {
   }
 
   /**
-   * Enrolls a user into a specific course.
+   * Enrolls a user/employee directly into an individual course.
    *
-   * @param userId - User ID
-   * @param courseId - Course ID
-   * @param managerId - ID of the manager performing the enrollment
+   * @param userId - Unique user identifier of the target employee.
+   * @param courseId - Unique ID of the course to enroll.
+   * @param managerId - Unique ID of the manager performing this action.
+   * @returns An `Observable` emitting the text success message response.
    */
   enrollCourse(userId: string, courseId: number, managerId: string): Observable<string> {
     return this.http.post(
@@ -214,9 +268,10 @@ export class EnrollmentService {
   }
 
   /**
-   * Fetches how many employees are enrolled in a learning path.
+   * Retrieves the count of employees currently enrolled in a learning path.
    *
-   * @param learningPathId - Learning path ID
+   * @param learningPathId - Unique ID of the target learning path.
+   * @returns An `Observable` emitting the total headcount number.
    */
   getLearningPathEmployeesCount(learningPathId: number): Observable<number> {
     return this.http
@@ -225,9 +280,11 @@ export class EnrollmentService {
   }
 
   /**
-   * Fetches employees enrolled by a manager along with their learning path progress.
-   * 
-   * @param managerId - Manager ID
+   * Retrieves a list of all employees assigned under a specific manager
+   * along with their current progress percentages in their assigned learning paths.
+   *
+   * @param managerId - Unique user identifier of the manager.
+   * @returns An `Observable` emitting an array of `EmployeeProgressDto` elements.
    */
   getEmployeeProgressWithManagerId(managerId: string): Observable<EmployeeProgressDto[]> {
     return this.http
@@ -235,10 +292,12 @@ export class EnrollmentService {
   }
 
   /**
-   * Fetches detailed course-level progress for a specific employee in a specific learning path.
+   * Retrieves detailed course-by-course status and progress percentages
+   * for a specific employee within a specific learning path context.
    *
-   * @param employeeId - Employee user ID
-   * @param learningPathId - Learning path ID
+   * @param employeeId - The unique user ID of the employee.
+   * @param learningPathId - The unique ID of the target learning path.
+   * @returns An `Observable` emitting an array of `EmployeeCourseProgressDto` entries.
    */
   getEmployeeCoursesProgress(employeeId: string, learningPathId: number): Observable<EmployeeCourseProgressDto[]> {
     return this.http
@@ -246,7 +305,10 @@ export class EnrollmentService {
   }
 
   /**
-   * Normalizes raw backend user info into UserInfo.
+   * Normalizes raw backend user information nodes into a formatted, robust `UserInfo` object.
+   *
+   * @param raw - Unprocessed user JSON record.
+   * @returns The structured and safe `UserInfo` profile.
    */
   private normalizeUserInfo(raw: unknown): UserInfo {
     const node = asObject(raw);
@@ -263,7 +325,10 @@ export class EnrollmentService {
   }
 
   /**
-   * Normalizes supported count response shapes into a number.
+   * Normalizes the count responses from the backend (handling raw numbers, stringified numbers, or wrappers).
+   *
+   * @param raw - Unprocessed API payload structure.
+   * @returns The resolved total count integer.
    */
   private normalizeEmployeesCount(raw: unknown): number {
     if (typeof raw === 'number' || typeof raw === 'string') {

@@ -2,6 +2,11 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LearningPathResponseDto, BASE_URL } from '../../types/course-builder.types';
 
+/**
+ * Card Component for displaying a single learning path in the Course Builder panel.
+ * Contains direct styling templates, binds course count badges and title/description strings,
+ * and emits callbacks when managing, editing, or deleting the path is requested.
+ */
 @Component({
   selector: 'app-learning-path-card',
   standalone: true,
@@ -179,12 +184,34 @@ import { LearningPathResponseDto, BASE_URL } from '../../types/course-builder.ty
   ],
 })
 export class LearningPathCardComponent {
+  /**
+   * The learning path payload data bound to the card.
+   */
   @Input({ required: true }) path!: LearningPathResponseDto;
+
+  /**
+   * Index value inside list iterators, used to cycle cover art backup gradients.
+   */
   @Input() cardIndex: number = 0;
+
+  /**
+   * Event dispatched when clicking the manage course button, emitting the path's ID.
+   */
   @Output() manage = new EventEmitter<number>();
+
+  /**
+   * Event dispatched when clicking the edit pencil, emitting the full path object.
+   */
   @Output() edit = new EventEmitter<LearningPathResponseDto>();
+
+  /**
+   * Event dispatched when clicking the delete trashcan, emitting the path's ID.
+   */
   @Output() remove = new EventEmitter<number>();
 
+  /**
+   * Predefined gradients list to use as aesthetic placeholders when cover art is not present.
+   */
   private readonly gradients = [
     'linear-gradient(135deg, #0f1b3d 0%, #1e3a8a 100%)',
     'linear-gradient(135deg, #065f56 0%, #0d9488 100%)',
@@ -194,10 +221,20 @@ export class LearningPathCardComponent {
     'linear-gradient(135deg, #14532d 0%, #16a34a 100%)',
   ];
 
+  /**
+   * Validates if a custom picture cover art is set for the path.
+   *
+   * @returns True if pictureUrl exists, false otherwise.
+   */
   hasPicture(): boolean {
     return !!this.path.pictureUrl;
   }
 
+  /**
+   * Formats and returns the course cover art url, appending local server bases if relative.
+   *
+   * @returns Formatted image URL string.
+   */
   getPictureUrl(): string {
     if (!this.path.pictureUrl) return '';
     // If it's already an absolute URL, use it directly
@@ -206,6 +243,12 @@ export class LearningPathCardComponent {
     return `${BASE_URL}/${this.path.pictureUrl.replace(/^\//, '')}`;
   }
 
+  /**
+   * Decides which background setting should fill the card banner.
+   * Returns a transparent fill if cover art exists, or cycles aesthetic gradients according to `cardIndex`.
+   *
+   * @returns Background fill CSS string.
+   */
   getBannerBackground(): string {
     if (this.hasPicture()) return 'transparent';
     return this.gradients[this.cardIndex % this.gradients.length];
