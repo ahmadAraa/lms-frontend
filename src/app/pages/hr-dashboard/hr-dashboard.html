@@ -13,6 +13,39 @@
     </a>
   </div>
 
+  <!-- Key Metrics Row -->
+  <div class="hr-metrics-grid">
+    <div class="hr-metric-card">
+      <div class="hr-metric-icon-wrapper employee-icon">
+        <span class="material-symbols-outlined">group</span>
+      </div>
+      <div class="hr-metric-content">
+        <span class="hr-metric-value">{{ totalEmployees() }}</span>
+        <span class="hr-metric-label">Total Employees</span>
+      </div>
+    </div>
+
+    <div class="hr-metric-card">
+      <div class="hr-metric-icon-wrapper path-icon">
+        <span class="material-symbols-outlined">schema</span>
+      </div>
+      <div class="hr-metric-content">
+        <span class="hr-metric-value">{{ paths().length }}</span>
+        <span class="hr-metric-label">Learning Paths</span>
+      </div>
+    </div>
+
+    <div class="hr-metric-card">
+      <div class="hr-metric-icon-wrapper enrollment-icon">
+        <span class="material-symbols-outlined">assignment_turned_in</span>
+      </div>
+      <div class="hr-metric-content">
+        <span class="hr-metric-value">{{ totalEnrollments() }}</span>
+        <span class="hr-metric-label">Total Enrollments</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Learning Path Distribution -->
   <app-learning-path-distribution
     [paths]="paths()"

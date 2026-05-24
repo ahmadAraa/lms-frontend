@@ -2,12 +2,12 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, forkJoin, of, switchMap, map } from 'rxjs';
 import { AuthService } from '../../core/services/auth';
 import { Router } from '@angular/router';
 import { LearningPathService, LearningPathResponseDto } from '../../core/services/learning-path.service';
 import { ActivityService, AdminActivity } from '../../core/services/activity.service';
-import { EnrollmentService } from '../../core/services/enrollment.service';
+import { EnrollmentService, UserInfo } from '../../core/services/enrollment.service';
 import { LearningPathDistributionComponent } from './components/learning-path-distribution/learning-path-distribution.component';
 import { RecentActivityComponent } from './components/recent-activity/recent-activity.component';
 import { QuickActionsComponent } from './components/quick-actions/quick-actions.component';
@@ -53,6 +53,12 @@ export class HrDashboard implements OnInit {
   activities = signal<AdminActivity[]>([]);
 
   /**
+   * Signals storing system-wide metrics.
+   */
+  totalEmployees = signal(0);
+  totalEnrollments = signal(0);
+
+  /**
    * Constructs the HrDashboard component.
    *
    * @param authService - Service to fetch the user identity and execute logouts.
@@ -84,18 +90,15 @@ export class HrDashboard implements OnInit {
       error: () => {},
     });
 
+    this.loadUserMetrics();
+
     this.activities.set(this.activityService.getRecent(8));
   }
 
-  /**
-   * Queries enrollment statistics for every provided path in parallel using forkJoin,
-   * mapping path IDs to their respective count of active students.
-   *
-   * @param paths - The active catalog of learning paths to query statistics for.
-   */
   private loadEnrolledCounts(paths: LearningPathResponseDto[]) {
     if (paths.length === 0) {
       this.enrolledCounts.set({});
+      this.totalEnrollments.set(0);
       return;
     }
 
@@ -112,6 +115,33 @@ export class HrDashboard implements OnInit {
           return acc;
         }, {})
       );
+
+      const total = counts.reduce((sum, count) => sum + (count ?? 0), 0);
+      this.totalEnrollments.set(total);
+    });
+  }
+
+  /**
+   * Queries user records to compute active employee metrics.
+   */
+  private loadUserMetrics() {
+    this.enrollmentService.searchUsers('@').pipe(
+      catchError(() => of([])),
+      switchMap((searchResults) => {
+        if (!searchResults || searchResults.length === 0) return of([] as UserInfo[]);
+        return forkJoin(
+          searchResults.map((u) =>
+            this.enrollmentService.getUserInfo(u.id).pipe(catchError(() => of(null)))
+          )
+        ).pipe(
+          map((infos) =>
+            (infos as (UserInfo | null)[]).filter((u): u is UserInfo => u !== null)
+          )
+        );
+      })
+    ).subscribe((users) => {
+      const employees = users.filter(u => u.role === 'EMPLOYEE').length;
+      this.totalEmployees.set(employees);
     });
   }
 
