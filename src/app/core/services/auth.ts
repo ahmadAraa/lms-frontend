@@ -3,11 +3,12 @@ import { HttpClient } from '@angular/common/http';
 
 /**
  * Supported authorization roles in the application.
+ * - 'SUPERADMIN': Highest-level administrator with HR account management access.
  * - 'HR': Human Resources/Admin user.
  * - 'MANAGER': Department or team manager.
  * - 'EMPLOYEE': General team employee.
  */
-export type UserRole = 'HR' | 'MANAGER' | 'EMPLOYEE';
+export type UserRole = 'SUPERADMIN' | 'HR' | 'MANAGER' | 'EMPLOYEE';
 
 /**
  * Backend response structure for a successful login request.
@@ -110,8 +111,12 @@ export class AuthService {
    * @param id - The unique GUID/Identifier of the user.
    * @returns An `Observable` corresponding to the HTTP DELETE request with text response.
    */
-  deleteUser(id: string) {
-    return this.http.delete(`${this.baseUrl}/DeleteUser/${id}`, { responseType: 'text' });
+  deleteUser(id: string, replacementManagerId?: string) {
+    let url = `${this.baseUrl}/DeleteUser/${id}`;
+    if (replacementManagerId) {
+      url += `?replacementManagerId=${encodeURIComponent(replacementManagerId)}`;
+    }
+    return this.http.delete(url, { responseType: 'text' });
   }
 
   /**
@@ -179,7 +184,7 @@ export class AuthService {
 
   /**
    * Decodes the current token payload and maps JWT role claims to a structured `UserRole`.
-   * Maps 'admin' and 'hr' to 'HR'.
+   * Maps 'admin' to 'HR' for legacy backend compatibility.
    *
    * Supports standard XML schema role claims and standard OAuth `role`/`roles` fields.
    *
@@ -211,6 +216,9 @@ export class AuthService {
 
     const normalizedRoles = roles.map((r) => r.trim().toLowerCase());
 
+    if (normalizedRoles.includes('superadmin')) return 'SUPERADMIN';
+    if (normalizedRoles.includes('super_admin')) return 'SUPERADMIN';
+    if (normalizedRoles.includes('super admin')) return 'SUPERADMIN';
     if (normalizedRoles.includes('admin')) return 'HR';
     if (normalizedRoles.includes('hr')) return 'HR';
     if (normalizedRoles.includes('manager')) return 'MANAGER';

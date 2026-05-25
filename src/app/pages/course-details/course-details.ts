@@ -274,7 +274,7 @@ export class CourseDetails implements OnInit {
   }
 
   /**
-   * Returns whether the active user possesses administrative permissions (HR or MANAGER),
+   * Returns whether the active user possesses administrative permissions,
    * enabling full course unlocking previews.
    *
    * @returns True if the user is staff, otherwise false.
@@ -283,7 +283,7 @@ export class CourseDetails implements OnInit {
   private isStaffPreview(): boolean {
     const role = this.authService.getUserRole();
 
-    return role === 'HR' || role === 'MANAGER';
+    return role === 'SUPERADMIN' || role === 'HR' || role === 'MANAGER';
   }
 
   /**

@@ -24,7 +24,7 @@ import { UserRole } from '../../core/services/auth';
   styleUrl: './hr-create-user.css',
 })
 export class HrCreateUser implements OnInit {
-  // ── Employee list ────────────────────────────────────────
+  // ── User list ────────────────────────────────────────────
   /**
    * Private internal signal storing the full list of all system users.
    */
@@ -50,8 +50,9 @@ export class HrCreateUser implements OnInit {
    */
   users = computed(() => {
     const q = this.userSearch().trim().toLowerCase();
-    if (!q) return this.allUsers();
-    return this.allUsers().filter(
+    const visibleUsers = this.allUsers().filter((u) => (u.role ?? '').toUpperCase() !== 'SUPERADMIN');
+    if (!q) return visibleUsers;
+    return visibleUsers.filter(
       (u) => u.userName.toLowerCase().includes(q) || u.email.toLowerCase().includes(q),
     );
   });
@@ -103,6 +104,27 @@ export class HrCreateUser implements OnInit {
   currentUserRole = signal<UserRole | null>(null);
 
   /**
+   * Role options the current administrator is allowed to assign to new users.
+   */
+  allowedCreateRoles = computed<UserRole[]>(() => {
+    switch (this.currentUserRole()) {
+      case 'SUPERADMIN':
+        return ['EMPLOYEE', 'MANAGER', 'HR'];
+      case 'HR':
+        return ['EMPLOYEE', 'MANAGER'];
+      case 'MANAGER':
+        return ['EMPLOYEE'];
+      default:
+        return [];
+    }
+  });
+
+  /**
+   * True when the form should expose a role selector.
+   */
+  canSelectCreateRole = computed(() => this.allowedCreateRoles().length > 1);
+
+  /**
    * Signal storing the ID of the logged in administrator.
    */
   currentUserId = signal('');
@@ -149,6 +171,7 @@ export class HrCreateUser implements OnInit {
   ngOnInit() {
     this.currentUserRole.set(this.authService.getUserRole());
     this.currentUserId.set(this.authService.getUserId());
+    this.ensureAllowedCreateRole();
     this.loadAllUsers();
   }
 
@@ -168,7 +191,7 @@ export class HrCreateUser implements OnInit {
             this.sessionExpired();
             return of(null);
           }
-          this.listError.set('Failed to load employees.');
+          this.listError.set('Failed to load users.');
           return of([]);
         }),
         switchMap((searchResults) => {
@@ -235,6 +258,12 @@ export class HrCreateUser implements OnInit {
       return;
     }
 
+    if (!this.allowedCreateRoles().includes(this.role)) {
+      this.errorMessage.set('You do not have permission to create this role.');
+      this.ensureAllowedCreateRole();
+      return;
+    }
+
     this.isSubmitting.set(true);
     this.submitFallbackTimer = setTimeout(() => {
       this.isSubmitting.set(false);
@@ -265,10 +294,10 @@ export class HrCreateUser implements OnInit {
           const createdName = this.userName.trim();
           this.activityService.log(
             'person_add',
-            `<strong>${this.authService.getUserName() || 'HR'}</strong> created a new user account for <strong>${createdName}</strong>.`,
+            `<strong>${this.actorLabel()}</strong> created a new user account for <strong>${createdName}</strong>.`,
             'User Management',
           );
-          this.successMessage.set('Employee created successfully.');
+          this.successMessage.set(`${this.roleLabel(this.role)} created successfully.`);
           this.resetForm();
           this.loadAllUsers();
         },
@@ -284,7 +313,7 @@ export class HrCreateUser implements OnInit {
               ? 'Request timed out. Please try again.'
               : typeof httpErr?.error === 'string' && httpErr.error
                 ? httpErr.error
-                : httpErr?.message || 'Failed to create employee. Please try again.';
+                : httpErr?.message || 'Failed to create user. Please try again.';
           this.errorMessage.set(msg);
         },
       });
@@ -307,6 +336,7 @@ export class HrCreateUser implements OnInit {
     this.password = '';
     this.confirmPassword = '';
     this.fullName = '';
+    this.ensureAllowedCreateRole();
   }
 
   // ── Delete User Modal ──────────────────────────────────────
@@ -326,6 +356,26 @@ export class HrCreateUser implements OnInit {
   isDeleting = signal(false);
 
   /**
+   * Tracks whether the user must select a replacement manager.
+   */
+  requiresReplacement = signal(false);
+
+  /**
+   * Stores the ID of the selected replacement manager.
+   */
+  replacementManagerId = signal('');
+
+  /**
+   * Computed list of available replacement managers.
+   */
+  availableManagers = computed(() => {
+    const deletingUser = this.userToDelete();
+    return this.allUsers().filter(
+      (u) => (u.role ?? '').toUpperCase() === 'MANAGER' && u.id !== deletingUser?.id
+    );
+  });
+
+  /**
    * Triggers the opening of the deletion verification modal for a specific user.
    *
    * @param user - The user record intended for deletion.
@@ -333,6 +383,9 @@ export class HrCreateUser implements OnInit {
   openDeleteModal(user: UserInfo) {
     this.userToDelete.set(user);
     this.deleteConfirmationText.set('');
+    this.requiresReplacement.set(false);
+    this.replacementManagerId.set('');
+    this.listError.set('');
   }
 
   /**
@@ -342,13 +395,16 @@ export class HrCreateUser implements OnInit {
     this.userToDelete.set(null);
     this.deleteConfirmationText.set('');
     this.isDeleting.set(false);
+    this.requiresReplacement.set(false);
+    this.replacementManagerId.set('');
   }
 
   /**
    * Implements strict server/client privilege safety filters:
    * 1. A user cannot delete their own account.
-   * 2. HR professionals can delete employees and managers (but not other HRs).
-   * 3. Managers can only delete employees.
+   * 2. Super admins can delete HR, manager, and employee accounts.
+   * 3. HR professionals can delete employees and managers.
+   * 4. Managers can only delete employees.
    *
    * @param user - The target user record.
    * @returns True if deletion is allowed, false otherwise.
@@ -360,8 +416,11 @@ export class HrCreateUser implements OnInit {
     const myRole = this.currentUserRole();
     const targetRole = (user.role ?? '').toUpperCase();
 
+    if (myRole === 'SUPERADMIN') {
+      return targetRole === 'HR' || targetRole === 'MANAGER' || targetRole === 'EMPLOYEE';
+    }
+
     if (myRole === 'HR') {
-      // HR can delete employees and managers only (not other HR accounts)
       return targetRole === 'EMPLOYEE' || targetRole === 'MANAGER';
     }
 
@@ -381,6 +440,8 @@ export class HrCreateUser implements OnInit {
    */
   roleBadgeClass(role: string): string {
     switch ((role ?? '').toUpperCase()) {
+      case 'SUPERADMIN':
+        return 'cu-badge badge-admin';
       case 'HR':
         return 'cu-badge badge-hr';
       case 'MANAGER':
@@ -400,6 +461,8 @@ export class HrCreateUser implements OnInit {
    */
   roleLabel(role: string): string {
     switch ((role ?? '').toUpperCase()) {
+      case 'SUPERADMIN':
+        return 'Super Admin';
       case 'HR':
         return 'HR';
       case 'MANAGER':
@@ -419,12 +482,18 @@ export class HrCreateUser implements OnInit {
     const user = this.userToDelete();
     if (!user || this.deleteConfirmationText().trim().toLowerCase() !== 'delete') return;
 
+    if (this.requiresReplacement() && !this.replacementManagerId()) {
+      return; // Handled by disabled button state
+    }
+
+    this.listError.set('');
     this.isDeleting.set(true);
-    this.authService.deleteUser(user.id).subscribe({
+
+    this.authService.deleteUser(user.id, this.replacementManagerId()).subscribe({
       next: () => {
         this.activityService.log(
           'person_remove',
-          `<strong>${this.authService.getUserName() || 'HR'}</strong> deleted user account <strong>${user.userName}</strong>.`,
+          `<strong>${this.actorLabel()}</strong> deleted user account <strong>${user.userName}</strong>.`,
           'User Management',
         );
         this.allUsers.update((users) => users.filter((u) => u.id !== user.id));
@@ -432,13 +501,47 @@ export class HrCreateUser implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         this.isDeleting.set(false);
+
         if (err.status === 401) {
           this.sessionExpired();
           return;
         }
-        this.listError.set('Failed to delete user.');
+
+        if (err.status === 409 && typeof err.error === 'string' && err.error.includes('Manager has enrolled students')) {
+          this.requiresReplacement.set(true);
+          return;
+        }
+
+        this.listError.set(err.error || 'Failed to delete user.');
         this.closeDeleteModal();
       },
     });
+  }
+
+  /**
+   * Returns dynamic submit text matching the selected target role.
+   */
+  createButtonText(): string {
+    const label = this.roleLabel(this.role);
+
+    return this.isSubmitting() ? `Creating ${label}...` : `Create ${label}`;
+  }
+
+  /**
+   * Keeps the selected form role inside the current administrator's allowed role set.
+   */
+  private ensureAllowedCreateRole() {
+    const allowedRoles = this.allowedCreateRoles();
+    if (allowedRoles.length === 0) return;
+    if (!allowedRoles.includes(this.role)) {
+      this.role = allowedRoles[0];
+    }
+  }
+
+  /**
+   * Resolves a readable fallback actor label for local activity messages.
+   */
+  private actorLabel(): string {
+    return this.authService.getUserName() || this.roleLabel(this.currentUserRole() ?? 'HR');
   }
 }

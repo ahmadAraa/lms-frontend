@@ -1,7 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { debounceTime, distinctUntilChanged, Subject, switchMap, catchError, of, forkJoin, map } from 'rxjs';
+import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { LearningPathService, LearningPathResponseDto } from '../../core/services/learning-path.service';
 import { EnrollmentService, UserInfo, UserSearchResult } from '../../core/services/enrollment.service';
 import { ActivityService } from '../../core/services/activity.service';
@@ -33,7 +33,12 @@ export class HrAssignPath implements OnInit {
   searchResults = signal<UserSearchResult[]>([]);
 
   /**
-   * Signal indicating if a search query is actively processing on the server.
+   * Cached directory of assignable employees used for local autocomplete search.
+   */
+  private employeeOptions = signal<UserSearchResult[]>([]);
+
+  /**
+   * Signal indicating if the employee directory or local search is actively processing.
    */
   isSearching = signal(false);
 
@@ -80,7 +85,7 @@ export class HrAssignPath implements OnInit {
   errorMessage = signal('');
 
   /**
-   * Subject pipeline routing typed search queries to debounce/switchMap operators.
+   * Subject pipeline routing typed search queries to the debounced local employee filter.
    */
   private search$ = new Subject<string>();
 
@@ -117,44 +122,55 @@ export class HrAssignPath implements OnInit {
     });
 
     // Debounce search — wait 350ms after user stops typing
+    this.loadEmployees();
+
     this.search$.pipe(
       debounceTime(350),
       distinctUntilChanged(),
-      switchMap(q => {
-        if (q.trim().length < 2) {
-          this.searchResults.set([]);
-          this.isSearching.set(false);
-          return of([]);
-        }
-        this.isSearching.set(true);
-        return this.enrollmentService.searchUsers(q).pipe(
-          switchMap((users) => {
-            if (users.length === 0) return of([]);
-
-            return forkJoin(
-              users.map((user) =>
-                this.enrollmentService.getUserInfo(user.id).pipe(catchError(() => of(null))),
-              ),
-            ).pipe(
-              map((infos) =>
-                infos
-                  .filter((info): info is UserInfo => info?.role === 'EMPLOYEE')
-                  .map((info) => ({
-                    id: info.id,
-                    userName: info.userName,
-                    email: info.email,
-                  })),
-              ),
-            );
-          }),
-          catchError(() => of([]))
-        );
-      })
-    ).subscribe(results => {
-      this.searchResults.set(results);
-      this.isSearching.set(false);
-      this.showDropdown.set(results.length > 0);
+    ).subscribe((query) => {
+      this.updateSearchResults(query);
     });
+  }
+
+  /**
+   * Loads the assignable employee directory once so autocomplete can find every employee.
+   */
+  private loadEmployees() {
+    this.isSearching.set(true);
+    this.enrollmentService.getEmployees().subscribe({
+      next: (employees) => {
+        this.employeeOptions.set(employees);
+        this.updateSearchResults(this.searchQuery());
+      },
+      error: () => {
+        this.employeeOptions.set([]);
+        this.updateSearchResults(this.searchQuery());
+      },
+    });
+  }
+
+  /**
+   * Filters the local employee directory by username or email.
+   *
+   * @param query - The current typed search string.
+   */
+  private updateSearchResults(query: string) {
+    const q = query.trim().toLowerCase();
+
+    if (!q) {
+      this.searchResults.set([]);
+      this.showDropdown.set(false);
+      this.isSearching.set(false);
+      return;
+    }
+
+    const results = this.employeeOptions().filter((user) =>
+      user.userName.toLowerCase().includes(q) || (user.email ?? '').toLowerCase().includes(q),
+    );
+
+    this.searchResults.set(results);
+    this.showDropdown.set(results.length > 0);
+    this.isSearching.set(false);
   }
 
   /**
@@ -169,8 +185,9 @@ export class HrAssignPath implements OnInit {
     this.isLoadingUserInfo.set(false);
     this.searchQuery.set(value);
     this.selectedUser.set(null);
+    this.isSearching.set(value.trim().length > 0 && this.employeeOptions().length === 0);
     this.search$.next(value);
-    if (value.trim().length < 2) {
+    if (!value.trim()) {
       this.showDropdown.set(false);
     }
   }

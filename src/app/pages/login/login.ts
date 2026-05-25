@@ -7,7 +7,7 @@ import { AuthService } from '../../core/services/auth';
  * Component handling authentication requests and session logins for users.
  *
  * Implements login input forms, automated dashboard routing based on decoded
- * user role claims (HR/MANAGER vs. Employee), and handles invalid credentials gracefully.
+ * user role claims (SUPERADMIN/HR/MANAGER vs. Employee), and handles invalid credentials gracefully.
  */
 @Component({
   selector: 'app-login',
@@ -66,7 +66,7 @@ export class Login implements OnInit {
   ngOnInit(): void {
     if (this.authService.isLoggedIn()) {
       const role = this.authService.getUserRole();
-      if (role === 'HR' || role === 'MANAGER') {
+      if (role === 'SUPERADMIN' || role === 'HR' || role === 'MANAGER') {
         this.router.navigate(['/hr/dashboard']);
       } else {
         this.router.navigate(['/employee/dashboard']);
@@ -116,7 +116,7 @@ export class Login implements OnInit {
           return;
         }
 
-        const target = role === 'HR' || role === 'MANAGER'
+        const target = role === 'SUPERADMIN' || role === 'HR' || role === 'MANAGER'
           ? '/hr/dashboard'
           : '/employee/dashboard';
 

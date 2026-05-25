@@ -25,7 +25,7 @@ export class UserSettingsComponent implements OnInit {
   userName = '';
 
   /**
-   * The decoded security role of the user (e.g. 'HR', 'EMPLOYEE', 'MANAGER').
+   * The decoded security role of the user (e.g. 'SUPERADMIN', 'HR', 'EMPLOYEE', 'MANAGER').
    */
   userRole = '';
 

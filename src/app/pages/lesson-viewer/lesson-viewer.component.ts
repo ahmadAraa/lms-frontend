@@ -206,7 +206,7 @@ export class LessonViewerComponent implements OnInit {
   private routeCourseId: number | null = null;
 
   /**
-   * Signal representing whether the viewer is running as a staff preview mode (HR or MANAGER).
+   * Signal representing whether the viewer is running as a staff preview mode.
    */
   isPreviewMode = signal(false);
 
@@ -563,7 +563,7 @@ export class LessonViewerComponent implements OnInit {
 
   /**
    * Routes the user to the "courses index" for the active learning path.
-   * For HR/Manager preview this is the course-builder page (`/learning-paths/:pathId`);
+   * For staff preview this is the course-builder page (`/learning-paths/:pathId`);
    * for employees it's their path detail page (`/learning-path/:pathId`), which
    * lists the courses they have access to.
    */
@@ -640,7 +640,7 @@ export class LessonViewerComponent implements OnInit {
   }
 
   /**
-   * Returns whether the active user possesses administrative permissions (HR or MANAGER),
+   * Returns whether the active user possesses administrative permissions,
    * enabling full course unlocking previews.
    *
    * @returns True if the user is staff, otherwise false.
@@ -649,6 +649,6 @@ export class LessonViewerComponent implements OnInit {
   private isStaffPreview(): boolean {
     const role = this.authService.getUserRole();
 
-    return role === 'HR' || role === 'MANAGER';
+    return role === 'SUPERADMIN' || role === 'HR' || role === 'MANAGER';
   }
 }

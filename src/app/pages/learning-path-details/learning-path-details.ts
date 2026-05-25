@@ -235,7 +235,7 @@ export class LearningPathDetails implements OnInit {
   }
 
   /**
-   * Returns whether the active user possesses administrative permissions (HR or MANAGER),
+   * Returns whether the active user possesses administrative permissions,
    * which enables full course unlocking previews.
    *
    * @returns True if the user is staff, otherwise false.
@@ -243,6 +243,6 @@ export class LearningPathDetails implements OnInit {
   isStaffPreview(): boolean {
     const role = this.authService.getUserRole();
 
-    return role === 'HR' || role === 'MANAGER';
+    return role === 'SUPERADMIN' || role === 'HR' || role === 'MANAGER';
   }
 }

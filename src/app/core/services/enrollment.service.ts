@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, catchError, of } from 'rxjs';
+import { Observable, map, catchError, of, forkJoin, switchMap } from 'rxjs';
 
 /**
  * Basic user data structure returned when executing user search queries.
@@ -189,6 +189,37 @@ export class EnrollmentService {
   searchUsers(value: string): Observable<UserSearchResult[]> {
     return this.http.get<UserSearchResult[]>(
       `${this.baseUrl}/api/User/SearchUsers?value=${encodeURIComponent(value)}`,
+    );
+  }
+
+  /**
+   * Retrieves every employee account visible to the current administrator.
+   * Uses the broad user search endpoint, then resolves roles through detailed user info.
+   *
+   * @returns An `Observable` emitting employee-only search result records.
+   */
+  getEmployees(): Observable<UserSearchResult[]> {
+    return this.searchUsers('@').pipe(
+      switchMap((users) => {
+        if (!users || users.length === 0) return of([] as UserSearchResult[]);
+
+        return forkJoin(
+          users.map((user) =>
+            this.getUserInfo(user.id).pipe(catchError(() => of(null))),
+          ),
+        ).pipe(
+          map((infos) =>
+            (infos as (UserInfo | null)[])
+              .filter((info): info is UserInfo => info?.role === 'EMPLOYEE')
+              .map((info) => ({
+                id: info.id,
+                userName: info.userName,
+                email: info.email,
+              })),
+          ),
+        );
+      }),
+      catchError(() => of([] as UserSearchResult[])),
     );
   }
 

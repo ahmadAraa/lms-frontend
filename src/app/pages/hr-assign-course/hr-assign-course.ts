@@ -2,11 +2,12 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { debounceTime, distinctUntilChanged, Subject, switchMap, catchError, of, forkJoin, map } from 'rxjs';
-import { LearningPathService } from '../../core/services/learning-path.service';
+import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
+import { LearningPathResponseDto, LearningPathService } from '../../core/services/learning-path.service';
 import { EnrollmentService, UserInfo, UserSearchResult } from '../../core/services/enrollment.service';
 import { ActivityService } from '../../core/services/activity.service';
 import { AuthService } from '../../core/services/auth';
+import { SectionsApiService } from '../../core/services/sections-api.service';
 
 /**
  * Interface representing a normalized course item pulled from learning path collections.
@@ -74,7 +75,12 @@ export class HrAssignCourse implements OnInit {
   searchResults = signal<UserSearchResult[]>([]);
 
   /**
-   * Signal indicating if a search query is actively processing on the server.
+   * Cached directory of assignable employees used for local autocomplete search.
+   */
+  private employeeOptions = signal<UserSearchResult[]>([]);
+
+  /**
+   * Signal indicating if the employee directory or local search is actively processing.
    */
   isSearching = signal(false);
 
@@ -121,7 +127,7 @@ export class HrAssignCourse implements OnInit {
   errorMessage = signal('');
 
   /**
-   * Subject pipeline routing typed search queries to debounce/switchMap operators.
+   * Subject pipeline routing typed search queries to the debounced local employee filter.
    */
   private search$ = new Subject<string>();
 
@@ -139,6 +145,7 @@ export class HrAssignCourse implements OnInit {
    * @param activityService - Local mock or service logging system activities.
    * @param authService - Service to extract current manager/administrator ID.
    * @param router - Navigation controller to route course previews.
+   * @param sectionsApi - Service to resolve course section counts when path payloads omit sections.
    */
   constructor(
     private learningPathService: LearningPathService,
@@ -147,6 +154,7 @@ export class HrAssignCourse implements OnInit {
     private activityService: ActivityService,
     private authService: AuthService,
     private router: Router,
+    private sectionsApi: SectionsApiService,
   ) {}
 
   /**
@@ -156,62 +164,106 @@ export class HrAssignCourse implements OnInit {
   ngOnInit() {
     this.learningPathService.getPaths().subscribe({
       next: (paths) => {
-        const courseList: CourseItem[] = [];
-        for (const path of paths) {
-          for (const course of path.courses ?? []) {
-            courseList.push({
-              id: course.id,
-              title: course.title,
-              description: course.description,
-              pathId: path.id,
-              pathTitle: path.title,
-              sectionCount: course.sections?.length ?? 0,
-              firstLessonId: this.getFirstLessonId(course),
-            });
-          }
-        }
-        this.courses.set(courseList);
+        void this.loadCourses(paths);
       },
       error: () => {},
     });
 
+    this.loadEmployees();
+
     this.search$.pipe(
       debounceTime(350),
       distinctUntilChanged(),
-      switchMap(q => {
-        if (q.trim().length < 2) {
-          this.searchResults.set([]);
-          this.isSearching.set(false);
-          return of([]);
-        }
-        this.isSearching.set(true);
-        return this.enrollmentService.searchUsers(q).pipe(
-          switchMap((users) => {
-            if (users.length === 0) return of([]);
-            return forkJoin(
-              users.map((user) =>
-                this.enrollmentService.getUserInfo(user.id).pipe(catchError(() => of(null))),
-              ),
-            ).pipe(
-              map((infos) =>
-                infos
-                  .filter((info): info is UserInfo => info?.role === 'EMPLOYEE')
-                  .map((info) => ({
-                    id: info.id,
-                    userName: info.userName,
-                    email: info.email,
-                  })),
-              ),
-            );
-          }),
-          catchError(() => of([]))
-        );
-      })
-    ).subscribe(results => {
-      this.searchResults.set(results);
-      this.isSearching.set(false);
-      this.showDropdown.set(results.length > 0);
+    ).subscribe((query) => {
+      this.updateSearchResults(query);
     });
+  }
+
+  /**
+   * Loads the assignable employee directory once so autocomplete can find every employee.
+   */
+  private loadEmployees() {
+    this.isSearching.set(true);
+    this.enrollmentService.getEmployees().subscribe({
+      next: (employees) => {
+        this.employeeOptions.set(employees);
+        this.updateSearchResults(this.searchQuery());
+      },
+      error: () => {
+        this.employeeOptions.set([]);
+        this.updateSearchResults(this.searchQuery());
+      },
+    });
+  }
+
+  /**
+   * Filters the local employee directory by username or email.
+   *
+   * @param query - The current typed search string.
+   */
+  private updateSearchResults(query: string) {
+    const q = query.trim().toLowerCase();
+
+    if (!q) {
+      this.searchResults.set([]);
+      this.showDropdown.set(false);
+      this.isSearching.set(false);
+      return;
+    }
+
+    const results = this.employeeOptions().filter((user) =>
+      user.userName.toLowerCase().includes(q) || (user.email ?? '').toLowerCase().includes(q),
+    );
+
+    this.searchResults.set(results);
+    this.showDropdown.set(results.length > 0);
+    this.isSearching.set(false);
+  }
+
+  /**
+   * Builds the assignable course list. Some path endpoints return courses without nested sections,
+   * so the page falls back to the section endpoint before showing section counts.
+   *
+   * @param paths - Learning paths and their available course records.
+   */
+  private async loadCourses(paths: LearningPathResponseDto[]) {
+    const courseItems = paths.flatMap((path) =>
+      (path.courses ?? []).map((course) => this.toCourseItem(path, course)),
+    );
+
+    this.courses.set(await Promise.all(courseItems));
+  }
+
+  /**
+   * Converts a backend course payload into the local card model.
+   *
+   * @param path - Parent learning path record.
+   * @param course - Course record nested under the path.
+   * @returns The local course item used by the page.
+   */
+  private async toCourseItem(
+    path: LearningPathResponseDto,
+    course: LearningPathResponseDto['courses'][number],
+  ): Promise<CourseItem> {
+    let sections = course.sections ?? [];
+
+    if (sections.length === 0) {
+      try {
+        sections = await this.sectionsApi.getSectionsByCourse(course.id);
+      } catch {
+        sections = [];
+      }
+    }
+
+    return {
+      id: course.id,
+      title: course.title,
+      description: course.description,
+      pathId: path.id,
+      pathTitle: path.title,
+      sectionCount: sections.length,
+      firstLessonId: this.getFirstLessonId({ sections }),
+    };
   }
 
   /**
@@ -226,8 +278,9 @@ export class HrAssignCourse implements OnInit {
     this.isLoadingUserInfo.set(false);
     this.searchQuery.set(value);
     this.selectedUser.set(null);
+    this.isSearching.set(value.trim().length > 0 && this.employeeOptions().length === 0);
     this.search$.next(value);
-    if (value.trim().length < 2) {
+    if (!value.trim()) {
       this.showDropdown.set(false);
     }
   }

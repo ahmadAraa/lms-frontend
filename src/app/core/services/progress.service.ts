@@ -167,7 +167,7 @@ export class ProgressService {
 
   /**
    * Queries the backend API to determine if the current user is authorized to access a given course.
-   * Staff users (HR/MANAGER) bypass the backend check and are granted access automatically.
+   * Staff users (SUPERADMIN/HR/MANAGER) bypass the backend check and are granted access automatically.
    *
    * Handles HTTP 403 (blocked by prerequisite validation) and HTTP 401 (unauthenticated) gracefully
    * by returning descriptive reason strings. Implements a fail-open strategy for other errors.
@@ -234,7 +234,7 @@ export class ProgressService {
 
   /**
    * Fetches the completion progress percentage for the current user in a specific course.
-   * Staff users (HR/MANAGER) do not have course progress tracking, so they default to 0%.
+   * Staff users (SUPERADMIN/HR/MANAGER) do not have course progress tracking, so they default to 0%.
    *
    * Supports various serialized progress properties (e.g. progress, percentage, percent) to
    * ensure compatibility with different API schemas.
@@ -281,13 +281,13 @@ export class ProgressService {
   }
 
   /**
-   * Determines if the current user has administrative/staff permissions (HR or MANAGER).
+   * Determines if the current user has administrative/staff permissions.
    *
-   * @returns True if the user is HR or MANAGER, otherwise false.
+   * @returns True if the user is SUPERADMIN, HR, or MANAGER, otherwise false.
    */
   private isStaffUser(): boolean {
     const role = this.authService.getUserRole();
 
-    return role === 'HR' || role === 'MANAGER';
+    return role === 'SUPERADMIN' || role === 'HR' || role === 'MANAGER';
   }
 }

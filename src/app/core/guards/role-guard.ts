@@ -12,6 +12,10 @@ export const roleGuard: CanActivateFn = (route) => {
   }
 
   const userRole = authService.getUserRole();
-  router.navigate([userRole === 'HR' || userRole === 'MANAGER' ? '/hr/dashboard' : '/employee/dashboard']);
+  router.navigate([
+    userRole === 'SUPERADMIN' || userRole === 'HR' || userRole === 'MANAGER'
+      ? '/hr/dashboard'
+      : '/employee/dashboard',
+  ]);
   return false;
 };

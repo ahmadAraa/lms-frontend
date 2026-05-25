@@ -48,7 +48,7 @@ export class EmployeeLayoutComponent {
    */
   getLogoRoute(): string {
     const role = this.authService.getUserRole();
-    if (role === 'HR' || role === 'MANAGER') {
+    if (role === 'SUPERADMIN' || role === 'HR' || role === 'MANAGER') {
       return '/hr/dashboard';
     }
     return '/employee/dashboard';
