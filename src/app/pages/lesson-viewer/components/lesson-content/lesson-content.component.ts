@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { LessonResponseDTO, CourseResponseDTO } from '../../../../types/course-builder.types';
@@ -34,6 +34,85 @@ export class LessonContentComponent {
    * A string containing error messages encountered during lesson retrieval.
    */
   @Input() error: string = '';
+
+  /**
+   * 1-based position of this lesson within the course.
+   */
+  @Input() currentLessonNumber = 0;
+
+  /**
+   * Total number of lessons in the parent course.
+   */
+  @Input() totalLessons = 0;
+
+  /**
+   * ID of the next lesson in sequence (null when on the last lesson).
+   */
+  @Input() nextLessonId: number | null = null;
+
+  /**
+   * Whether the active lesson is already marked complete.
+   */
+  @Input() isComplete = false;
+
+  /**
+   * Whether the viewer is running in staff preview mode (disables progress mutations).
+   */
+  @Input() isPreviewMode = false;
+
+  /**
+   * Whether a completion mutation is currently in flight.
+   */
+  @Input() isCompleting = false;
+
+  /**
+   * Event emitted when the user clicks "Mark as Complete" on the active lesson.
+   */
+  @Output() markComplete = new EventEmitter<Event>();
+
+  /**
+   * Event emitted when the user clicks the "Next Lesson" button.
+   */
+  @Output() nextLesson = new EventEmitter<void>();
+
+  /**
+   * Whether a next course exists in the parent learning path. When true, a
+   * "Next Course" button replaces "Next Lesson" on the final lesson of the course.
+   */
+  @Input() hasNextCourse = false;
+
+  /**
+   * Whether the active lesson is the last lesson of the current course.
+   * Drives the "Course Complete" banner and the swap between Next Lesson / Next Course.
+   */
+  @Input() isLastLessonOfCourse = false;
+
+  /**
+   * Whether every lesson in the active course has been completed by the learner.
+   */
+  @Input() isCourseComplete = false;
+
+  /**
+   * Title of the course currently being viewed (used inside the completion banner).
+   */
+  @Input() courseTitle = '';
+
+  /**
+   * Event emitted when the learner clicks "Next Course" to advance to the
+   * first lesson of the next course in the learning path.
+   */
+  @Output() nextCourse = new EventEmitter<void>();
+
+  /**
+   * Event emitted when the user clicks the top-right "Back to Course Builder" link.
+   */
+  @Output() back = new EventEmitter<void>();
+
+  /**
+   * Event emitted when the user clicks a breadcrumb crumb. The payload identifies
+   * which destination the crumb refers to ("home" | "paths" | "course").
+   */
+  @Output() navigate = new EventEmitter<'home' | 'paths' | 'course'>();
 
   /**
    * Constructs the LessonContentComponent.

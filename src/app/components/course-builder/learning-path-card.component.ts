@@ -27,15 +27,14 @@ import { LearningPathResponseDto, BASE_URL } from '../../types/course-builder.ty
         <h3 class="lp-card-title">{{ path.title }}</h3>
         <p class="lp-card-desc">{{ path.description || 'No description provided.' }}</p>
         <div class="lp-card-actions">
-          <button class="btn-manage" (click)="manage.emit(path.id)">
-            <span class="material-symbols-outlined">settings</span>
-            Manage Courses
+          <button class="btn-manage-link" (click)="manage.emit(path.id)">
+            Manage
           </button>
-          <div class="btn-group">
-            <button class="btn-icon btn-edit" (click)="edit.emit(path)" title="Edit">
+          <div class="btn-action-group">
+            <button class="btn-action-icon btn-edit-icon" (click)="edit.emit(path)" title="Edit">
               <span class="material-symbols-outlined">edit</span>
             </button>
-            <button class="btn-icon btn-delete" (click)="remove.emit(path.id)" title="Delete">
+            <button class="btn-action-icon btn-delete-icon" (click)="remove.emit(path.id)" title="Delete">
               <span class="material-symbols-outlined">delete</span>
             </button>
           </div>
@@ -133,53 +132,53 @@ import { LearningPathResponseDto, BASE_URL } from '../../types/course-builder.ty
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding-top: 12px;
+        padding-top: 14px;
         border-top: 1px solid #f3f4f6;
-        margin-top: 6px;
+        margin-top: auto;
       }
-      .btn-manage {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 8px 16px;
-        background: linear-gradient(135deg, #0f1b3d, #2563eb);
-        color: #fff;
+      .btn-manage-link {
+        background: none;
         border: none;
-        border-radius: 9px;
-        font-size: 13px;
-        font-weight: 600;
-        font-family: inherit;
+        color: #2563eb;
+        font-size: 14px;
+        font-weight: 750;
         cursor: pointer;
-        transition: all 0.2s ease;
-        box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+        padding: 0;
+        font-family: inherit;
+        transition: color 0.15s, opacity 0.15s;
       }
-      .btn-manage:hover {
-        box-shadow: 0 6px 18px rgba(37,99,235,0.35);
-        transform: translateY(-1px);
+      .btn-manage-link:hover {
+        color: #1d4ed8;
       }
-      .btn-manage .material-symbols-outlined { font-size: 17px; }
 
-      .btn-group { display: flex; gap: 6px; }
+      .btn-action-group {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+      }
 
-      .btn-icon {
-        width: 34px;
-        height: 34px;
+      .btn-action-icon {
+        background: none;
+        border: none;
+        color: #8b96a5;
+        cursor: pointer;
+        padding: 0;
         display: flex;
         align-items: center;
         justify-content: center;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        background: #fff;
-        cursor: pointer;
-        transition: all 0.15s;
+        transition: color 0.15s, transform 0.15s;
       }
-      .btn-icon .material-symbols-outlined { font-size: 17px; }
-
-      .btn-edit { color: #3b82f6; }
-      .btn-edit:hover { background: #eff6ff; border-color: #93c5fd; }
-
-      .btn-delete { color: #ef4444; }
-      .btn-delete:hover { background: #fef2f2; border-color: #fca5a5; }
+      .btn-action-icon .material-symbols-outlined {
+        font-size: 20px;
+      }
+      .btn-edit-icon:hover {
+        color: #3b82f6;
+        transform: scale(1.12);
+      }
+      .btn-delete-icon:hover {
+        color: #ef4444;
+        transform: scale(1.12);
+      }
     `,
   ],
 })

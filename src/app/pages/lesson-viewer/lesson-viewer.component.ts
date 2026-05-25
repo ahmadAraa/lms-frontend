@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { LessonsApiService } from '../../core/services/lessons-api.service';
 import { SectionsApiService } from '../../core/services/sections-api.service';
 import { CoursesApiService } from '../../core/services/courses-api.service';
+import { LearningPathsApiService } from '../../core/services/learning-paths-api.service';
 import { ProgressService } from '../../core/services/progress.service';
 import { AuthService } from '../../core/services/auth';
 import {
@@ -65,6 +66,120 @@ export class LessonViewerComponent implements OnInit {
   completedLessonIds = computed(() => Array.from(this.completedLessons()));
 
   /**
+   * Flat, ordered list of all lessons across all sections in the active course.
+   */
+  flatLessons = computed(() =>
+    this.sections().flatMap((section) => section.lessons ?? []),
+  );
+
+  /**
+   * Total number of lessons in the course.
+   */
+  totalLessons = computed(() => this.flatLessons().length);
+
+  /**
+   * The 1-based position of the active lesson within the course (0 when unknown).
+   */
+  currentLessonNumber = computed(() => {
+    const current = this.lesson();
+    if (!current) return 0;
+    const index = this.flatLessons().findIndex((l) => l.id === current.id);
+    return index >= 0 ? index + 1 : 0;
+  });
+
+  /**
+   * ID of the next lesson in sequence, or null when on the last lesson.
+   */
+  nextLessonId = computed<number | null>(() => {
+    const lessons = this.flatLessons();
+    const current = this.lesson();
+    if (!current) return null;
+    const index = lessons.findIndex((l) => l.id === current.id);
+    if (index < 0 || index + 1 >= lessons.length) return null;
+    return lessons[index + 1].id;
+  });
+
+  /**
+   * Whether the currently displayed lesson has been marked complete.
+   */
+  isCurrentLessonComplete = computed(() => {
+    const current = this.lesson();
+    return !!current && this.completedLessons().has(current.id);
+  });
+
+  /**
+   * Course completion percentage, rounded to the nearest whole number.
+   */
+  progressPercent = computed(() => {
+    const total = this.totalLessons();
+    if (total === 0) return 0;
+    return Math.round((this.completedLessons().size / total) * 100);
+  });
+
+  /**
+   * Ordered list of sibling courses inside the active learning path (empty when no path context).
+   */
+  pathCourses = signal<CourseResponseDTO[]>([]);
+
+  /**
+   * 1-based index of the active course within the learning path (0 when unknown).
+   */
+  currentCourseIndex = computed(() => {
+    const courses = this.pathCourses();
+    const currentCourseId = this.course()?.id;
+    if (!currentCourseId || courses.length === 0) return 0;
+    const idx = courses.findIndex((c) => c.id === currentCourseId);
+    return idx >= 0 ? idx + 1 : 0;
+  });
+
+  /**
+   * Whether another course follows the current one inside the learning path.
+   */
+  hasNextCourse = computed(() => {
+    const courses = this.pathCourses();
+    const idx = this.currentCourseIndex();
+    return idx > 0 && idx < courses.length;
+  });
+
+  /**
+   * First lesson ID of the next course in the learning path, or null when none.
+   * Used by the "Next Course" action to deep-link directly into the next course.
+   */
+  nextCourseFirstLessonId = computed<number | null>(() => {
+    if (!this.hasNextCourse()) return null;
+    const nextCourse = this.pathCourses()[this.currentCourseIndex()];
+    const sections = [...(nextCourse?.sections ?? [])].sort(
+      (a, b) => (a.order ?? 0) - (b.order ?? 0),
+    );
+    for (const section of sections) {
+      const firstLesson = [...(section.lessons ?? [])].sort(
+        (a, b) => (a.order ?? 0) - (b.order ?? 0),
+      )[0];
+      if (firstLesson?.id) return firstLesson.id;
+    }
+    return null;
+  });
+
+  /**
+   * Whether the active lesson is the final lesson in the current course.
+   */
+  isLastLessonOfCourse = computed(() => {
+    const lessons = this.flatLessons();
+    const current = this.lesson();
+    if (!current || lessons.length === 0) return false;
+    return lessons[lessons.length - 1].id === current.id;
+  });
+
+  /**
+   * Whether every lesson in the active course has been completed.
+   */
+  isCourseComplete = computed(() => {
+    const total = this.totalLessons();
+    if (total === 0) return false;
+    return this.completedLessons().size >= total;
+  });
+
+  /**
    * Signal indicating if a curriculum load transaction is currently active in the background.
    */
   isLoading = signal(true);
@@ -112,6 +227,7 @@ export class LessonViewerComponent implements OnInit {
     private lessonsApi: LessonsApiService,
     private sectionsApi: SectionsApiService,
     private coursesApi: CoursesApiService,
+    private pathsApi: LearningPathsApiService,
     private progressService: ProgressService,
     private authService: AuthService,
   ) {}
@@ -200,6 +316,10 @@ export class LessonViewerComponent implements OnInit {
         this.sections.set(sectionsWithProgress);
         this.completedLessons.set(completed);
       }
+
+      if (this.pathId && this.pathCourses().length === 0) {
+        await this.loadPathCourses(this.pathId);
+      }
     } catch (e) {
       if (courseId && !this.isPreviewMode() && this.isAccessDeniedError(e)) {
         this.redirectToLockedCourse(courseId);
@@ -268,6 +388,119 @@ export class LessonViewerComponent implements OnInit {
       this.completedLessons.set(reverted);
     } finally {
       this.isCompleting.set(false);
+    }
+  }
+
+  /**
+   * Marks the currently displayed lesson as complete (no-op if already complete or in preview mode).
+   *
+   * @param event - The originating click event.
+   */
+  markCurrentComplete(event: Event): void {
+    const current = this.lesson();
+    if (!current) return;
+    void this.toggleCompletion({ lessonId: current.id, event });
+  }
+
+  /**
+   * Navigates to the next lesson in the course sequence, if one exists.
+   */
+  goToNextLesson(): void {
+    const nextId = this.nextLessonId();
+    if (nextId !== null) this.openLesson(nextId);
+  }
+
+  /**
+   * Navigates to the first lesson of the next course in the active learning path.
+   * Falls back to navigating back to the path detail page when no next course exists.
+   */
+  goToNextCourse(): void {
+    const nextLessonId = this.nextCourseFirstLessonId();
+    if (nextLessonId === null) {
+      this.goBack();
+      return;
+    }
+    const courses = this.pathCourses();
+    const nextCourse = courses[this.currentCourseIndex()] ?? null;
+
+    void this.router.navigate(['/lesson', nextLessonId], {
+      state: { courseId: nextCourse?.id ?? null, pathId: this.pathId },
+    });
+  }
+
+  /**
+   * Fetches the ordered list of sibling courses inside the parent learning path.
+   * Used to power the "Next Course" navigation when the learner finishes a course.
+   *
+   * @param pathId - The learning path identifier.
+   */
+  private async loadPathCourses(pathId: number): Promise<void> {
+    try {
+      const path = await this.pathsApi.getPathById(pathId);
+      const ordered = [...(path.courses ?? [])].sort(
+        (a, b) => (a.order ?? 0) - (b.order ?? 0),
+      );
+      this.pathCourses.set(ordered);
+    } catch {
+      // Path lookup is non-fatal — falling back means "Next Course" simply won't render.
+      this.pathCourses.set([]);
+    }
+  }
+
+  /**
+   * Routes the user to the home landing page appropriate for their role.
+   */
+  goHome(): void {
+    if (this.isPreviewMode()) {
+      void this.router.navigate(['/learning-paths']);
+      return;
+    }
+    void this.router.navigate(['/employee/dashboard']);
+  }
+
+  /**
+   * Routes the user to the learning paths context (admin list for staff,
+   * active path detail for employees, or the dashboard fallback).
+   */
+  goToLearningPaths(): void {
+    if (this.isPreviewMode()) {
+      void this.router.navigate(['/learning-paths']);
+      return;
+    }
+    if (this.pathId) {
+      void this.router.navigate(['/learning-path', String(this.pathId)]);
+      return;
+    }
+    void this.router.navigate(['/employee/dashboard']);
+  }
+
+  /**
+   * Routes the user to the parent course detail page.
+   */
+  goToCourse(): void {
+    const course = this.course();
+    if (!course) return;
+    void this.router.navigate(['/course', course.id], {
+      state: { course, pathId: this.pathId },
+    });
+  }
+
+  /**
+   * Dispatches a breadcrumb navigation request to the appropriate destination.
+   *
+   * @param destination - Crumb identifier emitted by the content component.
+   */
+  onBreadcrumbNavigate(destination: 'home' | 'paths' | 'course'): void {
+    switch (destination) {
+      case 'home':
+        this.goHome();
+        return;
+      case 'paths':
+        this.goToLearningPaths();
+        return;
+      case 'course':
+        this.goToCourse();
+        return;
     }
   }
 

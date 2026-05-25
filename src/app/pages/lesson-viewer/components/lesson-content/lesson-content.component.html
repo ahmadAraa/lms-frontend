@@ -1,52 +1,224 @@
-<div class="video-area">
-  @if (isLoading) {
-    <div class="lv-spinner"></div>
-  } @else if (error && !lesson) {
-    <div class="error-msg">{{ error }}</div>
-  } @else if (lesson?.videoUrl) {
-    @if (lesson!.type === 0) {
-      <video class="lesson-video" [src]="getMediaUrl(lesson)" controls controlsList="nodownload"></video>
-    } @else if (lesson!.type === 3 && getYouTubeEmbedUrl(lesson)) {
-      <iframe class="lesson-video" [src]="getYouTubeEmbedUrl(lesson)" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="width: 100%; height: 100%;"></iframe>
+<div class="lv-stage">
+
+  <!-- Top breadcrumb row -->
+  <nav class="lv-breadcrumb" aria-label="Breadcrumb">
+    <button type="button" class="lv-crumb lv-crumb--link" (click)="navigate.emit('home')">Home</button>
+    <span class="material-symbols-outlined lv-sep">chevron_right</span>
+    <button type="button" class="lv-crumb lv-crumb--link" (click)="navigate.emit('paths')">Learning Paths</button>
+    @if (course?.title) {
+      <span class="material-symbols-outlined lv-sep">chevron_right</span>
+      <button type="button" class="lv-crumb lv-crumb--link" (click)="navigate.emit('course')">{{ course?.title }}</button>
+    }
+    @if (lesson?.title) {
+      <span class="material-symbols-outlined lv-sep">chevron_right</span>
+      <span class="lv-crumb lv-crumb--current">{{ lesson?.title }}</span>
+    }
+  </nav>
+
+  <!-- Lesson header (title + meta + back link) -->
+  @if (lesson) {
+    <header class="lv-header">
+      <div class="lv-header-text">
+        <h1 class="lv-title">{{ lesson.title }}</h1>
+        <div class="lv-meta">
+          <span class="lv-meta-item">
+            <span class="material-symbols-outlined">schedule</span>
+            Self-paced
+          </span>
+          @if (lesson.type === 0) {
+            <span class="lv-meta-item">
+              <span class="material-symbols-outlined">smart_display</span>
+              Video Lesson
+            </span>
+          } @else if (lesson.type === 1) {
+            <span class="lv-meta-item">
+              <span class="material-symbols-outlined">picture_as_pdf</span>
+              PDF Resource
+            </span>
+          } @else if (lesson.type === 2) {
+            <span class="lv-meta-item">
+              <span class="material-symbols-outlined">slideshow</span>
+              Presentation
+            </span>
+          } @else if (lesson.type === 3) {
+            <span class="lv-meta-item">
+              <span class="material-symbols-outlined">language</span>
+              Interactive Material
+            </span>
+          }
+        </div>
+      </div>
+
+      <button type="button" class="lv-back-link" (click)="back.emit()">
+        <span class="material-symbols-outlined">arrow_back</span>
+        @if (isPreviewMode) {
+          <span>Back to Course Builder</span>
+        } @else {
+          <span>Back to Courses</span>
+        }
+      </button>
+    </header>
+  }
+
+  <!-- Media stage -->
+  <div class="lv-media-stage">
+    @if (isLoading) {
+      <div class="lv-media-state lv-media-state--loading">
+        <div class="lv-spinner"></div>
+        <span>Loading lesson…</span>
+      </div>
+    } @else if (error && !lesson) {
+      <div class="lv-media-state lv-media-state--error">
+        <span class="material-symbols-outlined">error</span>
+        <span>{{ error }}</span>
+      </div>
+    } @else if (lesson?.videoUrl) {
+      @if (lesson!.type === 0) {
+        <video class="lv-video" [src]="getMediaUrl(lesson)" controls controlsList="nodownload"></video>
+      } @else if (lesson!.type === 3 && getYouTubeEmbedUrl(lesson)) {
+        <iframe class="lv-video" [src]="getYouTubeEmbedUrl(lesson)" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      } @else {
+        <!-- Card design for PDF / Slides / external Link -->
+        <div class="lv-external">
+          <div class="lv-external-card">
+            <div class="lv-external-tile">
+              @if (lesson!.type === 1) {
+                <span class="material-symbols-outlined">picture_as_pdf</span>
+              } @else if (lesson!.type === 2) {
+                <span class="material-symbols-outlined">slideshow</span>
+              } @else {
+                <span class="material-symbols-outlined">language</span>
+              }
+            </div>
+            <h3 class="lv-external-title">
+              @if (lesson!.type === 1) {
+                <span>PDF Document</span>
+              } @else if (lesson!.type === 2) {
+                <span>Interactive Presentation</span>
+              } @else {
+                <span>External Material</span>
+              }
+            </h3>
+            <p class="lv-external-desc">
+              This lesson contains rich material that opens in a dedicated focused viewer.
+            </p>
+            <a [href]="getMediaUrl(lesson)" target="_blank" rel="noopener" class="lv-external-cta">
+              Open Material
+              <span class="material-symbols-outlined">open_in_new</span>
+            </a>
+          </div>
+        </div>
+      }
     } @else {
-      <div class="external-material" style="text-align: center;">
-        <span class="material-symbols-outlined material-icon" style="font-size: 48px; margin-bottom: 16px; color: var(--blue);">
-          {{ lesson!.type === 1 ? 'picture_as_pdf' : (lesson!.type === 2 ? 'slideshow' : 'link') }}
-        </span>
-        <h3 style="margin-bottom: 8px;">{{ lesson!.type === 1 ? 'PDF Document' : (lesson!.type === 2 ? 'Presentation' : 'External Link') }}</h3>
-        <p style="margin-bottom: 24px; color: #6b7280;">This lesson contains external material that opens in a new tab.</p>
-        <a [href]="getMediaUrl(lesson)" target="_blank" class="btn-save" style="text-decoration: none; display: inline-block;">
-          Open Material
-        </a>
+      <div class="lv-media-state lv-media-state--empty">
+        <span class="material-symbols-outlined">menu_book</span>
+        <span>No material available for this lesson.</span>
       </div>
     }
-  } @else {
-    <div class="no-video">
-      <span class="material-symbols-outlined">menu_book</span>
-      <p>No material available for this lesson.</p>
+  </div>
+
+  <!-- Course Complete celebration banner (shown on last lesson when everything's done) -->
+  @if (lesson && isLastLessonOfCourse && isCourseComplete && !isPreviewMode) {
+    <div class="lv-complete-banner" [class.lv-complete-banner--final]="!hasNextCourse">
+      <div class="lv-complete-icon">
+        <span class="material-symbols-outlined">military_tech</span>
+      </div>
+      <div class="lv-complete-text">
+        <h3 class="lv-complete-title">
+          @if (hasNextCourse) {
+            <span>Course Complete!</span>
+          } @else {
+            <span>Path Complete!</span>
+          }
+        </h3>
+        <p class="lv-complete-sub">
+          @if (hasNextCourse) {
+            <span>Great job finishing {{ courseTitle || 'this course' }}. Ready to continue?</span>
+          } @else {
+            <span>You've completed every course in this learning path.</span>
+          }
+        </p>
+      </div>
     </div>
   }
+
+  <!-- Action bar: Mark Complete (left) | Lesson N of TOTAL + Next Lesson / Next Course (right) -->
+  @if (lesson) {
+    <div class="lv-actions">
+      <div class="lv-actions-left">
+        @if (!isPreviewMode) {
+          <button type="button"
+                  class="lv-btn-complete"
+                  [class.is-complete]="isComplete"
+                  [disabled]="isComplete || isCompleting"
+                  (click)="markComplete.emit($event)">
+            <span class="material-symbols-outlined">
+              @if (isComplete) {
+                <span>task_alt</span>
+              } @else {
+                <span>check_circle</span>
+              }
+            </span>
+            @if (isComplete) {
+              <span>Completed</span>
+            } @else if (isCompleting) {
+              <span>Saving…</span>
+            } @else {
+              <span>Mark as Complete</span>
+            }
+          </button>
+        }
+      </div>
+
+      <div class="lv-actions-right">
+        @if (nextLessonId !== null) {
+          @if (totalLessons > 0 && currentLessonNumber > 0) {
+            <span class="lv-lesson-count">
+              Lesson {{ currentLessonNumber }} of {{ totalLessons }}
+            </span>
+          }
+          <button type="button" class="lv-btn-next" (click)="nextLesson.emit()">
+            Next Lesson
+            <span class="material-symbols-outlined">arrow_forward</span>
+          </button>
+        } @else if (hasNextCourse) {
+          @if (totalLessons > 0 && currentLessonNumber > 0) {
+            <span class="lv-lesson-count">
+              Lesson {{ currentLessonNumber }} of {{ totalLessons }} · Course finished
+            </span>
+          }
+          <button type="button" class="lv-btn-next lv-btn-next-course" (click)="nextCourse.emit()">
+            Next Course
+            <span class="material-symbols-outlined">arrow_forward</span>
+          </button>
+        } @else {
+          @if (totalLessons > 0 && currentLessonNumber > 0) {
+            <span class="lv-lesson-count">
+              Lesson {{ currentLessonNumber }} of {{ totalLessons }}
+            </span>
+          }
+          <button type="button" class="lv-btn-next lv-btn-back-path" (click)="back.emit()">
+            Back to Path
+            <span class="material-symbols-outlined">arrow_forward</span>
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- About this lesson -->
+  @if (lesson) {
+    <section class="lv-about">
+      <h2 class="lv-about-title">About this Lesson</h2>
+      @if (lesson.description) {
+        <p class="lv-about-desc">{{ lesson.description }}</p>
+      }
+      @if (lesson.content) {
+        <div class="lv-about-content" [innerHTML]="lesson.content"></div>
+      }
+      @if (!lesson.description && !lesson.content) {
+        <p class="lv-about-empty">No additional information is available for this lesson.</p>
+      }
+    </section>
+  }
 </div>
-
-@if (lesson) {
-  <div class="course-info">
-    <div class="breadcrumb">
-      <span>Home</span>
-      <span class="material-symbols-outlined">chevron_right</span>
-      <span>Course</span>
-      <span class="material-symbols-outlined">chevron_right</span>
-      <span>{{ course?.title || 'Loading...' }}</span>
-    </div>
-
-    <h1>{{ lesson!.title }}</h1>
-
-    <div class="lesson-content">
-      @if (lesson!.description) {
-        <p class="desc">{{ lesson!.description }}</p>
-      }
-      @if (lesson!.content) {
-        <div class="html-content" [innerHTML]="lesson!.content"></div>
-      }
-    </div>
-  </div>
-}

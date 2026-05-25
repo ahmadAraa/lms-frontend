@@ -1,11 +1,26 @@
 <div class="viewer-wrapper">
   <main class="layout">
     <section class="main">
-      <app-lesson-content 
+      <app-lesson-content
         [lesson]="lesson()"
         [course]="course()"
         [isLoading]="isLoading()"
-        [error]="error()">
+        [error]="error()"
+        [currentLessonNumber]="currentLessonNumber()"
+        [totalLessons]="totalLessons()"
+        [nextLessonId]="nextLessonId()"
+        [isComplete]="isCurrentLessonComplete()"
+        [isPreviewMode]="isPreviewMode()"
+        [isCompleting]="isCompleting()"
+        [hasNextCourse]="hasNextCourse()"
+        [isLastLessonOfCourse]="isLastLessonOfCourse()"
+        [isCourseComplete]="isCourseComplete()"
+        [courseTitle]="course()?.title || ''"
+        (markComplete)="markCurrentComplete($event)"
+        (nextLesson)="goToNextLesson()"
+        (nextCourse)="goToNextCourse()"
+        (back)="goBack()"
+        (navigate)="onBreadcrumbNavigate($event)">
       </app-lesson-content>
     </section>
 

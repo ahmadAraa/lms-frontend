@@ -116,8 +116,10 @@
                     <span class="material-symbols-outlined">list</span>
                     Sections
                   </h4>
-                  <button class="cm-add-inline" (click)="openAddSectionModal(course.id)">
-                    <span class="material-symbols-outlined">add</span>
+                  <button class="cm-add-inline cm-add-inline--modern" (click)="openAddSectionModal(course.id)">
+                    <span class="cm-add-inline-plus">
+                      <span class="material-symbols-outlined">add</span>
+                    </span>
                     Add Section
                   </button>
                 </div>
@@ -180,8 +182,10 @@
                       <div class="cm-lessons-list">
                         <div class="cm-lessons-header">
                           <span>Lessons</span>
-                          <button class="cm-add-inline-sm" (click)="openAddLessonModal(section.id)">
-                            <span class="material-symbols-outlined">add</span>
+                          <button class="cm-add-inline-sm cm-add-inline-sm--modern" (click)="openAddLessonModal(section.id)">
+                            <span class="cm-add-inline-plus cm-add-inline-plus--sm">
+                              <span class="material-symbols-outlined">add</span>
+                            </span>
                             Add Lesson
                           </button>
                         </div>
@@ -330,9 +334,15 @@
 <!-- ── Section Modal ─────────────────────────────── -->
 @if (sectionModalOpen) {
   <div class="modal-overlay" (click)="sectionModalOpen = false">
-    <div class="modal-panel modal-sm" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Add Section</h2>
+    <div class="modal-panel modal-sm modal-modern" (click)="$event.stopPropagation()">
+      <div class="modal-header modal-header-modern">
+        <div class="modal-header-icon modal-header-icon--section">
+          <span class="material-symbols-outlined">folder_open</span>
+        </div>
+        <div class="modal-header-text">
+          <h2>Add Section</h2>
+          <p class="modal-header-sub">Group related lessons under a chapter</p>
+        </div>
         <button class="modal-close" (click)="sectionModalOpen = false">
           <span class="material-symbols-outlined">close</span>
         </button>
@@ -364,9 +374,15 @@
 <!-- ── Lesson Modal ──────────────────────────────── -->
 @if (lessonModalOpen) {
   <div class="modal-overlay" (click)="lessonModalOpen = false">
-    <div class="modal-panel modal-sm" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Add Lesson</h2>
+    <div class="modal-panel modal-sm modal-modern" (click)="$event.stopPropagation()">
+      <div class="modal-header modal-header-modern">
+        <div class="modal-header-icon modal-header-icon--lesson">
+          <span class="material-symbols-outlined">play_circle</span>
+        </div>
+        <div class="modal-header-text">
+          <h2>Add Lesson</h2>
+          <p class="modal-header-sub">Create a new learning unit</p>
+        </div>
         <button class="modal-close" (click)="lessonModalOpen = false">
           <span class="material-symbols-outlined">close</span>
         </button>
@@ -380,36 +396,94 @@
           <label for="lesson-desc">Description</label>
           <textarea id="lesson-desc" [(ngModel)]="lessonDescription" placeholder="Optional description…" class="form-textarea" rows="3"></textarea>
         </div>
+
         <div class="form-group">
-          <label for="lesson-material-type">Material Type <span class="required">*</span></label>
-          <select id="lesson-material-type" [(ngModel)]="lessonMaterialType" class="form-input">
-            <option [value]="0">Video</option>
-            <option [value]="1">PDF</option>
-            <option [value]="2">Presentation</option>
-            <option [value]="3">Link</option>
-          </select>
+          <label>Material Type <span class="required">*</span></label>
+          <div class="material-type-grid">
+            <button type="button" class="material-type-btn" [class.selected]="lessonMaterialType == 0" (click)="lessonMaterialType = 0">
+              <span class="material-symbols-outlined">smart_display</span>
+              <span class="mt-label">Video</span>
+            </button>
+            <button type="button" class="material-type-btn" [class.selected]="lessonMaterialType == 1" (click)="lessonMaterialType = 1">
+              <span class="material-symbols-outlined">picture_as_pdf</span>
+              <span class="mt-label">PDF</span>
+            </button>
+            <button type="button" class="material-type-btn" [class.selected]="lessonMaterialType == 2" (click)="lessonMaterialType = 2">
+              <span class="material-symbols-outlined">slideshow</span>
+              <span class="mt-label">Slides</span>
+            </button>
+            <button type="button" class="material-type-btn" [class.selected]="lessonMaterialType == 3" (click)="lessonMaterialType = 3">
+              <span class="material-symbols-outlined">link</span>
+              <span class="mt-label">Link</span>
+            </button>
+          </div>
         </div>
 
         @if (lessonMaterialType == 3) {
           <div class="form-group">
             <label for="lesson-link">Link URL <span class="required">*</span></label>
-            <input id="lesson-link" type="url" [(ngModel)]="lessonLinkUrl" placeholder="https://..." class="form-input" />
+            <div class="input-with-icon">
+              <span class="material-symbols-outlined">link</span>
+              <input id="lesson-link" type="url" [(ngModel)]="lessonLinkUrl" placeholder="https://..." class="form-input form-input--with-icon" />
+            </div>
           </div>
         } @else {
           <div class="form-group">
-            <label for="lesson-file">File Upload <span class="required">*</span></label>
-            <input id="lesson-file" type="file" 
-                   [accept]="lessonMaterialType == 0 ? 'video/*' : (lessonMaterialType == 1 ? 'application/pdf' : '.ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation')" 
-                   (change)="onLessonVideoSelected($event)" class="form-input" />
-            @if (lessonVideoFile) {
-              <span class="upload-hint">{{ lessonVideoFile.name }}</span>
-            }
+            <label>
+              @if (lessonMaterialType == 0) {
+                <span>Video File</span>
+              } @else if (lessonMaterialType == 1) {
+                <span>PDF File</span>
+              } @else {
+                <span>Presentation File</span>
+              }
+              <span class="required">*</span>
+            </label>
+            <div class="lesson-file-drop" (click)="lessonFileInput.click()" [class.has-file]="lessonVideoFile">
+              @if (lessonVideoFile) {
+                <div class="lesson-file-selected">
+                  <div class="lesson-file-icon-ring">
+                    @if (lessonMaterialType == 0) {
+                      <span class="material-symbols-outlined">movie</span>
+                    } @else if (lessonMaterialType == 1) {
+                      <span class="material-symbols-outlined">picture_as_pdf</span>
+                    } @else {
+                      <span class="material-symbols-outlined">slideshow</span>
+                    }
+                  </div>
+                  <div class="lesson-file-info">
+                    <span class="lesson-file-name">{{ lessonVideoFile.name }}</span>
+                    <span class="lesson-file-hint">Click to change file</span>
+                  </div>
+                  <span class="material-symbols-outlined lesson-file-check">check_circle</span>
+                </div>
+              } @else {
+                <div class="upload-placeholder">
+                  <div class="upload-icon-ring">
+                    <span class="material-symbols-outlined">cloud_upload</span>
+                  </div>
+                  <span class="upload-text">Click to browse or drop your file here</span>
+                  <span class="upload-hint">
+                    @if (lessonMaterialType == 0) {
+                      <span>MP4, MOV, WebM</span>
+                    } @else if (lessonMaterialType == 1) {
+                      <span>PDF document</span>
+                    } @else {
+                      <span>PPT, PPTX</span>
+                    }
+                  </span>
+                </div>
+              }
+              <input #lessonFileInput type="file"
+                     [accept]="lessonMaterialType == 0 ? 'video/*' : (lessonMaterialType == 1 ? 'application/pdf' : '.ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation')"
+                     (change)="onLessonVideoSelected($event)" class="file-input-hidden" />
+            </div>
           </div>
         }
       </div>
       <div class="modal-footer">
         <button class="btn-cancel" (click)="lessonModalOpen = false">Cancel</button>
-        <button class="btn-save" (click)="submitLessonModal()" 
+        <button class="btn-save" (click)="submitLessonModal()"
                 [disabled]="!lessonTitle.trim() || (lessonMaterialType == 3 ? !lessonLinkUrl.trim() : !lessonVideoFile) || isSaving">
           @if (isSaving) {
             <div class="btn-spinner"></div> Saving…
