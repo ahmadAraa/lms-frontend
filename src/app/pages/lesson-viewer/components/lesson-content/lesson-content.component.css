@@ -50,6 +50,59 @@
   padding: 4px 0;
 }
 
+/* Admin breadcrumb (pill style with vertical pipe separators) */
+.lv-breadcrumb--admin {
+  gap: 6px;
+}
+
+.lv-pipe {
+  width: 1px;
+  height: 18px;
+  background: #cbd5e1;
+  display: inline-block;
+  border-radius: 1px;
+}
+
+.lv-crumb--pill {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #475569;
+  transition: all 0.18s;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.lv-crumb--pill:hover {
+  background: #f1f5f9;
+  color: #1d4ed8;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px -4px rgba(37, 99, 235, 0.25);
+}
+
+.lv-crumb--pill:active {
+  transform: translateY(0);
+}
+
+.lv-crumb--pill-current {
+  background: linear-gradient(135deg, #0f1b3d, #2563eb);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 4px 12px -2px rgba(37, 99, 235, 0.45);
+}
+
+.lv-crumb--pill-current:hover {
+  background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 6px 16px -4px rgba(37, 99, 235, 0.55);
+}
+
 .lv-sep {
   font-size: 14px !important;
   color: #cbd5e1;

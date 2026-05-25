@@ -29,7 +29,7 @@
       <div class="empty-state">
         <span class="material-symbols-outlined empty-icon">menu_book</span>
         <p>No course data found. Please navigate here from a learning path.</p>
-        <a routerLink="/employee/dashboard" class="btn-primary">Go to Dashboard</a>
+        <a [routerLink]="backLink()" class="btn-primary">Go to Dashboard</a>
       </div>
     } @else {
       @if (course()) {

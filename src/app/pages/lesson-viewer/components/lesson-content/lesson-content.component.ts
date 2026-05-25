@@ -110,9 +110,13 @@ export class LessonContentComponent {
 
   /**
    * Event emitted when the user clicks a breadcrumb crumb. The payload identifies
-   * which destination the crumb refers to ("home" | "paths" | "course").
+   * which destination the crumb refers to.
+   *   - "home"    → role-appropriate landing page
+   *   - "paths"   → learning-paths list / current path detail
+   *   - "courses" → course-builder index for the current learning path (admin only)
+   *   - "course"  → course detail for the current course
    */
-  @Output() navigate = new EventEmitter<'home' | 'paths' | 'course'>();
+  @Output() navigate = new EventEmitter<'home' | 'paths' | 'courses' | 'course'>();
 
   /**
    * Constructs the LessonContentComponent.

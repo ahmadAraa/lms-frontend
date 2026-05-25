@@ -232,10 +232,6 @@ export class LessonViewerComponent implements OnInit {
     private authService: AuthService,
   ) {}
 
-  /**
-   * Angular initialization hook. Identifies preview status contexts, decodes parameter states,
-   * and triggers the reactive curriculum loader subscription stream.
-   */
   ngOnInit() {
     this.isPreviewMode.set(this.isStaffPreview());
 
@@ -244,6 +240,14 @@ export class LessonViewerComponent implements OnInit {
     this.routeCourseId = this.toNullableNumber(state?.['courseId']);
 
     this.route.paramMap.subscribe((params) => {
+      const currentState = history.state as Record<string, unknown>;
+      if (currentState?.['pathId'] !== undefined) {
+        this.pathId = this.toNullableNumber(currentState['pathId']);
+      }
+      if (currentState?.['courseId'] !== undefined) {
+        this.routeCourseId = this.toNullableNumber(currentState['courseId']);
+      }
+
       const id = Number(params.get('id'));
       if (id) {
         void this.loadLessonAndCurriculum(id);
@@ -263,66 +267,116 @@ export class LessonViewerComponent implements OnInit {
   async loadLessonAndCurriculum(lessonId: number) {
     this.isLoading.set(true);
     this.error.set('');
-    let courseId = this.routeCourseId;
 
     try {
-      if (courseId && !this.isPreviewMode()) {
-        const access = await this.progressService.canAccess(courseId);
-        if (!access.canAccess) {
-          this.redirectToLockedCourse(courseId, access.reason);
-          return;
-        }
-      }
-
       const lesson = await this.lessonsApi.getLessonById(lessonId);
       this.lesson.set(lesson);
 
       this.expandedSections.update((set) => new Set(set).add(lesson.sectionId));
 
-      if (!this.course() || !this.sections().some((s) => s.id === lesson.sectionId)) {
-        const section = await this.sectionsApi.getSectionById(lesson.sectionId);
-        courseId = section.courseId;
-        this.routeCourseId = courseId;
+      const section = await this.sectionsApi.getSectionById(lesson.sectionId);
+      const targetCourseId = section.courseId;
+      const isNewCourse = !this.course() || this.course()?.id !== targetCourseId;
+
+      if (isNewCourse) {
+        // Clear course and sections immediately to prevent stale sidebar rendering during load
+        this.course.set(null);
+        this.sections.set([]);
+        this.completedLessons.set(new Set());
+
+        this.routeCourseId = targetCourseId;
 
         if (!this.isPreviewMode()) {
-          const access = await this.progressService.canAccess(courseId);
+          const access = await this.progressService.canAccess(targetCourseId);
           if (!access.canAccess) {
-            this.redirectToLockedCourse(courseId, access.reason);
+            this.redirectToLockedCourse(targetCourseId, access.reason);
             return;
           }
         }
 
-        const [course, allSections] = await Promise.all([
-          this.coursesApi.getCourseById(courseId),
-          this.sectionsApi.getSectionsByCourse(courseId),
+        const [courseResult, sectionsResult] = await Promise.all([
+          this.coursesApi.getCourseById(targetCourseId).catch(() => null),
+          this.sectionsApi
+            .getSectionsByCourse(targetCourseId)
+            .catch(() => [] as SectionResponseDTO[]),
         ]);
 
-        // GetSectionsByCourse doesn't include isComplete on lessons.
-        // Fetch lessons per section via GetLessonsBySection (which does) in parallel.
+        // Per-course endpoints can come back empty/failed for staff preview or
+        // newly-created courses (no enrollment yet). When that happens we fall
+        // back to the parent learning-path tree, which already exposes the full
+        // curriculum and works in every context.
+        let resolvedCourse: CourseResponseDTO | null = courseResult;
+        let resolvedSections: SectionResponseDTO[] = sectionsResult;
+
+        const pathIdForFallback =
+          this.pathId ??
+          (resolvedCourse?.learningPathId ?? null);
+
+        if ((!resolvedCourse || resolvedSections.length === 0) && pathIdForFallback) {
+          try {
+            const path = await this.pathsApi.getPathById(pathIdForFallback);
+            const ordered = [...(path.courses ?? [])].sort(
+              (a, b) => (a.order ?? 0) - (b.order ?? 0),
+            );
+            this.pathCourses.set(ordered);
+            const courseInPath = ordered.find((c) => c.id === targetCourseId);
+            if (!resolvedCourse && courseInPath) {
+              resolvedCourse = courseInPath;
+            }
+            if (resolvedSections.length === 0 && courseInPath?.sections) {
+              resolvedSections = [...courseInPath.sections].sort(
+                (a, b) => (a.order ?? 0) - (b.order ?? 0),
+              );
+            }
+          } catch {
+            // Path lookup is non-fatal — fall through with whatever we have.
+          }
+        }
+
+        // GetSectionsByCourse already returns lessons embedded in each section
+        // (without the per-user `isComplete` flag). GetLessonsBySection re-fetches
+        // them WITH the progress flag for enrolled employees. For admin preview
+        // and other un-enrolled contexts the progress endpoint can return empty,
+        // so we fall back to the embedded lessons in that case.
         const lessonGroups = await Promise.all(
-          allSections.map((sec) => this.lessonsApi.getLessonsBySection(sec.id)),
+          resolvedSections.map((sec) =>
+            this.lessonsApi
+              .getLessonsBySection(sec.id)
+              .catch(() => [] as LessonResponseDTO[]),
+          ),
         );
 
-        // Merge lesson data (with isComplete) into sections + build completed set
         const completed = new Set<number>();
-        const sectionsWithProgress = allSections.map((sec, i) => {
-          for (const l of lessonGroups[i]) {
+        const sectionsWithProgress = resolvedSections.map((sec, i) => {
+          const fetched = lessonGroups[i];
+          const lessons = fetched.length > 0 ? fetched : (sec.lessons ?? []);
+          for (const l of lessons) {
             if (l.isComplete) completed.add(l.id);
           }
-          return { ...sec, lessons: lessonGroups[i] };
+          return { ...sec, lessons };
         });
 
-        this.course.set(course);
+        this.course.set(resolvedCourse);
         this.sections.set(sectionsWithProgress);
         this.completedLessons.set(completed);
       }
 
-      if (this.pathId && this.pathCourses().length === 0) {
-        await this.loadPathCourses(this.pathId);
+      // Automatically resolve pathId from the course if not set in navigation state
+      const currentCourse = this.course();
+      if (currentCourse && currentCourse.learningPathId) {
+        this.pathId = currentCourse.learningPathId;
+      }
+
+      if (this.pathId) {
+        if (this.pathCourses().length === 0 || this.pathCourses()[0]?.learningPathId !== this.pathId) {
+          await this.loadPathCourses(this.pathId);
+        }
       }
     } catch (e) {
-      if (courseId && !this.isPreviewMode() && this.isAccessDeniedError(e)) {
-        this.redirectToLockedCourse(courseId);
+      const section = this.lesson() ? await this.sectionsApi.getSectionById(this.lesson()!.sectionId).catch(() => null) : null;
+      const targetCourseId = section ? section.courseId : this.routeCourseId;
+      if (targetCourseId && !this.isPreviewMode() && this.isAccessDeniedError(e)) {
+        this.redirectToLockedCourse(targetCourseId);
         return;
       }
 
@@ -490,7 +544,7 @@ export class LessonViewerComponent implements OnInit {
    *
    * @param destination - Crumb identifier emitted by the content component.
    */
-  onBreadcrumbNavigate(destination: 'home' | 'paths' | 'course'): void {
+  onBreadcrumbNavigate(destination: 'home' | 'paths' | 'courses' | 'course'): void {
     switch (destination) {
       case 'home':
         this.goHome();
@@ -498,10 +552,36 @@ export class LessonViewerComponent implements OnInit {
       case 'paths':
         this.goToLearningPaths();
         return;
+      case 'courses':
+        this.goToCourseBuilder();
+        return;
       case 'course':
         this.goToCourse();
         return;
     }
+  }
+
+  /**
+   * Routes the user to the "courses index" for the active learning path.
+   * For HR/Manager preview this is the course-builder page (`/learning-paths/:pathId`);
+   * for employees it's their path detail page (`/learning-path/:pathId`), which
+   * lists the courses they have access to.
+   */
+  goToCourseBuilder(): void {
+    if (this.isPreviewMode()) {
+      if (this.pathId) {
+        void this.router.navigate(['/learning-paths', this.pathId]);
+        return;
+      }
+      void this.router.navigate(['/learning-paths']);
+      return;
+    }
+
+    if (this.pathId) {
+      void this.router.navigate(['/learning-path', String(this.pathId)]);
+      return;
+    }
+    void this.router.navigate(['/employee/dashboard']);
   }
 
   /**

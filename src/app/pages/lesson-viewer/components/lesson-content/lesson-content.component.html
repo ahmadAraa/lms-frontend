@@ -1,19 +1,37 @@
 <div class="lv-stage">
 
   <!-- Top breadcrumb row -->
-  <nav class="lv-breadcrumb" aria-label="Breadcrumb">
-    <button type="button" class="lv-crumb lv-crumb--link" (click)="navigate.emit('home')">Home</button>
-    <span class="material-symbols-outlined lv-sep">chevron_right</span>
-    <button type="button" class="lv-crumb lv-crumb--link" (click)="navigate.emit('paths')">Learning Paths</button>
-    @if (course?.title) {
-      <span class="material-symbols-outlined lv-sep">chevron_right</span>
-      <button type="button" class="lv-crumb lv-crumb--link" (click)="navigate.emit('course')">{{ course?.title }}</button>
-    }
-    @if (lesson?.title) {
-      <span class="material-symbols-outlined lv-sep">chevron_right</span>
-      <span class="lv-crumb lv-crumb--current">{{ lesson?.title }}</span>
-    }
-  </nav>
+  @if (isPreviewMode) {
+    <!-- Admin/preview breadcrumb: Home | Learning Paths | Courses | {course} -->
+    <nav class="lv-breadcrumb lv-breadcrumb--admin" aria-label="Breadcrumb">
+      <button type="button" class="lv-crumb lv-crumb--pill" (click)="navigate.emit('home')">Home</button>
+      <span class="lv-pipe" aria-hidden="true"></span>
+      <button type="button" class="lv-crumb lv-crumb--pill" (click)="navigate.emit('paths')">Learning Paths</button>
+      <span class="lv-pipe" aria-hidden="true"></span>
+      <button type="button" class="lv-crumb lv-crumb--pill" (click)="navigate.emit('courses')">Courses</button>
+      @if (course?.title) {
+        <span class="lv-pipe" aria-hidden="true"></span>
+        <button type="button" class="lv-crumb lv-crumb--pill lv-crumb--pill-current" (click)="navigate.emit('course')">{{ course?.title }}</button>
+      }
+    </nav>
+  } @else {
+    <!-- Employee breadcrumb: Home | Learning Paths | Courses | {course} | {lesson} -->
+    <nav class="lv-breadcrumb lv-breadcrumb--admin" aria-label="Breadcrumb">
+      <button type="button" class="lv-crumb lv-crumb--pill" (click)="navigate.emit('home')">Home</button>
+      <span class="lv-pipe" aria-hidden="true"></span>
+      <button type="button" class="lv-crumb lv-crumb--pill" (click)="navigate.emit('paths')">Learning Paths</button>
+      <span class="lv-pipe" aria-hidden="true"></span>
+      <button type="button" class="lv-crumb lv-crumb--pill" (click)="navigate.emit('courses')">Courses</button>
+      @if (course?.title) {
+        <span class="lv-pipe" aria-hidden="true"></span>
+        <button type="button" class="lv-crumb lv-crumb--pill" (click)="navigate.emit('course')">{{ course?.title }}</button>
+      }
+      @if (lesson?.title) {
+        <span class="lv-pipe" aria-hidden="true"></span>
+        <span class="lv-crumb lv-crumb--pill lv-crumb--pill-current">{{ lesson?.title }}</span>
+      }
+    </nav>
+  }
 
   <!-- Lesson header (title + meta + back link) -->
   @if (lesson) {
@@ -21,19 +39,10 @@
       <div class="lv-header-text">
         <h1 class="lv-title">{{ lesson.title }}</h1>
         <div class="lv-meta">
-          <span class="lv-meta-item">
-            <span class="material-symbols-outlined">schedule</span>
-            Self-paced
-          </span>
           @if (lesson.type === 0) {
             <span class="lv-meta-item">
               <span class="material-symbols-outlined">smart_display</span>
               Video Lesson
-            </span>
-          } @else if (lesson.type === 1) {
-            <span class="lv-meta-item">
-              <span class="material-symbols-outlined">picture_as_pdf</span>
-              PDF Resource
             </span>
           } @else if (lesson.type === 2) {
             <span class="lv-meta-item">

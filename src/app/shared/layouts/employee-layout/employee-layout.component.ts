@@ -43,6 +43,18 @@ export class EmployeeLayoutComponent {
   }
 
   /**
+   * Resolves the route for the brand logo. Admins are redirected to the HR dashboard
+   * while employees go to the employee dashboard.
+   */
+  getLogoRoute(): string {
+    const role = this.authService.getUserRole();
+    if (role === 'HR' || role === 'MANAGER') {
+      return '/hr/dashboard';
+    }
+    return '/employee/dashboard';
+  }
+
+  /**
    * Toggles the visible expansion state of the user profile navigation menu.
    * Stops event propagation to prevent immediate document-click auto-dismissal.
    *
