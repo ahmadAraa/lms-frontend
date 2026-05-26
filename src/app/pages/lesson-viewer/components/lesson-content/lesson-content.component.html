@@ -129,9 +129,7 @@
   <!-- Course Complete celebration banner (shown on last lesson when everything's done) -->
   @if (lesson && isLastLessonOfCourse && isCourseComplete && !isPreviewMode) {
     <div class="lv-complete-banner" [class.lv-complete-banner--final]="!hasNextCourse">
-      <div class="lv-complete-icon">
-        <span class="material-symbols-outlined">military_tech</span>
-      </div>
+
       <div class="lv-complete-text">
         <h3 class="lv-complete-title">
           @if (hasNextCourse) {
@@ -215,19 +213,4 @@
     </div>
   }
 
-  <!-- About this lesson -->
-  @if (lesson) {
-    <section class="lv-about">
-      <h2 class="lv-about-title">About this Lesson</h2>
-      @if (lesson.description) {
-        <p class="lv-about-desc">{{ lesson.description }}</p>
-      }
-      @if (lesson.content) {
-        <div class="lv-about-content" [innerHTML]="lesson.content"></div>
-      }
-      @if (!lesson.description && !lesson.content) {
-        <p class="lv-about-empty">No additional information is available for this lesson.</p>
-      }
-    </section>
-  }
 </div>
