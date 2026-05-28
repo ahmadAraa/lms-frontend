@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, catchError, of, forkJoin, switchMap } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 /**
  * Basic user data structure returned when executing user search queries.
@@ -175,7 +176,7 @@ function normalizeEnrollment(raw: unknown): {
 })
 export class EnrollmentService {
   /** API Base URL representing backend server host */
-  private readonly baseUrl = 'http://localhost:5232';
+  private readonly baseUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 

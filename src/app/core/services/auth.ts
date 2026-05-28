@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 /**
  * Supported authorization roles in the application.
@@ -33,7 +34,7 @@ export type LoginResponse = {
 })
 export class AuthService {
   /** Base URL for user and authentication API endpoints */
-  private baseUrl = 'http://localhost:5232/api/User';
+  private baseUrl = `${environment.apiUrl}/api/User`;
   
   /** In-memory cache of the JWT string */
   private token: string | null = null;

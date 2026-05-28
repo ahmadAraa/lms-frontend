@@ -1,4 +1,6 @@
-export const BASE_URL = 'http://localhost:5232';
+import { environment } from '../../environments/environment';
+
+export const BASE_URL = environment.apiUrl;
 
 export enum MaterialType {
   Video = 0,

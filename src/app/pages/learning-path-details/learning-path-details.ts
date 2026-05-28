@@ -5,6 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { LearningPathService, LearningPathResponseDto, CourseResponseDTO } from '../../core/services/learning-path.service';
 import { ProgressService } from '../../core/services/progress.service';
 import { AuthService } from '../../core/services/auth';
+import { BASE_URL } from '../../types/course-builder.types';
 
 /**
  * Component displaying details of a specific learning path.
@@ -49,7 +50,7 @@ export class LearningPathDetails implements OnInit {
    * Base local backend server URL for relative graphic payloads.
    * @private
    */
-  private readonly baseUrl = 'http://localhost:5232';
+  private readonly baseUrl = BASE_URL;
 
   /**
    * Constructs the LearningPathDetails component.

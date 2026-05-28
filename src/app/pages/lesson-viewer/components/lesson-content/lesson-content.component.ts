@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { LessonResponseDTO, CourseResponseDTO } from '../../../../types/course-builder.types';
+import { LessonResponseDTO, CourseResponseDTO, BASE_URL } from '../../../../types/course-builder.types';
 
 /**
  * Component responsible for rendering the active lesson content, including video players,
@@ -162,7 +162,6 @@ export class LessonContentComponent {
     if (lesson.videoUrl.startsWith('http')) return lesson.videoUrl;
     
     // Prepend BASE_URL for uploaded files
-    const baseUrl = 'http://localhost:5232';
-    return `${baseUrl}/${lesson.videoUrl.replace(/^\//, '')}`;
+    return `${BASE_URL}/${lesson.videoUrl.replace(/^\//, '')}`;
   }
 }

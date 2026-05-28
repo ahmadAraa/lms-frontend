@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 /**
  * Payload data structure used when creating a new learning path.
@@ -425,7 +426,7 @@ function normalizeContinueLearning(
 })
 export class LearningPathService {
   /** API path endpoint URL */
-  private readonly apiUrl = 'http://localhost:5232/api/LearningPath';
+  private readonly apiUrl = `${environment.apiUrl}/api/LearningPath`;
 
   constructor(private http: HttpClient) {}
 
