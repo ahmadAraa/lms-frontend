@@ -1,3 +1,3 @@
 export const environment = {
-  apiUrl: 'http://localhost:5232'
+  apiUrl: 'http://lms-proj.runasp.net'
 };
