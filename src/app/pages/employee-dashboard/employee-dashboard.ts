@@ -4,63 +4,130 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { forkJoin, of, from } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { AuthService } from '../../services/auth';
-import { CourseResponseDTO, LearningPathService, LearningPathResponseDto } from '../../services/learning-path.service';
+import { AuthService } from '../../core/services/auth';
+import { CourseResponseDTO, LearningPathService, LearningPathResponseDto } from '../../core/services/learning-path.service';
 
-import { CoursesApiService } from '../../services/courses-api.service';
-import { ProgressService } from '../../services/progress.service';
-import { SectionsApiService } from '../../services/sections-api.service';
+import { CoursesApiService } from '../../core/services/courses-api.service';
+import { ProgressService } from '../../core/services/progress.service';
+import { SectionsApiService } from '../../core/services/sections-api.service';
 import { BASE_URL } from '../../types/course-builder.types';
 
+import { ContinueLearningComponent } from './components/continue-learning/continue-learning.component';
+import { MyCoursesComponent } from './components/my-courses/my-courses.component';
+import { LearningPathCardComponent } from './components/learning-path-card/learning-path-card.component';
+
+/**
+ * Interface representing the progress state of the current continue-learning recommendation.
+ */
 interface ContinueLearningState {
+  /** True if the learning path is fully completed. */
   isCompleted: boolean;
+  /** The unique identifier of the active learning path. */
   pathId: number;
+  /** The title of the active learning path. */
   pathTitle: string;
+  /** The identifier of the next lesson to learn (can be null). */
   lessonId: number | null;
+  /** The identifier of the next course to learn (can be null). */
   courseId: number | null;
+  /** Custom descriptive status messages from the continue-learning tracker. */
   message: string;
 }
 
+/**
+ * Represents a single course enrollment mapping back to its parent learning path wrapper.
+ */
 interface EnrolledCourse {
+  /** The course response data payload. */
   course: CourseResponseDTO;
+  /** The parent learning path's ID, or 0 if it is a direct course assignment. */
   learningPathId: number;
+  /** The parent learning path's title, or 'Direct Assignment' if assigned directly. */
   learningPathTitle: string;
 }
 
+/**
+ * Component representing the interactive Employee Dashboard page.
+ *
+ * Implements search filters, real-time continue-learning suggestions, enrolled paths
+ * progress bars, course direct-assignments lists, and complex automated lesson-viewer routing workflows.
+ */
 @Component({
   selector: 'app-employee-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ContinueLearningComponent, MyCoursesComponent, LearningPathCardComponent],
   templateUrl: './employee-dashboard.html',
   styleUrl: './employee-dashboard.css',
 })
 export class EmployeeDashboard implements OnInit {
-  /** All paths available in the system */
+  /**
+   * Signal carrying all learning paths defined in the system.
+   */
   allPaths = signal<LearningPathResponseDto[]>([]);
-  /** IDs of paths this employee is enrolled in */
+
+  /**
+   * Signal carrying the unique IDs of learning paths the current employee is enrolled in.
+   */
   enrolledPathIds = signal<Set<number>>(new Set());
-  /** Courses directly assigned to this employee (not via a learning path) */
+
+  /**
+   * Signal containing the list of courses directly assigned to this employee.
+   */
   directEnrolledCourses = signal<EnrolledCourse[]>([]);
+
+  /**
+   * Signal mapping learning path IDs to their overall completion progress percentages.
+   */
   progressMap = signal<Map<number, number>>(new Map());
+
+  /**
+   * Signal mapping course IDs to their individual completion progress percentages.
+   */
   courseProgressMap = signal<Map<number, number>>(new Map());
+
+  /**
+   * Signal carrying the computed continue-learning state representation.
+   */
   continueState = signal<ContinueLearningState | null>(null);
 
+  /**
+   * Signal tracking whether the initial dashboard data loading operations are still in progress.
+   */
   isLoading = signal(true);
+
+  /**
+   * Signal storing active backend error message descriptions.
+   */
   error = signal('');
+
+  /**
+   * Signal carrying the currently logged-in user's display name.
+   */
   userName = signal('');
+
+  /**
+   * Signal storing the active search filter query.
+   */
   searchQuery = signal('');
 
-  /** Paths the employee is enrolled in */
+  /**
+   * Computed signal returning all learning paths the current employee is enrolled in.
+   */
   enrolledPaths = computed(() =>
     this.allPaths().filter(p => this.enrolledPathIds().has(p.id))
   );
 
-  /** Other paths the employee is NOT enrolled in */
+  /**
+   * Computed signal returning all other paths the employee has not enrolled in.
+   */
   availablePaths = computed(() =>
     this.allPaths().filter(p => !this.enrolledPathIds().has(p.id))
   );
 
-  /** Courses inside the employee's enrolled learning paths + directly assigned courses */
+  /**
+   * Computed signal returning all enrolled courses combined from direct assignments
+   * and enrolled learning paths, automatically deduplicated by course ID.
+   */
   enrolledCourses = computed(() => {
     const seen = new Set<number>();
     const courses: EnrolledCourse[] = [];
@@ -88,7 +155,9 @@ export class EmployeeDashboard implements OnInit {
     return courses;
   });
 
-  /** Enrolled paths filtered by search */
+  /**
+   * Computed signal returning the list of enrolled paths filtered by the search query.
+   */
   filteredEnrolled = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
     if (!q) return this.enrolledPaths();
@@ -98,7 +167,9 @@ export class EmployeeDashboard implements OnInit {
     );
   });
 
-  /** Other paths filtered by search */
+  /**
+   * Computed signal returning the list of available paths filtered by the search query.
+   */
   filteredAvailable = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
     if (!q) return this.availablePaths();
@@ -108,16 +179,35 @@ export class EmployeeDashboard implements OnInit {
     );
   });
 
+  /**
+   * Computed signal returning the first enrolled learning path in the user's dashboard.
+   */
   firstEnrolledPath = computed(() => this.enrolledPaths()[0] ?? null);
+
+  /**
+   * Computed signal returning the learning path that corresponds to the active continue-learning recommendation.
+   */
   continuePath = computed(() => {
     const state = this.continueState();
     return this.enrolledPaths().find(path => path.id === state?.pathId) ?? this.firstEnrolledPath();
   });
+
+  /**
+   * Computed signal returning the completion progress percentage of the continue-learning path.
+   */
   continuePathProgress = computed(() => this.getProgress(this.continuePath()?.id ?? 0));
+
+  /**
+   * Computed signal returning whether the continue-learning path is fully completed.
+   */
   isContinueCompleted = computed(() =>
     Boolean(this.continueState()?.isCompleted) && this.continuePathProgress() >= 100
   );
 
+  /**
+   * Array of vibrant linear gradients used for path card covers.
+   * @private
+   */
   private readonly gradients = [
     'linear-gradient(135deg, #0f1b3d 0%, #1e3a8a 100%)',
     'linear-gradient(135deg, #065f56 0%, #0d9488 100%)',
@@ -127,6 +217,16 @@ export class EmployeeDashboard implements OnInit {
     'linear-gradient(135deg, #14532d 0%, #16a34a 100%)',
   ];
 
+  /**
+   * Constructs the EmployeeDashboard component.
+   *
+   * @param learningPathService - Service handling learning path details and progress retrieval.
+   * @param coursesApi - Service managing course queries and list updates.
+   * @param progressService - Service managing course access and course progress.
+   * @param sectionsApi - Service managing nested section and lesson records.
+   * @param authService - Service managing local authentication contexts.
+   * @param router - Angular router for dashboard redirects.
+   */
   constructor(
     private learningPathService: LearningPathService,
     private coursesApi: CoursesApiService,
@@ -136,11 +236,18 @@ export class EmployeeDashboard implements OnInit {
     private router: Router,
   ) {}
 
+  /**
+   * Angular initialization hook. Sets user displays and triggers the parallel data fetch.
+   */
   ngOnInit() {
     this.userName.set(this.authService.getUserName());
     this.loadData();
   }
 
+  /**
+   * Queries the backend APIs in parallel for all system paths and the user's enrolled paths.
+   * Initiates progress metrics and direct course assignments load upon completion.
+   */
   loadData() {
     this.isLoading.set(true);
     this.error.set('');
@@ -170,6 +277,11 @@ export class EmployeeDashboard implements OnInit {
     });
   }
 
+  /**
+   * Loads general learning path completion progress percentages for the current user in parallel.
+   *
+   * @param enrolledPaths - The array of enrolled paths to fetch progress for.
+   */
   loadProgress(enrolledPaths: LearningPathResponseDto[]) {
     const requests = enrolledPaths.map(p =>
       this.learningPathService.getMyProgress(p.id).pipe(
@@ -183,6 +295,11 @@ export class EmployeeDashboard implements OnInit {
     });
   }
 
+  /**
+   * Fetches completion metrics for all courses contained in the user's enrolled paths in parallel.
+   *
+   * @param enrolledPaths - The array of enrolled paths.
+   */
   async loadCourseProgress(enrolledPaths: LearningPathResponseDto[]) {
     const courseIds = [
       ...new Set(
@@ -199,6 +316,12 @@ export class EmployeeDashboard implements OnInit {
     this.courseProgressMap.set(cMap);
   }
 
+  /**
+   * Queries the API for continue-learning pointers inside enrolled paths.
+   * Evaluates the returned recommended items to select the most relevant active point.
+   *
+   * @param enrolledPaths - The array of enrolled paths.
+   */
   loadContinueLearning(enrolledPaths: LearningPathResponseDto[]) {
     const requests = enrolledPaths.map(path =>
       this.learningPathService.getContinueLearning(path.id).pipe(
@@ -228,6 +351,12 @@ export class EmployeeDashboard implements OnInit {
     });
   }
 
+  /**
+   * Loads direct course assignments from the server (courses assigned individually without a path wrapper).
+   * Normalizes payloads and triggers progress loads.
+   *
+   * @param allPaths - All paths defined in the system.
+   */
   loadDirectCourseEnrollments(allPaths: LearningPathResponseDto[]) {
     from(this.coursesApi.getMyCourses()).pipe(
       catchError(() => of([]))
@@ -260,6 +389,12 @@ export class EmployeeDashboard implements OnInit {
     });
   }
 
+  /**
+   * Fetches the completion progress metrics for directly assigned courses in parallel.
+   *
+   * @param items - The list of directly enrolled courses.
+   * @private
+   */
   private async loadDirectCourseProgress(items: EnrolledCourse[]) {
     const courseIds = items.map(item => item.course.id);
     const results = await Promise.all(
@@ -270,6 +405,10 @@ export class EmployeeDashboard implements OnInit {
     this.courseProgressMap.set(currentMap);
   }
 
+  /**
+   * Resumes the user's active continue-learning recommendation.
+   * Dynamically routes users directly to their next pending lesson, next course, or first incomplete course.
+   */
   resume() {
     const state = this.continueState();
     const path = this.continuePath();
@@ -296,6 +435,14 @@ export class EmployeeDashboard implements OnInit {
     }
   }
 
+  /**
+   * Computes a relevance weight score for a continue-learning path state item.
+   * Prioritizes paths with a direct lesson pointer, followed by a course pointer, adding active completion ratios.
+   *
+   * @param item - The path recommendation item.
+   * @returns A numeric evaluation weight.
+   * @private
+   */
   private continueScore(item: {
     path: LearningPathResponseDto;
     result: { data?: { lessonId: number | null; courseId: number | null } } | null;
@@ -305,6 +452,13 @@ export class EmployeeDashboard implements OnInit {
     return hasLesson + hasCourse + this.getProgress(item.path.id);
   }
 
+  /**
+   * Evaluates overall progress of a learning path. If all course completion states are loaded,
+   * returns the rounded average of all nested courses; otherwise, returns the cached progress metric.
+   *
+   * @param pathId - The unique identifier of the path.
+   * @returns The computed progress percentage integer from 0 to 100.
+   */
   getProgress(pathId: number): number {
     const path = this.allPaths().find(p => p.id === pathId);
     const courseProgress = path ? this.getPathProgressFromCourses(path) : null;
@@ -314,10 +468,24 @@ export class EmployeeDashboard implements OnInit {
     return this.progressMap().get(pathId) ?? 0;
   }
 
+  /**
+   * Returns the completion progress of a course from the local course progress cache map.
+   *
+   * @param courseId - The unique identifier of the course.
+   * @returns The progress percentage integer from 0 to 100.
+   */
   getCourseProgress(courseId: number): number {
     return this.courseProgressMap().get(courseId) ?? 0;
   }
 
+  /**
+   * Calculates the overall learning path progress percentage by averaging the completion
+   * percentage values of all nested courses.
+   *
+   * @param path - The learning path object.
+   * @returns The rounded integer average percentage, or null if course values are incomplete.
+   * @private
+   */
   private getPathProgressFromCourses(path: LearningPathResponseDto): number | null {
     const courses = path.courses ?? [];
     if (courses.length === 0) return this.progressMap().get(path.id) ?? 0;
@@ -330,18 +498,43 @@ export class EmployeeDashboard implements OnInit {
     return Math.round(total / courses.length);
   }
 
+  /**
+   * Returns the linear gradient background styling string at the specified sequence index.
+   *
+   * @param index - The array index.
+   * @returns A CSS linear-gradient string.
+   */
   getGradient(index: number): string {
     return this.gradients[index % this.gradients.length];
   }
 
+  /**
+   * Returns the total course count contained within a learning path.
+   *
+   * @param path - The learning path object.
+   * @returns The integer count of courses.
+   */
   getCourseCount(path: LearningPathResponseDto): number {
     return path.courses?.length ?? 0;
   }
 
+  /**
+   * Navigates the router to the detailed view page of a learning path.
+   *
+   * @param id - The unique identifier of the path.
+   */
   openPath(id: number) {
     this.router.navigate(['/learning-path', id]);
   }
 
+  /**
+   * Opens a specific course, verifying access status dynamically via the progress service.
+   * If authorized, routes straight to the next available lesson; if unauthorized, routes
+   * to course details displaying locking details.
+   *
+   * @param course - The target course to open.
+   * @param learningPathId - The unique ID of the learning path context.
+   */
   async openCourse(course: CourseResponseDTO, learningPathId: number) {
     const access = await this.progressService.canAccess(course.id);
     if (!access.canAccess) {
@@ -384,6 +577,13 @@ export class EmployeeDashboard implements OnInit {
     });
   }
 
+  /**
+   * Utility helper extracting the first lesson ID contained in a course's local template.
+   *
+   * @param course - The course DTO.
+   * @returns The first valid lesson ID found, or null if empty.
+   * @private
+   */
   private getFirstLessonId(course: CourseResponseDTO): number | null {
     for (const section of course.sections ?? []) {
       for (const lesson of section.lessons ?? []) {
@@ -395,22 +595,22 @@ export class EmployeeDashboard implements OnInit {
     return null;
   }
 
+  /**
+   * Extracts the first course in a learning path that has a completion progress of less than 100%.
+   *
+   * @param path - The learning path object.
+   * @returns The first incomplete course, or null if all are completed.
+   * @private
+   */
   private getFirstIncompleteCourse(path: LearningPathResponseDto): CourseResponseDTO | null {
     return (path.courses ?? []).find(course => this.getCourseProgress(course.id) < 100) ?? null;
   }
 
-  getPictureUrl(path: LearningPathResponseDto): string {
-    if (!path.image) return '';
-    if (path.image.startsWith('http')) return path.image;
-    return `${BASE_URL}/${path.image.replace(/^\//, '')}`;
-  }
-
-  getCoursePictureUrl(course: CourseResponseDTO): string {
-    if (!course.image) return '';
-    if (course.image.startsWith('http')) return course.image;
-    return `${BASE_URL}/${course.image.replace(/^\//, '')}`;
-  }
-
+  /**
+   * Triggers upon search input updates, setting the search query signal context.
+   *
+   * @param event - The input change event.
+   */
   onSearch(event: Event) {
     this.searchQuery.set((event.target as HTMLInputElement).value);
   }

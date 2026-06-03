@@ -2,7 +2,7 @@
   --navy: #0f1b3d;
   --navy-light: #1e3a8a;
   --blue: #2563eb;
-  --green: #10b981; 
+  --green: #10b981;
   --gray-50: #f9fafb;
   --gray-200: #e5e7eb;
   --gray-300: #d1d5db;
@@ -14,8 +14,8 @@
 }
 
 .viewer-wrapper {
-  background: #f5f6fa;
-  color: #10162f;
+  background: linear-gradient(180deg, #f5f7fb 0%, #eef1f8 100%);
+  color: #0f172a;
   min-height: 100vh;
   font-family: 'Inter', sans-serif;
 }
@@ -27,7 +27,7 @@
 }
 
 .main {
-  background: #f7f8fb;
+  background: transparent;
   overflow-y: auto;
   height: calc(100vh - 64px);
 }

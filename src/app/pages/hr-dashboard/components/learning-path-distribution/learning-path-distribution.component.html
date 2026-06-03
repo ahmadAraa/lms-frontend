@@ -1,0 +1,26 @@
+<div class="hr-section-card">
+  <div class="hr-section-header">
+    <h2>Learning Path Distribution</h2>
+    <a routerLink="/learning-paths" class="hr-view-link">
+      View Detailed Report <span class="material-symbols-outlined">chevron_right</span>
+    </a>
+  </div>
+
+  @if (paths.length === 0) {
+    <div class="hr-empty">No learning paths found.</div>
+  } @else {
+    <div class="hr-path-list">
+      @for (path of paths; track path.id) {
+        <div class="hr-path-row">
+          <div class="hr-path-info">
+            <span class="hr-path-name">{{ path.title }}</span>
+            <span class="hr-path-enrolled">{{ getEnrolledCount(path.id) }} Enrolled</span>
+          </div>
+          <div class="hr-path-bar">
+            <div class="hr-path-bar-fill" [style.width.%]="getBarWidth(path)"></div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

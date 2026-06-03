@@ -3,7 +3,7 @@
   <!-- Header -->
   <div class="cm-header">
     <div class="cm-header-left">
-      <a routerLink="/dashboard" class="cm-back-btn">
+      <a routerLink="/learning-paths" class="cm-back-btn">
         <span class="material-symbols-outlined">arrow_back</span>
       </a>
       <div class="cm-header-text">
@@ -90,10 +90,10 @@
                 <button class="cm-action-btn" title="Preview Course" (click)="previewCourse(course); $event.stopPropagation()">
                   <span class="material-symbols-outlined">visibility</span>
                 </button>
-                <button class="cm-action-btn" title="Move Up" (click)="moveCourseUp(i, $event)" [disabled]="i === 0" [class.disabled]="i === 0">
+                <button class="cm-action-btn" title="Move Up" (click)="moveCourseUp(i, $event)" [disabled]="isReordering || i === 0" [class.disabled]="isReordering || i === 0">
                   <span class="material-symbols-outlined">arrow_upward</span>
                 </button>
-                <button class="cm-action-btn" title="Move Down" (click)="moveCourseDown(i, $event)" [disabled]="i === tree.courses.length - 1" [class.disabled]="i === tree.courses.length - 1">
+                <button class="cm-action-btn" title="Move Down" (click)="moveCourseDown(i, $event)" [disabled]="isReordering || i === tree.courses.length - 1" [class.disabled]="isReordering || i === tree.courses.length - 1">
                   <span class="material-symbols-outlined">arrow_downward</span>
                 </button>
                 <button class="cm-action-btn" title="Edit" (click)="openEditCourseModal(course); $event.stopPropagation()">
@@ -116,8 +116,10 @@
                     <span class="material-symbols-outlined">list</span>
                     Sections
                   </h4>
-                  <button class="cm-add-inline" (click)="openAddSectionModal(course.id)">
-                    <span class="material-symbols-outlined">add</span>
+                  <button class="cm-add-inline cm-add-inline--modern" (click)="openAddSectionModal(course.id)">
+                    <span class="cm-add-inline-plus">
+                      <span class="material-symbols-outlined">add</span>
+                    </span>
                     Add Section
                   </button>
                 </div>
@@ -127,11 +129,27 @@
                 }
 
                 @for (section of course.sections; track section.id; let si = $index) {
-                  <div class="cm-section-block">
+                  <div class="cm-section-block"
+                       [class.is-dragging]="draggingSection?.sectionId === section.id"
+                       [class.is-drop-target]="dragOverSectionId === section.id"
+                       (dragover)="onSectionDragOver(course, section, $event)"
+                       (dragleave)="onSectionDragLeave(section, $event)"
+                       (drop)="dropSection(course, section, $event)">
                     <div class="cm-section-row" (click)="toggleSection(section.id)">
                       <div class="cm-section-num">{{ si + 1 }}</div>
 
                       @if (editingKey !== sectionKey(section)) {
+                        <button
+                          type="button"
+                          class="cm-drag-handle"
+                          title="Drag to reorder section"
+                          [draggable]="!isReordering"
+                          [disabled]="isReordering"
+                          (click)="$event.stopPropagation()"
+                          (dragstart)="startSectionDrag(course, section, $event)"
+                          (dragend)="endSectionDrag()">
+                          <span class="material-symbols-outlined">drag_indicator</span>
+                        </button>
                         <div class="cm-section-info">
                           <span class="cm-section-title">{{ section.title }}</span>
                           @if (section.description) {
@@ -164,8 +182,10 @@
                       <div class="cm-lessons-list">
                         <div class="cm-lessons-header">
                           <span>Lessons</span>
-                          <button class="cm-add-inline-sm" (click)="openAddLessonModal(section.id)">
-                            <span class="material-symbols-outlined">add</span>
+                          <button class="cm-add-inline-sm cm-add-inline-sm--modern" (click)="openAddLessonModal(section.id)">
+                            <span class="cm-add-inline-plus cm-add-inline-plus--sm">
+                              <span class="material-symbols-outlined">add</span>
+                            </span>
                             Add Lesson
                           </button>
                         </div>
@@ -174,8 +194,24 @@
                           <div class="cm-nested-empty">No lessons in this section yet.</div>
                         } @else {
                           @for (lesson of section.lessons; track lesson.id; let li = $index) {
-                            <div class="cm-lesson-row">
+                            <div class="cm-lesson-row"
+                                 [class.is-dragging]="draggingLesson?.lessonId === lesson.id"
+                                 [class.is-drop-target]="dragOverLessonId === lesson.id"
+                                 (dragover)="onLessonDragOver(section, lesson, $event)"
+                                 (dragleave)="onLessonDragLeave(lesson, $event)"
+                                 (drop)="dropLesson(section, lesson, $event)">
                               @if (editingKey !== 'lesson-' + lesson.id) {
+                                <button
+                                  type="button"
+                                  class="cm-drag-handle cm-drag-handle--lesson"
+                                  title="Drag to reorder lesson"
+                                  [draggable]="!isReordering"
+                                  [disabled]="isReordering"
+                                  (click)="$event.stopPropagation()"
+                                  (dragstart)="startLessonDrag(section, lesson, $event)"
+                                  (dragend)="endLessonDrag()">
+                                  <span class="material-symbols-outlined">drag_indicator</span>
+                                </button>
                                 <span class="cm-lesson-num">{{ li + 1 }}</span>
                                 <span class="material-symbols-outlined cm-lesson-icon">play_circle</span>
                                 <div class="cm-lesson-info">
@@ -298,9 +334,15 @@
 <!-- ── Section Modal ─────────────────────────────── -->
 @if (sectionModalOpen) {
   <div class="modal-overlay" (click)="sectionModalOpen = false">
-    <div class="modal-panel modal-sm" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Add Section</h2>
+    <div class="modal-panel modal-sm modal-modern" (click)="$event.stopPropagation()">
+      <div class="modal-header modal-header-modern">
+        <div class="modal-header-icon modal-header-icon--section">
+          <span class="material-symbols-outlined">folder_open</span>
+        </div>
+        <div class="modal-header-text">
+          <h2>Add Section</h2>
+          <p class="modal-header-sub">Group related lessons under a chapter</p>
+        </div>
         <button class="modal-close" (click)="sectionModalOpen = false">
           <span class="material-symbols-outlined">close</span>
         </button>
@@ -332,9 +374,15 @@
 <!-- ── Lesson Modal ──────────────────────────────── -->
 @if (lessonModalOpen) {
   <div class="modal-overlay" (click)="lessonModalOpen = false">
-    <div class="modal-panel modal-sm" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Add Lesson</h2>
+    <div class="modal-panel modal-sm modal-modern" (click)="$event.stopPropagation()">
+      <div class="modal-header modal-header-modern">
+        <div class="modal-header-icon modal-header-icon--lesson">
+          <span class="material-symbols-outlined">play_circle</span>
+        </div>
+        <div class="modal-header-text">
+          <h2>Add Lesson</h2>
+          <p class="modal-header-sub">Create a new learning unit</p>
+        </div>
         <button class="modal-close" (click)="lessonModalOpen = false">
           <span class="material-symbols-outlined">close</span>
         </button>
@@ -348,36 +396,94 @@
           <label for="lesson-desc">Description</label>
           <textarea id="lesson-desc" [(ngModel)]="lessonDescription" placeholder="Optional description…" class="form-textarea" rows="3"></textarea>
         </div>
+
         <div class="form-group">
-          <label for="lesson-material-type">Material Type <span class="required">*</span></label>
-          <select id="lesson-material-type" [(ngModel)]="lessonMaterialType" class="form-input">
-            <option [value]="0">Video</option>
-            <option [value]="1">PDF</option>
-            <option [value]="2">Presentation</option>
-            <option [value]="3">Link</option>
-          </select>
+          <label>Material Type <span class="required">*</span></label>
+          <div class="material-type-grid">
+            <button type="button" class="material-type-btn" [class.selected]="lessonMaterialType == 0" (click)="lessonMaterialType = 0">
+              <span class="material-symbols-outlined">smart_display</span>
+              <span class="mt-label">Video</span>
+            </button>
+            <button type="button" class="material-type-btn" [class.selected]="lessonMaterialType == 1" (click)="lessonMaterialType = 1">
+              <span class="material-symbols-outlined">picture_as_pdf</span>
+              <span class="mt-label">PDF</span>
+            </button>
+            <button type="button" class="material-type-btn" [class.selected]="lessonMaterialType == 2" (click)="lessonMaterialType = 2">
+              <span class="material-symbols-outlined">slideshow</span>
+              <span class="mt-label">Slides</span>
+            </button>
+            <button type="button" class="material-type-btn" [class.selected]="lessonMaterialType == 3" (click)="lessonMaterialType = 3">
+              <span class="material-symbols-outlined">link</span>
+              <span class="mt-label">Link</span>
+            </button>
+          </div>
         </div>
 
         @if (lessonMaterialType == 3) {
           <div class="form-group">
             <label for="lesson-link">Link URL <span class="required">*</span></label>
-            <input id="lesson-link" type="url" [(ngModel)]="lessonLinkUrl" placeholder="https://..." class="form-input" />
+            <div class="input-with-icon">
+              <span class="material-symbols-outlined">link</span>
+              <input id="lesson-link" type="url" [(ngModel)]="lessonLinkUrl" placeholder="https://..." class="form-input form-input--with-icon" />
+            </div>
           </div>
         } @else {
           <div class="form-group">
-            <label for="lesson-file">File Upload <span class="required">*</span></label>
-            <input id="lesson-file" type="file" 
-                   [accept]="lessonMaterialType == 0 ? 'video/*' : (lessonMaterialType == 1 ? 'application/pdf' : '.ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation')" 
-                   (change)="onLessonVideoSelected($event)" class="form-input" />
-            @if (lessonVideoFile) {
-              <span class="upload-hint">{{ lessonVideoFile.name }}</span>
-            }
+            <label>
+              @if (lessonMaterialType == 0) {
+                <span>Video File</span>
+              } @else if (lessonMaterialType == 1) {
+                <span>PDF File</span>
+              } @else {
+                <span>Presentation File</span>
+              }
+              <span class="required">*</span>
+            </label>
+            <div class="lesson-file-drop" (click)="lessonFileInput.click()" [class.has-file]="lessonVideoFile">
+              @if (lessonVideoFile) {
+                <div class="lesson-file-selected">
+                  <div class="lesson-file-icon-ring">
+                    @if (lessonMaterialType == 0) {
+                      <span class="material-symbols-outlined">movie</span>
+                    } @else if (lessonMaterialType == 1) {
+                      <span class="material-symbols-outlined">picture_as_pdf</span>
+                    } @else {
+                      <span class="material-symbols-outlined">slideshow</span>
+                    }
+                  </div>
+                  <div class="lesson-file-info">
+                    <span class="lesson-file-name">{{ lessonVideoFile.name }}</span>
+                    <span class="lesson-file-hint">Click to change file</span>
+                  </div>
+                  <span class="material-symbols-outlined lesson-file-check">check_circle</span>
+                </div>
+              } @else {
+                <div class="upload-placeholder">
+                  <div class="upload-icon-ring">
+                    <span class="material-symbols-outlined">cloud_upload</span>
+                  </div>
+                  <span class="upload-text">Click to browse or drop your file here</span>
+                  <span class="upload-hint">
+                    @if (lessonMaterialType == 0) {
+                      <span>MP4, MOV, WebM</span>
+                    } @else if (lessonMaterialType == 1) {
+                      <span>PDF document</span>
+                    } @else {
+                      <span>PPT, PPTX</span>
+                    }
+                  </span>
+                </div>
+              }
+              <input #lessonFileInput type="file"
+                     [accept]="lessonMaterialType == 0 ? 'video/*' : (lessonMaterialType == 1 ? 'application/pdf' : '.ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation')"
+                     (change)="onLessonVideoSelected($event)" class="file-input-hidden" />
+            </div>
           </div>
         }
       </div>
       <div class="modal-footer">
         <button class="btn-cancel" (click)="lessonModalOpen = false">Cancel</button>
-        <button class="btn-save" (click)="submitLessonModal()" 
+        <button class="btn-save" (click)="submitLessonModal()"
                 [disabled]="!lessonTitle.trim() || (lessonMaterialType == 3 ? !lessonLinkUrl.trim() : !lessonVideoFile) || isSaving">
           @if (isSaving) {
             <div class="btn-spinner"></div> Saving…

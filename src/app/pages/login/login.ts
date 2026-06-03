@@ -1,8 +1,14 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
-import { AuthService } from '../../services/auth';
+import { AuthService } from '../../core/services/auth';
 
+/**
+ * Component handling authentication requests and session logins for users.
+ *
+ * Implements login input forms, automated dashboard routing based on decoded
+ * user role claims (SUPERADMIN/HR/MANAGER vs. Employee), and handles invalid credentials gracefully.
+ */
 @Component({
   selector: 'app-login',
   imports: [FormsModule, RouterLink],
@@ -10,28 +16,74 @@ import { AuthService } from '../../services/auth';
   styleUrl: './login.css',
 })
 export class Login implements OnInit {
+  /**
+   * The bound email input string.
+   */
   email = '';
+
+  /**
+   * The bound password input string.
+   */
   password = '';
+
+  /**
+   * Holds the error message displayed on failure.
+   */
   errorMessage = '';
+
+  /**
+   * Flag indicating if a login transaction is currently pending.
+   */
   isLoading = false;
 
+  /**
+   * Controls password input visibility toggle.
+   */
+  showPassword = false;
+
+  /**
+   * Controls email local storage credential preservation.
+   */
+  rememberMe = false;
+
+  /**
+   * Constructs the Login component.
+   *
+   * @param authService - The service responsible for sending credential updates and saving local tokens.
+   * @param router - The router used to perform dashboard redirect navigations.
+   * @param cdr - The ChangeDetectorRef to force template updates after asynchronous subscription events.
+   */
   constructor(
     private authService: AuthService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
 
+  /**
+   * Angular initialization hook. If the user is already authenticated, automatically redirects
+   * them to their corresponding dashboard page.
+   */
   ngOnInit(): void {
     if (this.authService.isLoggedIn()) {
       const role = this.authService.getUserRole();
-      if (role === 'HR' || role === 'MANAGER') {
+      if (role === 'SUPERADMIN' || role === 'HR' || role === 'MANAGER') {
         this.router.navigate(['/hr/dashboard']);
       } else {
         this.router.navigate(['/employee/dashboard']);
       }
+    } else {
+      const savedEmail = localStorage.getItem('remembered_email');
+      if (savedEmail) {
+        this.email = savedEmail;
+        this.rememberMe = true;
+      }
     }
   }
 
+  /**
+   * Triggers the login workflow, executing credentials verification against the AuthService.
+   * Saves the JWT token in localStorage on success and redirects the user to the proper page.
+   */
   onLogin() {
     if (this.isLoading) return;
     this.errorMessage = '';
@@ -45,6 +97,14 @@ export class Login implements OnInit {
           this.cdr.markForCheck();
           return;
         }
+        
+        // Remember Me Email Preservation
+        if (this.rememberMe) {
+          localStorage.setItem('remembered_email', this.email.trim());
+        } else {
+          localStorage.removeItem('remembered_email');
+        }
+
         this.authService.saveToken(token);
         const role = this.authService.getUserRole();
 
@@ -56,7 +116,7 @@ export class Login implements OnInit {
           return;
         }
 
-        const target = role === 'HR' || role === 'MANAGER'
+        const target = role === 'SUPERADMIN' || role === 'HR' || role === 'MANAGER'
           ? '/hr/dashboard'
           : '/employee/dashboard';
 

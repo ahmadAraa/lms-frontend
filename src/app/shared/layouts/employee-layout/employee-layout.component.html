@@ -1,0 +1,45 @@
+<div class="ed-layout">
+  <nav class="ed-nav">
+    <a [routerLink]="getLogoRoute()" class="ed-nav-brand">
+      <span class="brand-logo-frame" aria-label="EduPro LMS by Advanced Business Solutions">
+        <img src="assets/ABS-LOGO.png" alt="EduPro LMS by Advanced Business Solutions" class="brand-logo" />
+      </span>
+    </a>
+
+    <div class="ed-nav-spacer"></div>
+
+    <div class="ed-nav-right">
+      <app-notification-bell></app-notification-bell>
+
+      <div class="profile-menu-wrapper" (click)="$event.stopPropagation()">
+        <button class="profile-avatar-btn" (click)="toggleProfile($event)" id="profile-menu-btn">
+          <span class="profile-avatar">{{ getInitial() }}</span>
+          <span class="material-symbols-outlined chevron" [class.open]="profileOpen">expand_more</span>
+        </button>
+
+        <div class="profile-dropdown" [class.visible]="profileOpen">
+          <div class="profile-dropdown-header">
+            <div class="dropdown-avatar">{{ getInitial() }}</div>
+            <div>
+              <div class="dropdown-name">{{ authService.getUserName() }}</div>
+              <div class="dropdown-role">{{ authService.getUserRole() }}</div>
+            </div>
+          </div>
+          <div class="profile-dropdown-divider"></div>
+          <button class="profile-dropdown-item" (click)="goToSettings()">
+            <span class="material-symbols-outlined">manage_accounts</span>
+            User Settings
+          </button>
+          <button class="profile-dropdown-item danger" (click)="logout()">
+            <span class="material-symbols-outlined">logout</span>
+            Log Out
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="ed-layout-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

@@ -1,47 +1,109 @@
-<aside class="sidebar">
-  <div class="sidebar-header">
-    <h2>{{ course?.title || 'Course Content' }}</h2>
-    <p>{{ sections.length }} sections • {{ countTotalLessons() }} lessons</p>
-  </div>
-
-  @for (section of sections; track section.id; let i = $index) {
-    <div class="section">
-      <div class="section-title" (click)="onToggleSection(section.id)">
-        <div>
-          <span class="material-symbols-outlined">{{ isSectionExpanded(section.id) ? 'expand_more' : 'chevron_right' }}</span> 
-          {{ section.title }}
-        </div>
-        <small>
-          @if (isPreviewMode) {
-            {{ section.lessons.length }} lessons
-          } @else {
-            {{ countCompletedLessons(section) }}/{{ section.lessons.length }}
-          }
-        </small>
-      </div>
-
-      @if (isSectionExpanded(section.id)) {
-        <div class="lessons-list">
-          @for (l of section.lessons; track l.id; let j = $index) {
-            <div class="lesson" [class.active-lesson]="l.id === currentLessonId" (click)="onOpenLesson(l.id)">
-              <span class="check" [class.checked]="isLessonCompleted(l.id)" [class.preview]="isPreviewMode" (click)="onToggleCompletion(l.id, $event)">
-                @if (isPreviewMode) {
-                  <span class="material-symbols-outlined" style="font-size: 16px;">play_arrow</span>
-                } @else if (isLessonCompleted(l.id)) {
-                  <span class="material-symbols-outlined" style="font-size: 14px;">check</span>
-                }
-              </span>
-              <span class="lesson-name">{{ j + 1 }}. {{ l.title }}</span>
-            </div>
-          }
-        </div>
+<aside class="cur-aside">
+  <div class="cur-header">
+    <div class="cur-header-row">
+      <h2 class="cur-title">Course Curriculum</h2>
+      @if (!isPreviewMode && countTotalLessons() > 0) {
+        <span class="cur-progress-pill">
+          {{ ((completedLessonIds.length / countTotalLessons()) * 100) | number:'1.0-0' }}% Done
+        </span>
       }
     </div>
-  }
+    <p class="cur-sub">
+      {{ sections.length }} {{ sections.length === 1 ? 'module' : 'modules' }}
+      ·
+      {{ countTotalLessons() }} {{ countTotalLessons() === 1 ? 'lesson' : 'lessons' }}
+    </p>
 
-  <div class="bottom-btn">
-    <button (click)="onBackToTop()">
-      <span class="material-symbols-outlined">arrow_upward</span> Back to Top
+    @if (!isPreviewMode && countTotalLessons() > 0) {
+      <div class="cur-progress-bar">
+        <div class="cur-progress-fill"
+             [style.width.%]="(completedLessonIds.length / countTotalLessons()) * 100"></div>
+      </div>
+    }
+  </div>
+
+  <div class="cur-body">
+    @for (section of sections; track section.id; let i = $index) {
+      <div class="mod" [class.mod--open]="isSectionExpanded(section.id)">
+        <button type="button" class="mod-header" (click)="onToggleSection(section.id)">
+          <span class="material-symbols-outlined mod-chevron">
+            {{ isSectionExpanded(section.id) ? 'expand_more' : 'chevron_right' }}
+          </span>
+          <div class="mod-text">
+            <span class="mod-label">MODULE {{ i + 1 }}</span>
+            <span class="mod-title">{{ section.title }}</span>
+          </div>
+          <div class="mod-count-block">
+            <span class="mod-count">{{ section.lessons.length }}</span>
+            <span class="mod-count-label">
+              {{ section.lessons.length === 1 ? 'Lesson' : 'Lessons' }}
+            </span>
+          </div>
+        </button>
+
+        @if (isSectionExpanded(section.id)) {
+          <ul class="mod-lessons">
+            @for (l of section.lessons; track l.id; let j = $index) {
+              <li class="m-lesson"
+                  [class.m-lesson--active]="l.id === currentLessonId"
+                  [class.m-lesson--complete]="isLessonCompleted(l.id)"
+                  (click)="onOpenLesson(l.id)">
+
+                <span class="m-lesson-status"
+                      [class.is-complete]="isLessonCompleted(l.id)"
+                      [class.is-active]="l.id === currentLessonId && !isLessonCompleted(l.id)"
+                      [class.is-preview]="isPreviewMode"
+                      (click)="onToggleCompletion(l.id, $event)">
+                  @if (isLessonCompleted(l.id)) {
+                    <span class="material-symbols-outlined">check</span>
+                  } @else if (l.id === currentLessonId) {
+                    <span class="material-symbols-outlined">play_arrow</span>
+                  } @else {
+                    <span class="material-symbols-outlined">play_arrow</span>
+                  }
+                </span>
+
+                <div class="m-lesson-text">
+                  <span class="m-lesson-title">{{ l.title }}</span>
+                  <span class="m-lesson-sub">
+                    @if (l.id === currentLessonId) {
+                      <span class="m-lesson-sub-now">
+                        <span class="material-symbols-outlined">menu_book</span>
+                        Currently Reading
+                      </span>
+                    } @else if (isLessonCompleted(l.id)) {
+                      <span class="m-lesson-sub-done">Completed</span>
+                    } @else {
+                      <span class="m-lesson-sub-meta">
+                        @if (l.type === 0) {
+                          <span class="material-symbols-outlined">smart_display</span>
+                          <span>Video</span>
+                        } @else if (l.type === 1) {
+                          <span class="material-symbols-outlined">picture_as_pdf</span>
+                          <span>PDF</span>
+                        } @else if (l.type === 2) {
+                          <span class="material-symbols-outlined">slideshow</span>
+                          <span>Slides</span>
+                        } @else {
+                          <span class="material-symbols-outlined">language</span>
+                          <span>Link</span>
+                        }
+                      </span>
+                    }
+                  </span>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="cur-footer">
+    <button class="cur-back-btn" (click)="onBackToTop()">
+      <span class="material-symbols-outlined">arrow_back</span>
+      Back to Path
     </button>
   </div>
 </aside>

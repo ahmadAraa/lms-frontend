@@ -1,12 +1,12 @@
-<div class="cu-content">
-  <!-- ── Employee list card ── -->
+<div class="cu-content stagger-container">
+  <!-- ── User list card ── -->
   <div class="cu-card">
     <div class="cu-list-header">
       <div class="cu-list-header-left">
-        <h2>All Employees</h2>
+        <h2>All Users</h2>
         @if (!isLoadingUsers()) {
         <span class="cu-count"
-          >{{ users().length }} employee{{ users().length !== 1 ? 's' : '' }}</span
+          >{{ users().length }} user{{ users().length !== 1 ? 's' : '' }}</span
         >
         }
       </div>
@@ -42,14 +42,14 @@
           <tr>
             <td colspan="6" class="cu-empty-row">
               <div class="cu-spinner"></div>
-              Loading employees…
+              Loading users...
             </td>
           </tr>
           } @else if (users().length === 0) {
           <tr>
             <td colspan="6" class="cu-empty-row">
               <span class="material-symbols-outlined">person_search</span>
-              No employees found
+              No users found
             </td>
           </tr>
           } @for (user of users(); track user.id) {
@@ -90,7 +90,7 @@
   <!-- ── Create user form (same structure as register page) ── -->
   <div class="form-panel">
     <div class="form-header">
-      <h2>Create Employee</h2>
+      <h2>Create {{ roleLabel(role) }}</h2>
       <p>Required fields are marked with an asterisk.</p>
     </div>
 
@@ -119,7 +119,7 @@
 
     <div
       class="form-grid"
-      [ngStyle]="{'grid-template-columns': currentUserRole() === 'HR' ? '1fr 1fr' : '1fr'}"
+      [ngStyle]="{'grid-template-columns': canSelectCreateRole() ? '1fr 1fr' : '1fr'}"
     >
       <div class="form-group">
         <label for="email">Email *</label>
@@ -135,14 +135,15 @@
         </div>
       </div>
 
-      @if (currentUserRole() === 'HR') {
+      @if (canSelectCreateRole()) {
       <div class="form-group">
         <label for="role">Role *</label>
         <div class="input-icon-wrap">
           <span class="material-symbols-outlined input-icon-left">admin_panel_settings</span>
           <select id="role" [(ngModel)]="role" name="role">
-            <option value="EMPLOYEE">Employee</option>
-            <option value="MANAGER">Manager</option>
+            @for (roleOption of allowedCreateRoles(); track roleOption) {
+            <option [value]="roleOption">{{ roleLabel(roleOption) }}</option>
+            }
           </select>
           <!-- Add a custom arrow for the select -->
           <span
@@ -169,11 +170,20 @@
           <span class="material-symbols-outlined input-icon-left">lock</span>
           <input
             id="password"
-            type="password"
+            [type]="showPassword ? 'text' : 'password'"
             [(ngModel)]="password"
             name="password"
             placeholder="••••••••"
+            class="input-with-toggle"
           />
+          <button
+            type="button"
+            class="password-toggle-btn"
+            (click)="showPassword = !showPassword"
+            [aria-label]="showPassword ? 'Hide password' : 'Show password'"
+          >
+            <span class="material-symbols-outlined">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
+          </button>
         </div>
       </div>
       <div class="form-group">
@@ -182,17 +192,26 @@
           <span class="material-symbols-outlined input-icon-left">lock_person</span>
           <input
             id="confirmPassword"
-            type="password"
+            [type]="showConfirmPassword ? 'text' : 'password'"
             [(ngModel)]="confirmPassword"
             name="confirmPassword"
             placeholder="••••••••"
+            class="input-with-toggle"
           />
+          <button
+            type="button"
+            class="password-toggle-btn"
+            (click)="showConfirmPassword = !showConfirmPassword"
+            [aria-label]="showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'"
+          >
+            <span class="material-symbols-outlined">{{ showConfirmPassword ? 'visibility_off' : 'visibility' }}</span>
+          </button>
         </div>
       </div>
     </div>
 
     <button class="btn-primary" (click)="onCreateUser()" [disabled]="isSubmitting()">
-      {{ isSubmitting() ? 'Creating Employee...' : 'Create Employee' }}
+      {{ createButtonText() }}
       <span class="material-symbols-outlined">person_add</span>
     </button>
   </div>
@@ -215,16 +234,43 @@
     </div>
 
     <div class="cu-modal-body">
+      @if (requiresReplacement()) {
+      <div class="cu-alert cu-alert-warning" style="margin-bottom: 20px;">
+        <span class="material-symbols-outlined">group_remove</span>
+        <div>
+          <strong>Employees Assigned</strong>
+          <p>This manager has employees assigned to them. You must select a replacement manager before they can be deleted.</p>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 24px;">
+        <label for="replacementManager">Select Replacement Manager *</label>
+        <div class="input-icon-wrap">
+          <span class="material-symbols-outlined input-icon-left">supervisor_account</span>
+          <select id="replacementManager" [ngModel]="replacementManagerId()" (ngModelChange)="replacementManagerId.set($event)">
+            <option value="" disabled selected>Choose a manager...</option>
+            @for (manager of availableManagers(); track manager.id) {
+            <option [value]="manager.id">{{ manager.userName }} ({{ manager.email }})</option>
+            }
+          </select>
+          <span class="material-symbols-outlined cu-select-arrow">expand_more</span>
+        </div>
+        @if (availableManagers().length === 0) {
+        <small class="cu-text-red" style="display: block; margin-top: 8px;">
+          No other managers available. You must create one first.
+        </small>
+        }
+      </div>
+      } @else {
       <p>
         You are about to permanently delete the user account for
         <strong>{{ userToDelete()?.userName }}</strong> ({{ userToDelete()?.email }}). This action
         cannot be undone.
       </p>
+      }
 
       <div class="cu-delete-confirm-box">
-        <label for="deleteConfirmText"
-          >To confirm, please type <strong>delete</strong> below:</label
-        >
+        <label for="deleteConfirmText">To confirm, please type <strong>delete</strong> below:</label>
         <input
           id="deleteConfirmText"
           type="text"
@@ -244,7 +290,7 @@
       <button
         class="cu-btn cu-btn-danger-filled"
         (click)="confirmDeleteUser()"
-        [disabled]="isDeleting() || deleteConfirmationText().trim().toLowerCase() !== 'delete'"
+        [disabled]="isDeleting() || deleteConfirmationText().trim().toLowerCase() !== 'delete' || (requiresReplacement() && !replacementManagerId())"
       >
         @if (isDeleting()) {
         <span class="material-symbols-outlined cu-spin-icon">progress_activity</span>

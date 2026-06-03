@@ -1,0 +1,376 @@
+/* ── Shared Authentication Styles for EduPro LMS ── */
+
+/* ── Page wrapper ─────────────────────────────────── */
+/* ── Page wrapper ─────────────────────────────────── */
+.page-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+  background: radial-gradient(circle at center, #1b2a4a 0%, #0a1128 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Glowing backdrop behind the card ─────────────── */
+.page-wrapper::before {
+  content: '';
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.12) 0%, rgba(37, 99, 235, 0) 70%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Card ─────────────────────────────────────────── */
+.auth-card {
+  width: 100%;
+  max-width: 460px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  background: var(--white);
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Form Panel ───────────────────────────────────── */
+.form-panel {
+  width: 100%;
+  background: var(--white);
+  padding: 40px 40px 44px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Corporate Logo ───────────────────────────────── */
+.auth-logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.auth-logo {
+  height: 48px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* ── Form Header ──────────────────────────────────── */
+.form-header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.form-header h2 {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--navy);
+  margin-bottom: 6px;
+  letter-spacing: -0.4px;
+}
+
+.form-header p {
+  font-size: 14px;
+  color: var(--gray-500);
+  line-height: 1.55;
+}
+
+/* ── Form group ───────────────────────────────────── */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--gray-600);
+  margin-bottom: 7px;
+}
+
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 7px;
+}
+
+.label-row label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--gray-600);
+  margin: 0;
+}
+
+.forgot-link {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blue);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.forgot-link:hover {
+  color: var(--blue-hover);
+  text-decoration: underline;
+}
+
+/* ── Input with icon ──────────────────────────────── */
+.input-icon-wrap {
+  position: relative;
+}
+
+.input-icon-wrap input {
+  width: 100%;
+  padding: 13px 16px 13px 46px;
+  background: var(--gray-50);
+  border: 1.5px solid var(--gray-200);
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--gray-900);
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  font-family: inherit;
+  outline: none;
+}
+
+.input-icon-wrap input:focus {
+  border-color: var(--navy);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(15, 27, 61, 0.08);
+}
+
+.input-icon-wrap input::placeholder {
+  color: var(--gray-400);
+}
+
+.input-icon-left {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 19px;
+  color: var(--gray-400);
+  pointer-events: none;
+  transition: color 0.2s;
+}
+
+.input-icon-wrap:focus-within .input-icon-left {
+  color: var(--navy);
+}
+
+/* Password eye toggle absolute position overlay */
+.password-toggle-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--gray-400);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.password-toggle-btn:hover {
+  color: var(--navy);
+  background: var(--gray-100);
+}
+
+.password-toggle-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+/* Offset input padding right if there's a password toggle */
+.input-with-toggle {
+  padding-right: 46px !important;
+}
+
+/* ── Primary button ───────────────────────────────── */
+.btn-primary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  background: var(--navy);
+  color: var(--white);
+  border: none;
+  border-radius: 11px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 14px rgba(15, 27, 61, 0.3);
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+  margin-top: 8px;
+  font-family: inherit;
+}
+
+.btn-primary:hover {
+  background: var(--navy-light);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(15, 27, 61, 0.38);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-primary:disabled {
+  background: var(--gray-300) !important;
+  color: var(--gray-500) !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.btn-primary .material-symbols-outlined {
+  font-size: 20px;
+  transition: transform 0.2s;
+}
+
+.btn-primary:hover:not(:disabled) .material-symbols-outlined {
+  transform: translateX(4px);
+}
+
+/* ── Divider ──────────────────────────────────────── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 28px 0 20px;
+  color: var(--gray-400);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--gray-200);
+}
+
+/* ── Secondary button ─────────────────────────────── */
+.btn-secondary {
+  display: block;
+  width: 100%;
+  padding: 13px;
+  background: transparent;
+  color: var(--gray-700);
+  border: 1.5px solid var(--gray-200);
+  border-radius: 11px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.btn-secondary:hover {
+  background: var(--gray-50);
+  border-color: var(--navy);
+  color: var(--navy);
+}
+
+/* ── Checkbox container (Remember Me) ─────────────── */
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 20px;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-600);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-container input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--navy);
+  cursor: pointer;
+}
+
+/* ── Error Alert ──────────────────────────────────── */
+.error-alert {
+  background: var(--red-light);
+  color: var(--red);
+  padding: 12px 14px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  border-left: 4px solid var(--red);
+  line-height: 1.5;
+}
+
+/* ── Success Alert ──────────────────────────────────── */
+.success-alert {
+  background-color: var(--green-light);
+  color: var(--green);
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 22px;
+  border-left: 4px solid var(--green);
+  line-height: 1.5;
+}
+
+/* ── Footer note below card ───────────────────────── */
+.page-wrapper::after {
+  content: 'Advanced Business Solutions';
+  display: block;
+  margin-top: 28px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  z-index: 1;
+}
+
+/* ── Responsive ───────────────────────────────────── */
+@media (max-width: 520px) {
+  .form-panel {
+    padding: 32px 24px 36px;
+  }
+
+  .form-header h2 {
+    font-size: 24px;
+  }
+}

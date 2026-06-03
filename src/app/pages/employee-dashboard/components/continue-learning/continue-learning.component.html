@@ -1,0 +1,37 @@
+<div class="continue-card" (click)="resume.emit()">
+  <div class="continue-visual">
+    <div class="play-ring"></div>
+    <div class="course-icon-wrap">
+      <span class="material-symbols-outlined">
+        {{ isContinueCompleted ? 'emoji_events' : 'play_circle' }}
+      </span>
+    </div>
+  </div>
+  <div class="continue-info">
+    <span class="continue-badge">
+      {{ isContinueCompleted ? 'Completed' : 'In Progress' }}
+    </span>
+    <h3>{{ continuePath.title }}</h3>
+    <div class="progress-row">
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="continuePathProgress"></div>
+      </div>
+      <span class="progress-pct">{{ continuePathProgress }}%</span>
+    </div>
+    <p class="continue-hint">
+      @if (isContinueCompleted) {
+        {{ continueState?.message }}
+      } @else if (continueState?.lessonId) {
+        Resume from where you left off
+      } @else {
+        Pick up where you left off
+      }
+    </p>
+  </div>
+  <button class="btn-resume">
+    <span class="material-symbols-outlined">
+      {{ isContinueCompleted ? 'replay' : 'play_arrow' }}
+    </span>
+    {{ isContinueCompleted ? 'Review' : 'Resume' }}
+  </button>
+</div>

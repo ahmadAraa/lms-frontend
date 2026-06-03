@@ -1,0 +1,228 @@
+/* ── Layout ──────────────────────────────────────── */
+.hr-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f4f5f7;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ── Sidebar ─────────────────────────────────────── */
+.hr-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--navy);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hr-sidebar-brand {
+  padding: 20px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.brand-logo-frame {
+  width: 200px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: left center;
+  display: block;
+}
+
+.hr-sidebar-nav {
+  padding: 20px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hr-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  transition: all 0.15s;
+}
+
+.hr-sidebar-link .material-symbols-outlined {
+  font-size: 20px;
+}
+.hr-sidebar-link:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.hr-sidebar-link.active {
+  background: rgba(37, 99, 235, 0.15);
+  color: #fff;
+  border-left: 3px solid var(--blue);
+  padding-left: 11px;
+}
+
+.hr-sidebar-link.active .material-symbols-outlined {
+  color: var(--blue);
+}
+
+/* ── Main ────────────────────────────────────────── */
+.hr-main {
+  margin-left: 220px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Top bar ─────────────────────────────────────── */
+.hr-topbar {
+  height: 64px;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.hr-topbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Make the notification bell icon dark so it's visible on the white topbar */
+.hr-topbar-right app-notification-bell {
+  --nb-icon-color: #6b7280;
+  --nb-btn-hover-bg: rgba(0, 0, 0, 0.06);
+}
+
+.hr-icon-btn,
+.hr-logout-btn {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 9px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.hr-icon-btn:hover,
+.hr-logout-btn:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+.hr-icon-btn .material-symbols-outlined,
+.hr-logout-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+/* ── Content Wrapper ─────────────────────────────── */
+.hr-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* ── Responsive ──────────────────────────────────── */
+@media (max-width: 900px) {
+  .hr-sidebar {
+    width: 64px;
+  }
+  .hr-sidebar-brand {
+    padding: 14px 8px;
+  }
+  .brand-logo-frame {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    overflow: hidden;
+  }
+  .brand-logo {
+    width: 160px;
+    height: 100%;
+    object-fit: contain;
+    object-position: left center;
+    max-width: none;
+  }
+  .hr-sidebar-link span:last-child {
+    display: none;
+  }
+  .hr-sidebar-link {
+    justify-content: center;
+    padding: 12px;
+  }
+  .hr-sidebar-link.active {
+    border-left: none;
+    border-bottom: 3px solid var(--blue);
+  }
+  .hr-main {
+    margin-left: 64px;
+  }
+  .hr-sidebar-footer {
+    display: none;
+  }
+}
+
+/* ── Sidebar Footer ──────────────────────────────── */
+.hr-sidebar-spacer {
+  flex: 1;
+}
+
+.hr-sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  font-family: 'Inter', sans-serif;
+  color: rgba(255, 255, 255, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-copyright {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+.sidebar-sub-copyright {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  margin: 0;
+}

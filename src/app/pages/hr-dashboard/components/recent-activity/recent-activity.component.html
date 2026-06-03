@@ -1,0 +1,23 @@
+<div class="hr-section-card hr-activity-card">
+  <div class="hr-section-header">
+    <h2>Recent Administrative Activity</h2>
+  </div>
+
+  @if (activities.length === 0) {
+    <div class="hr-empty">No recent activity yet. Actions you take will appear here.</div>
+  } @else {
+    <div class="hr-activity-list">
+      @for (act of activities; track act.timestamp) {
+        <div class="hr-activity-item">
+          <div class="hr-activity-icon">
+            <span class="material-symbols-outlined">{{ act.icon }}</span>
+          </div>
+          <div class="hr-activity-body">
+            <p class="hr-activity-msg" [innerHTML]="act.message"></p>
+            <span class="hr-activity-meta">{{ timeAgo(act.timestamp) }} &bull; {{ act.detail }}</span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

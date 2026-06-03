@@ -4,6 +4,10 @@
 
     <!-- Right: Form Panel -->
     <div class="form-panel">
+      <div class="auth-logo-container">
+        <img src="assets/ABS-LOGO.png" alt="Advanced Business Solutions" class="auth-logo" />
+      </div>
+
       <div class="form-header">
         <h2>Welcome Back</h2>
         <p>Please enter your credentials to access the dashboard.</p>
@@ -32,12 +36,28 @@
           <span class="material-symbols-outlined input-icon-left">lock_person</span>
           <input
             id="password"
-            type="password"
+            [type]="showPassword ? 'text' : 'password'"
             [(ngModel)]="password"
             name="password"
             placeholder="••••••••••••"
+            class="input-with-toggle"
           />
+          <button
+            type="button"
+            class="password-toggle-btn"
+            (click)="showPassword = !showPassword"
+            [aria-label]="showPassword ? 'Hide password' : 'Show password'"
+          >
+            <span class="material-symbols-outlined">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
+          </button>
         </div>
+      </div>
+
+      <div class="checkbox-row">
+        <label class="checkbox-container">
+          <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe" />
+          Remember me on this device
+        </label>
       </div>
 
       @if (errorMessage) {

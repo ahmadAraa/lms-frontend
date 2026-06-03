@@ -1,0 +1,31 @@
+<div class="ed-section">
+  <h2 class="ed-section-title">
+    My Courses
+    <span class="ed-section-count">{{ enrolledCourses.length }}</span>
+  </h2>
+
+  <div class="course-strip">
+    @for (item of enrolledCourses; track item.course.id; let i = $index) {
+      <div class="course-mini-card" (click)="open.emit({ course: item.course, learningPathId: item.learningPathId })">
+        <div class="course-mini-thumb" [style.background]="item.course.image ? 'transparent' : getGradient(i)">
+          @if (item.course.image) {
+            <img [src]="getCoursePictureUrl(item.course)" alt="" />
+          } @else {
+            <span class="material-symbols-outlined">menu_book</span>
+          }
+        </div>
+
+        <div class="course-mini-info">
+          <h3>{{ item.course.title }}</h3>
+          <p>{{ item.learningPathTitle }}</p>
+          <div class="course-mini-progress">
+            <div
+              class="course-mini-progress-fill"
+              [style.width.%]="getCourseProgress(item.course.id)"
+            ></div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>
