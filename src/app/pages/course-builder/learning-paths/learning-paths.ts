@@ -77,6 +77,12 @@ export class LearningPathsPage implements OnInit {
    */
   isDragOver = false;
 
+  // Delete modal state
+  deleteModalOpen = false;
+  deletePathId: number | null = null;
+  deletePathTitle = '';
+  deleteConfirmText = '';
+
   /**
    * Constructs the LearningPathsPage component.
    *
@@ -262,7 +268,23 @@ export class LearningPathsPage implements OnInit {
    * @param id - The learning path ID.
    */
   async deletePath(id: number): Promise<void> {
-    if (!confirm('Delete this learning path?')) return;
+    const path = this.paths.find((p) => p.id === id);
+    if (!path) return;
+
+    this.deletePathId = id;
+    this.deletePathTitle = path.title;
+    this.deleteConfirmText = '';
+    this.deleteModalOpen = true;
+  }
+
+  /**
+   * Performs actual deletion after safety text confirmation matches.
+   */
+  async confirmDeletePath(): Promise<void> {
+    if (this.deleteConfirmText.trim().toLowerCase() !== 'delete' || !this.deletePathId) return;
+
+    const id = this.deletePathId;
+    this.deleteModalOpen = false;
     try {
       await this.api.deletePath(id);
       this.toast.success('Learning path deleted');

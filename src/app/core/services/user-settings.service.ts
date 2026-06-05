@@ -32,14 +32,14 @@ export class UserSettingsService {
   constructor(private http: HttpClient) {}
 
   /**
-   * Updates the display name (username) of the currently logged-in user.
+   * Updates the full name of the currently logged-in user.
    * Sends a PUT request to `/api/User/UpdateUserName`.
    *
-   * @param newUserName - The new username string to be set.
+   * @param fullName - The new full name string to be set.
    * @returns An observable emitting the response text from the backend API.
    */
-  updateUserName(newUserName: string): Observable<string> {
-    return this.http.put(`${this.userUrl}/UpdateUserName`, { newUserName }, { responseType: 'text' });
+  updateUserName(fullName: string): Observable<string> {
+    return this.http.put(`${this.userUrl}/UpdateUserName`, { fullName }, { responseType: 'text' });
   }
 
   /**

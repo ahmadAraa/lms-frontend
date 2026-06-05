@@ -131,7 +131,11 @@ export class HrTeamProgress implements OnInit {
       this.isLoading.set(false);
       return;
     }
-    this.enrollmentService.getEmployeeProgressWithManagerId(managerId).subscribe({
+
+    const role = this.authService.getUserRole();
+    const queryId = (role === 'HR' || role === 'SUPERADMIN') ? 'all' : managerId;
+
+    this.enrollmentService.getEmployeeProgressWithManagerId(queryId).subscribe({
       next: (data) => {
         this.progressList.set(data ?? []);
         this.isLoading.set(false);
