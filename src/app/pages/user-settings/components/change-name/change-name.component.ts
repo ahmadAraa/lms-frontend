@@ -20,14 +20,14 @@ import { ToastService } from '../../../../core/services/toast.service';
 })
 export class ChangeNameComponent implements OnInit {
   /**
-   * Bound input value for the proposed new username.
+   * Bound input value for the proposed new full name.
    */
-  newUserName = '';
+  newFullName = '';
 
   /**
-   * Current cached username value loaded from active authentication credentials.
+   * Current cached full name value loaded from active authentication credentials.
    */
-  currentUserName = '';
+  currentFullName = '';
 
   /**
    * Flag indicating if a submission is currently in progress.
@@ -61,29 +61,29 @@ export class ChangeNameComponent implements OnInit {
    * Angular initialization hook. Pre-populates form inputs with the currently active username.
    */
   ngOnInit(): void {
-    this.currentUserName = this.authService.getUserName();
-    this.newUserName = this.currentUserName;
+    this.currentFullName = this.authService.getUserName();
+    this.newFullName = this.currentFullName;
   }
 
   /**
-   * Submits the updated username after verifying strict character pattern format
+   * Submits the updated full name after verifying strict character pattern format
    * and length range checks on client side. Alerts global and inline indicators on outcome.
    */
   onSubmit(): void {
     this.successMsg = '';
     this.errorMsg = '';
 
-    const trimmed = this.newUserName.trim();
+    const trimmed = this.newFullName.trim();
     if (!trimmed) {
-      this.errorMsg = 'Username cannot be empty.';
+      this.errorMsg = 'Name cannot be empty.';
       return;
     }
     if (trimmed.length < 3 || trimmed.length > 20) {
-      this.errorMsg = 'Username must be between 3 and 20 characters.';
+      this.errorMsg = 'Name must be between 3 and 20 characters.';
       return;
     }
-    if (!/^[a-zA-Z0-9._]+$/.test(trimmed)) {
-      this.errorMsg = 'Only letters, numbers, dots and underscores are allowed.';
+    if (!/^[a-zA-Z0-9._ ]+$/.test(trimmed)) {
+      this.errorMsg = 'Only letters, numbers, dots, underscores, and spaces are allowed.';
       return;
     }
 
@@ -91,12 +91,12 @@ export class ChangeNameComponent implements OnInit {
     this.userSettingsService.updateUserName(trimmed).subscribe({
       next: () => {
         this.isLoading = false;
-        this.successMsg = 'Username updated successfully!';
-        this.toast.success('Username updated!');
+        this.successMsg = 'Name updated successfully!';
+        this.toast.success('Name updated!');
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMsg = err?.error || 'Failed to update username. Please try again.';
+        this.errorMsg = err?.error || 'Failed to update name. Please try again.';
         this.toast.error(this.errorMsg);
       },
     });

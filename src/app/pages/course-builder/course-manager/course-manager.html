@@ -495,3 +495,59 @@
     </div>
   </div>
 }
+
+<!-- ── Delete Confirmation Modal ────────────────── -->
+@if (deleteModalOpen) {
+  <div class="modal-overlay" (click)="deleteModalOpen = false">
+    <div class="modal-panel modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 40px; height: 40px; border-radius: 50%; background: #fee2e2; display: flex; align-items: center; justify-content: center; color: #ef4444; flex-shrink: 0;">
+            <span class="material-symbols-outlined">warning</span>
+          </div>
+          <h2>Delete {{ deleteItemType === 'course' ? 'Course' : 'Section' }}</h2>
+        </div>
+        <button class="modal-close" (click)="deleteModalOpen = false">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="modal-content" style="padding-top: 12px;">
+        <p style="margin: 0 0 16px; font-size: 14px; color: #4b5563; line-height: 1.5;">
+          You are about to permanently delete the {{ deleteItemType }} <strong>{{ deleteItemTitle }}</strong>. 
+          This action cannot be undone.
+        </p>
+
+        <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px;">
+          <label for="deleteConfirmInput" style="display: block; font-size: 13px; color: #374151; margin-bottom: 8px; font-weight: 600;">
+            To confirm, please type <strong>delete</strong> below:
+          </label>
+          <input
+            id="deleteConfirmInput"
+            type="text"
+            [(ngModel)]="deleteConfirmText"
+            class="form-input"
+            placeholder="Type 'delete' here"
+            autocomplete="off"
+            style="border-color: #e5e7eb;"
+            (keyup.enter)="deleteConfirmText.trim().toLowerCase() === 'delete' && confirmDelete()"
+          />
+        </div>
+      </div>
+
+      <div class="modal-footer" style="background: #f9fafb; border-top: 1px solid #e5e7eb;">
+        <button class="btn-cancel" (click)="deleteModalOpen = false">Cancel</button>
+        <button 
+          class="btn-save" 
+          (click)="confirmDelete()" 
+          [disabled]="deleteConfirmText.trim().toLowerCase() !== 'delete'"
+          style="background: #dc2626; box-shadow: 0 3px 12px rgba(220, 38, 38, 0.25);"
+        >
+          <span class="material-symbols-outlined">delete</span>
+          Delete {{ deleteItemType === 'course' ? 'Course' : 'Section' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+

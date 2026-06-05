@@ -223,6 +223,13 @@ export class CourseManagerPage implements OnInit {
    */
   lessonOrder = 1;
 
+  // Delete modal state
+  deleteModalOpen = false;
+  deleteItemType: 'course' | 'section' | null = null;
+  deleteItemId: number | null = null;
+  deleteItemTitle = '';
+  deleteConfirmText = '';
+
   /**
    * Constructs the CourseManagerPage component.
    *
@@ -677,8 +684,14 @@ export class CourseManagerPage implements OnInit {
    * @param id - The course ID.
    */
   async removeCourse(id: number): Promise<void> {
-    if (!confirm('Delete this course?')) return;
-    await this.safeDelete(async () => this.coursesApi.deleteCourse(id), 'Course deleted');
+    const course = this.tree?.courses?.find((c) => c.id === id);
+    if (!course) return;
+
+    this.deleteItemType = 'course';
+    this.deleteItemId = id;
+    this.deleteItemTitle = course.title;
+    this.deleteConfirmText = '';
+    this.deleteModalOpen = true;
   }
 
   /**
@@ -687,8 +700,33 @@ export class CourseManagerPage implements OnInit {
    * @param id - The section ID.
    */
   async removeSection(id: number): Promise<void> {
-    if (!confirm('Delete this section?')) return;
-    await this.safeDelete(async () => this.sectionsApi.deleteSection(id), 'Section deleted');
+    const section = this.tree?.courses
+      ?.flatMap((c) => c.sections || [])
+      ?.find((s) => s.id === id);
+    if (!section) return;
+
+    this.deleteItemType = 'section';
+    this.deleteItemId = id;
+    this.deleteItemTitle = section.title;
+    this.deleteConfirmText = '';
+    this.deleteModalOpen = true;
+  }
+
+  /**
+   * Performs actual deletion after safety text confirmation matches.
+   */
+  async confirmDelete(): Promise<void> {
+    if (this.deleteConfirmText.trim().toLowerCase() !== 'delete' || !this.deleteItemId || !this.deleteItemType) return;
+    
+    const id = this.deleteItemId;
+    const type = this.deleteItemType;
+    this.deleteModalOpen = false;
+
+    if (type === 'course') {
+      await this.safeDelete(async () => this.coursesApi.deleteCourse(id), 'Course deleted');
+    } else if (type === 'section') {
+      await this.safeDelete(async () => this.sectionsApi.deleteSection(id), 'Section deleted');
+    }
   }
 
   /**
