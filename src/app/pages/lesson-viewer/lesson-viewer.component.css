@@ -22,7 +22,7 @@
 
 .layout {
   display: grid;
-  grid-template-columns: 1fr 360px;
+  grid-template-columns: 1489px 1fr;
   min-height: calc(100vh - 64px);
 }
 
