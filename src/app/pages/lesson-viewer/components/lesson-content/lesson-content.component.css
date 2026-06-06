@@ -1,8 +1,17 @@
 /* ── Container ─────────────────────────────────────── */
 .lv-stage {
-  max-width: 920px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Content Body (everything below the video) ────── */
+.lv-content-body {
+  max-width: 856px;
+  width: calc(100% - 64px);
   margin: 0 auto;
-  padding: 28px 32px 60px;
+  padding-top: 24px;
+  padding-bottom: 60px;
   display: flex;
   flex-direction: column;
   gap: 22px;
@@ -177,24 +186,23 @@
   color: #94a3b8;
 }
 
-/* ── Media Stage ───────────────────────────────────── */
+/* ── Media Stage (full-bleed, flush at top) ────────── */
 .lv-media-stage {
   position: relative;
-  border-radius: 18px;
-  overflow: hidden;
-  background: linear-gradient(180deg, #0b1226 0%, #0f1b3d 100%);
-  min-height: 460px;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 661px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 20px 50px -20px rgba(15, 27, 61, 0.4),
-              0 4px 14px rgba(15, 23, 42, 0.08);
+  background: #1c1d1f;
+  overflow: hidden;
 }
 
-.lv-video {
+.lv-video,
+.lv-media-stage iframe {
   width: 100%;
   height: 100%;
-  min-height: 460px;
   object-fit: contain;
   display: block;
   border: none;
@@ -236,7 +244,6 @@
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 460px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -571,8 +578,10 @@
 
 /* ── Responsive ───────────────────────────────────── */
 @media (max-width: 900px) {
-  .lv-stage {
-    padding: 20px 18px 40px;
+  .lv-content-body {
+    width: calc(100% - 36px);
+    padding-top: 16px;
+    padding-bottom: 40px;
   }
 
   .lv-title {
@@ -590,10 +599,8 @@
     margin-top: 0;
   }
 
-  .lv-media-stage,
-  .lv-video,
   .lv-external {
-    min-height: 340px;
+    min-height: 240px;
   }
 
   .lv-external-tile {

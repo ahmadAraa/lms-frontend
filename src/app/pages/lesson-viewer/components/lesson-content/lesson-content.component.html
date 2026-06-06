@@ -1,75 +1,6 @@
 <div class="lv-stage">
 
-  <!-- Top breadcrumb row -->
-  @if (isPreviewMode) {
-    <!-- Admin/preview breadcrumb: Home | Learning Paths | Courses | {course} -->
-    <nav class="lv-breadcrumb lv-breadcrumb--admin" aria-label="Breadcrumb">
-      <button type="button" class="lv-crumb lv-crumb--pill" (click)="navigate.emit('home')">Home</button>
-      <span class="lv-pipe" aria-hidden="true"></span>
-      <button type="button" class="lv-crumb lv-crumb--pill" (click)="navigate.emit('paths')">Learning Paths</button>
-      <span class="lv-pipe" aria-hidden="true"></span>
-      <button type="button" class="lv-crumb lv-crumb--pill" (click)="navigate.emit('courses')">Courses</button>
-      @if (course?.title) {
-        <span class="lv-pipe" aria-hidden="true"></span>
-        <button type="button" class="lv-crumb lv-crumb--pill lv-crumb--pill-current" (click)="navigate.emit('course')">{{ course?.title }}</button>
-      }
-    </nav>
-  } @else {
-    <!-- Employee breadcrumb: Home | Learning Paths | Courses | {course} | {lesson} -->
-    <nav class="lv-breadcrumb lv-breadcrumb--admin" aria-label="Breadcrumb">
-      <button type="button" class="lv-crumb lv-crumb--pill" (click)="navigate.emit('home')">Home</button>
-      <span class="lv-pipe" aria-hidden="true"></span>
-      <button type="button" class="lv-crumb lv-crumb--pill" (click)="navigate.emit('paths')">Learning Paths</button>
-      <span class="lv-pipe" aria-hidden="true"></span>
-      <button type="button" class="lv-crumb lv-crumb--pill" (click)="navigate.emit('courses')">Courses</button>
-      @if (course?.title) {
-        <span class="lv-pipe" aria-hidden="true"></span>
-        <button type="button" class="lv-crumb lv-crumb--pill" (click)="navigate.emit('course')">{{ course?.title }}</button>
-      }
-      @if (lesson?.title) {
-        <span class="lv-pipe" aria-hidden="true"></span>
-        <span class="lv-crumb lv-crumb--pill lv-crumb--pill-current">{{ lesson?.title }}</span>
-      }
-    </nav>
-  }
-
-  <!-- Lesson header (title + meta + back link) -->
-  @if (lesson) {
-    <header class="lv-header">
-      <div class="lv-header-text">
-        <h1 class="lv-title">{{ lesson.title }}</h1>
-        <div class="lv-meta">
-          @if (lesson.type === 0) {
-            <span class="lv-meta-item">
-              <span class="material-symbols-outlined">smart_display</span>
-              Video Lesson
-            </span>
-          } @else if (lesson.type === 2) {
-            <span class="lv-meta-item">
-              <span class="material-symbols-outlined">slideshow</span>
-              Presentation
-            </span>
-          } @else if (lesson.type === 3) {
-            <span class="lv-meta-item">
-              <span class="material-symbols-outlined">language</span>
-              Interactive Material
-            </span>
-          }
-        </div>
-      </div>
-
-      <button type="button" class="lv-back-link" (click)="back.emit()">
-        <span class="material-symbols-outlined">arrow_back</span>
-        @if (isPreviewMode) {
-          <span>Back to Course Builder</span>
-        } @else {
-          <span>Back to Courses</span>
-        }
-      </button>
-    </header>
-  }
-
-  <!-- Media stage -->
+  <!-- Media stage (flush at the very top, Udemy-style) -->
   <div class="lv-media-stage">
     @if (isLoading) {
       <div class="lv-media-state lv-media-state--loading">
@@ -126,91 +57,165 @@
     }
   </div>
 
-  <!-- Course Complete celebration banner (shown on last lesson when everything's done) -->
-  @if (lesson && isLastLessonOfCourse && isCourseComplete && !isPreviewMode) {
-    <div class="lv-complete-banner" [class.lv-complete-banner--final]="!hasNextCourse">
+  <!-- Content body below video (centered, padded) -->
+  <div class="lv-content-body">
 
-      <div class="lv-complete-text">
-        <h3 class="lv-complete-title">
-          @if (hasNextCourse) {
-            <span>Course Complete!</span>
-          } @else {
-            <span>Path Complete!</span>
-          }
-        </h3>
-        <p class="lv-complete-sub">
-          @if (hasNextCourse) {
-            <span>Great job finishing {{ courseTitle || 'this course' }}. Ready to continue?</span>
-          } @else {
-            <span>You've completed every course in this learning path.</span>
-          }
-        </p>
-      </div>
-    </div>
-  }
+    <!-- Breadcrumb row -->
+    @if (isPreviewMode) {
+      <!-- Admin/preview breadcrumb: Home | Learning Paths | Courses | {course} -->
+      <nav class="lv-breadcrumb lv-breadcrumb--admin" aria-label="Breadcrumb">
+        <button type="button" class="lv-crumb lv-crumb--pill" (click)="navigate.emit('home')">Home</button>
+        <span class="lv-pipe" aria-hidden="true"></span>
+        <button type="button" class="lv-crumb lv-crumb--pill" (click)="navigate.emit('paths')">Learning Paths</button>
+        <span class="lv-pipe" aria-hidden="true"></span>
+        <button type="button" class="lv-crumb lv-crumb--pill" (click)="navigate.emit('courses')">Courses</button>
+        @if (course?.title) {
+          <span class="lv-pipe" aria-hidden="true"></span>
+          <button type="button" class="lv-crumb lv-crumb--pill lv-crumb--pill-current" (click)="navigate.emit('course')">{{ course?.title }}</button>
+        }
+      </nav>
+    } @else {
+      <!-- Employee breadcrumb: Home | Learning Paths | Courses | {course} | {lesson} -->
+      <nav class="lv-breadcrumb lv-breadcrumb--admin" aria-label="Breadcrumb">
+        <button type="button" class="lv-crumb lv-crumb--pill" (click)="navigate.emit('home')">Home</button>
+        <span class="lv-pipe" aria-hidden="true"></span>
+        <button type="button" class="lv-crumb lv-crumb--pill" (click)="navigate.emit('paths')">Learning Paths</button>
+        <span class="lv-pipe" aria-hidden="true"></span>
+        <button type="button" class="lv-crumb lv-crumb--pill" (click)="navigate.emit('courses')">Courses</button>
+        @if (course?.title) {
+          <span class="lv-pipe" aria-hidden="true"></span>
+          <button type="button" class="lv-crumb lv-crumb--pill" (click)="navigate.emit('course')">{{ course?.title }}</button>
+        }
+        @if (lesson?.title) {
+          <span class="lv-pipe" aria-hidden="true"></span>
+          <span class="lv-crumb lv-crumb--pill lv-crumb--pill-current">{{ lesson?.title }}</span>
+        }
+      </nav>
+    }
 
-  <!-- Action bar: Mark Complete (left) | Lesson N of TOTAL + Next Lesson / Next Course (right) -->
-  @if (lesson) {
-    <div class="lv-actions">
-      <div class="lv-actions-left">
-        @if (!isPreviewMode) {
-          <button type="button"
-                  class="lv-btn-complete"
-                  [class.is-complete]="isComplete"
-                  [disabled]="isComplete || isCompleting"
-                  (click)="markComplete.emit($event)">
-            <span class="material-symbols-outlined">
-              @if (isComplete) {
-                <span>task_alt</span>
-              } @else {
-                <span>check_circle</span>
-              }
-            </span>
-            @if (isComplete) {
-              <span>Completed</span>
-            } @else if (isCompleting) {
-              <span>Saving…</span>
-            } @else {
-              <span>Mark as Complete</span>
+    <!-- Lesson header (title + meta + back link) -->
+    @if (lesson) {
+      <header class="lv-header">
+        <div class="lv-header-text">
+          <h1 class="lv-title">{{ lesson.title }}</h1>
+          <div class="lv-meta">
+            @if (lesson.type === 0) {
+              <span class="lv-meta-item">
+                <span class="material-symbols-outlined">smart_display</span>
+                Video Lesson
+              </span>
+            } @else if (lesson.type === 2) {
+              <span class="lv-meta-item">
+                <span class="material-symbols-outlined">slideshow</span>
+                Presentation
+              </span>
+            } @else if (lesson.type === 3) {
+              <span class="lv-meta-item">
+                <span class="material-symbols-outlined">language</span>
+                Interactive Material
+              </span>
             }
-          </button>
-        }
-      </div>
+          </div>
+        </div>
 
-      <div class="lv-actions-right">
-        @if (nextLessonId !== null) {
-          @if (totalLessons > 0 && currentLessonNumber > 0) {
-            <span class="lv-lesson-count">
-              Lesson {{ currentLessonNumber }} of {{ totalLessons }}
-            </span>
+        <button type="button" class="lv-back-link" (click)="back.emit()">
+          <span class="material-symbols-outlined">arrow_back</span>
+          @if (isPreviewMode) {
+            <span>Back to Course Builder</span>
+          } @else {
+            <span>Back to Courses</span>
           }
-          <button type="button" class="lv-btn-next" (click)="nextLesson.emit()">
-            Next Lesson
-            <span class="material-symbols-outlined">arrow_forward</span>
-          </button>
-        } @else if (hasNextCourse) {
-          @if (totalLessons > 0 && currentLessonNumber > 0) {
-            <span class="lv-lesson-count">
-              Lesson {{ currentLessonNumber }} of {{ totalLessons }} · Course finished
-            </span>
-          }
-          <button type="button" class="lv-btn-next lv-btn-next-course" (click)="nextCourse.emit()">
-            Next Course
-            <span class="material-symbols-outlined">arrow_forward</span>
-          </button>
-        } @else {
-          @if (totalLessons > 0 && currentLessonNumber > 0) {
-            <span class="lv-lesson-count">
-              Lesson {{ currentLessonNumber }} of {{ totalLessons }}
-            </span>
-          }
-          <button type="button" class="lv-btn-next lv-btn-back-path" (click)="back.emit()">
-            Back to Path
-            <span class="material-symbols-outlined">arrow_forward</span>
-          </button>
-        }
+        </button>
+      </header>
+    }
+
+    <!-- Course Complete celebration banner (shown on last lesson when everything's done) -->
+    @if (lesson && isLastLessonOfCourse && isCourseComplete && !isPreviewMode) {
+      <div class="lv-complete-banner" [class.lv-complete-banner--final]="!hasNextCourse">
+
+        <div class="lv-complete-text">
+          <h3 class="lv-complete-title">
+            @if (hasNextCourse) {
+              <span>Course Complete!</span>
+            } @else {
+              <span>Path Complete!</span>
+            }
+          </h3>
+          <p class="lv-complete-sub">
+            @if (hasNextCourse) {
+              <span>Great job finishing {{ courseTitle || 'this course' }}. Ready to continue?</span>
+            } @else {
+              <span>You've completed every course in this learning path.</span>
+            }
+          </p>
+        </div>
       </div>
-    </div>
-  }
+    }
+
+    <!-- Action bar: Mark Complete (left) | Lesson N of TOTAL + Next Lesson / Next Course (right) -->
+    @if (lesson) {
+      <div class="lv-actions">
+        <div class="lv-actions-left">
+          @if (!isPreviewMode) {
+            <button type="button"
+                    class="lv-btn-complete"
+                    [class.is-complete]="isComplete"
+                    [disabled]="isComplete || isCompleting"
+                    (click)="markComplete.emit($event)">
+              <span class="material-symbols-outlined">
+                @if (isComplete) {
+                  <span>task_alt</span>
+                } @else {
+                  <span>check_circle</span>
+                }
+              </span>
+              @if (isComplete) {
+                <span>Completed</span>
+              } @else if (isCompleting) {
+                <span>Saving…</span>
+              } @else {
+                <span>Mark as Complete</span>
+              }
+            </button>
+          }
+        </div>
+
+        <div class="lv-actions-right">
+          @if (nextLessonId !== null) {
+            @if (totalLessons > 0 && currentLessonNumber > 0) {
+              <span class="lv-lesson-count">
+                Lesson {{ currentLessonNumber }} of {{ totalLessons }}
+              </span>
+            }
+            <button type="button" class="lv-btn-next" (click)="nextLesson.emit()">
+              Next Lesson
+              <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
+          } @else if (hasNextCourse) {
+            @if (totalLessons > 0 && currentLessonNumber > 0) {
+              <span class="lv-lesson-count">
+                Lesson {{ currentLessonNumber }} of {{ totalLessons }} · Course finished
+              </span>
+            }
+            <button type="button" class="lv-btn-next lv-btn-next-course" (click)="nextCourse.emit()">
+              Next Course
+              <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
+          } @else {
+            @if (totalLessons > 0 && currentLessonNumber > 0) {
+              <span class="lv-lesson-count">
+                Lesson {{ currentLessonNumber }} of {{ totalLessons }}
+              </span>
+            }
+            <button type="button" class="lv-btn-next lv-btn-back-path" (click)="back.emit()">
+              Back to Path
+              <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+  </div>
 
 </div>
