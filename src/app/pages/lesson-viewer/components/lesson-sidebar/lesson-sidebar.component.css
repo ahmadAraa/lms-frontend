@@ -1,3 +1,7 @@
+:host {
+  display: block;
+}
+
 /* ── Container ─────────────────────────────────────── */
 .cur-aside {
   background: #ffffff;

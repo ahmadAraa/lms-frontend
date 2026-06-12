@@ -164,4 +164,15 @@ export class LessonContentComponent {
     // Prepend BASE_URL for uploaded files
     return `${BASE_URL}/${lesson.videoUrl.replace(/^\//, '')}`;
   }
+
+  /**
+   * Gets the fully resolved course cover image URL.
+   *
+   * @returns The absolute URL to the course cover image, or an empty string.
+   */
+  getCoursePictureUrl(): string {
+    if (!this.course || !this.course.pictureUrl) return '';
+    if (this.course.pictureUrl.startsWith('http')) return this.course.pictureUrl;
+    return `${BASE_URL}/${this.course.pictureUrl.replace(/^\//, '')}`;
+  }
 }

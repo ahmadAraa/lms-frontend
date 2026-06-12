@@ -1,3 +1,7 @@
+:host {
+  display: block;
+}
+
 /* ── Container ─────────────────────────────────────── */
 .lv-stage {
   width: 100%;
@@ -7,14 +11,14 @@
 
 /* ── Content Body (everything below the video) ────── */
 .lv-content-body {
-  max-width: 856px;
-  width: calc(100% - 64px);
-  margin: 0 auto;
-  padding-top: 24px;
-  padding-bottom: 60px;
+  width: 100%;
+  max-width: 1300px;
+  margin: 0;
+  padding: 24px 48px 60px;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 24px;
 }
 
 /* ── Breadcrumb ────────────────────────────────────── */
@@ -395,29 +399,30 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 11px 22px;
+  padding: 12px 24px;
   background: #0f172a;
   color: #ffffff;
   font-family: inherit;
   font-weight: 700;
   font-size: 13.5px;
   border: 1px solid #0f172a;
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.18s;
-  box-shadow: 0 4px 14px -4px rgba(15, 23, 42, 0.35);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(15, 27, 61, 0.12);
 }
 
 .lv-btn-complete:hover:not(:disabled) {
   background: #1e293b;
   transform: translateY(-1px);
-  box-shadow: 0 8px 22px -6px rgba(15, 23, 42, 0.5);
+  box-shadow: 0 6px 18px rgba(15, 27, 61, 0.22);
 }
 
 .lv-btn-complete.is-complete {
-  background: #16a34a;
-  border-color: #16a34a;
-  box-shadow: 0 4px 14px -4px rgba(22, 163, 74, 0.5);
+  background: #10b981;
+  border-color: #10b981;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
 
 .lv-btn-complete:disabled {
@@ -430,7 +435,7 @@
 }
 
 .lv-lesson-count {
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
   color: #64748b;
   white-space: nowrap;
@@ -440,17 +445,17 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 11px 22px;
-  background: #dbeafe;
-  color: #1d4ed8;
-  border: 1px solid #bfdbfe;
-  border-radius: 10px;
+  padding: 12px 24px;
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
   font-family: inherit;
   font-weight: 700;
   font-size: 13.5px;
   cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
 }
 
 .lv-btn-next:hover {
@@ -458,130 +463,165 @@
   color: #ffffff;
   border-color: #2563eb;
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px -4px rgba(37, 99, 235, 0.5);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
 }
 
 .lv-btn-next .material-symbols-outlined {
   font-size: 18px !important;
-  transition: transform 0.2s;
+  transition: transform 0.2s ease;
 }
 
 .lv-btn-next:hover .material-symbols-outlined {
-  transform: translateX(2px);
+  transform: translateX(3px);
 }
 
 /* Next Course variant — green/emerald to signal forward progression in the path */
 .lv-btn-next-course {
-  background: #d1fae5;
-  color: #065f46;
-  border-color: #a7f3d0;
-  box-shadow: 0 4px 14px -4px rgba(16, 185, 129, 0.35);
+  background: #ecfdf5;
+  color: #059669;
+  border-color: #d1fae5;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
 }
 
 .lv-btn-next-course:hover {
   background: #10b981;
   color: #ffffff;
   border-color: #10b981;
-  box-shadow: 0 10px 24px -6px rgba(16, 185, 129, 0.55);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.25);
 }
 
 /* Back to Path variant — neutral slate for end-of-path */
 .lv-btn-back-path {
-  background: #f1f5f9;
-  color: #334155;
+  background: #f8fafc;
+  color: #475569;
   border-color: #e2e8f0;
   box-shadow: none;
 }
 
 .lv-btn-back-path:hover {
-  background: #334155;
+  background: #475569;
   color: #ffffff;
-  border-color: #334155;
-  box-shadow: 0 8px 20px -6px rgba(51, 65, 85, 0.45);
+  border-color: #475569;
+  box-shadow: 0 6px 16px rgba(71, 85, 105, 0.25);
 }
 
-/* ── About this Lesson ─────────────────────────────── */
-.lv-about {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 24px 26px;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+/* ── Integrated Description Section ────────────────── */
+.lv-info-container {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
 }
 
-.lv-about-title {
+.lv-info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lv-info-heading {
   font-size: 17px;
   font-weight: 800;
   color: #0f172a;
-  margin: 0 0 12px;
+  margin: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
-.lv-about-title::before {
-  content: "";
-  width: 4px;
-  height: 18px;
-  background: linear-gradient(180deg, #2563eb, #0f1b3d);
-  border-radius: 2px;
-  display: inline-block;
+.lv-info-heading .material-symbols-outlined {
+  font-size: 20px !important;
+  color: #2563eb;
 }
 
-.lv-about-desc {
+.lv-info-text {
   font-size: 15px;
-  line-height: 1.65;
+  line-height: 1.7;
   color: #334155;
-  margin: 0 0 12px;
+  margin: 0;
 }
 
-.lv-about-content {
+.lv-info-content {
   font-size: 14.5px;
-  line-height: 1.65;
+  line-height: 1.7;
   color: #334155;
 }
 
-.lv-about-content :first-child { margin-top: 0; }
-.lv-about-content :last-child { margin-bottom: 0; }
-.lv-about-content h1,
-.lv-about-content h2,
-.lv-about-content h3 {
+.lv-info-content :first-child { margin-top: 0; }
+.lv-info-content :last-child { margin-bottom: 0; }
+.lv-info-content h1,
+.lv-info-content h2,
+.lv-info-content h3 {
   color: #0f172a;
-  margin: 18px 0 8px;
+  margin: 20px 0 10px;
   font-weight: 700;
 }
-
-.lv-about-content p { margin: 0 0 12px; }
-.lv-about-content ul,
-.lv-about-content ol { padding-left: 22px; margin: 0 0 12px; }
-.lv-about-content code {
-  background: #f3f4f6;
-  padding: 2px 6px;
+.lv-info-content p { margin: 0 0 12px; }
+.lv-info-content ul,
+.lv-info-content ol { padding-left: 20px; margin: 0 0 12px; }
+.lv-info-content code {
+  background: #f1f5f9;
+  padding: 3px 6px;
   border-radius: 4px;
   font-size: 0.9em;
 }
-.lv-about-content pre {
+.lv-info-content pre {
   background: #0f172a;
   color: #e2e8f0;
-  padding: 14px 16px;
-  border-radius: 10px;
+  padding: 16px;
+  border-radius: 8px;
   overflow-x: auto;
   margin: 0 0 12px;
 }
 
-.lv-about-empty {
-  font-size: 14px;
-  color: #94a3b8;
+.lv-info-empty {
+  font-size: 14.5px;
+  color: #64748b;
   font-style: italic;
+  margin: 0;
+}
+
+.lv-info-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 8px 0;
+}
+
+/* Course Overview Specifics */
+.lv-course-overview-row {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.lv-course-overview-img {
+  width: 100px;
+  height: 100px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  flex-shrink: 0;
+}
+
+.lv-course-overview-text-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lv-course-overview-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
   margin: 0;
 }
 
 /* ── Responsive ───────────────────────────────────── */
 @media (max-width: 900px) {
   .lv-content-body {
-    width: calc(100% - 36px);
-    padding-top: 16px;
-    padding-bottom: 40px;
+    width: 100%;
+    padding: 16px 20px 40px;
   }
 
   .lv-title {

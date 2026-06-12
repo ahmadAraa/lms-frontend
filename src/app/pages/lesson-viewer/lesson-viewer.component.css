@@ -1,4 +1,5 @@
 :host {
+  display: block;
   --navy: #0f1b3d;
   --navy-light: #1e3a8a;
   --blue: #2563eb;
@@ -16,14 +17,15 @@
 .viewer-wrapper {
   background: linear-gradient(180deg, #f5f7fb 0%, #eef1f8 100%);
   color: #0f172a;
-  min-height: 100vh;
+  height: calc(100vh - 64px);
+  overflow: hidden;
   font-family: 'Inter', sans-serif;
 }
 
 .layout {
   display: grid;
   grid-template-columns: 1489px 1fr;
-  min-height: calc(100vh - 64px);
+  height: calc(100vh - 64px);
 }
 
 .main {
@@ -33,8 +35,13 @@
 }
 
 @media (max-width: 900px) {
+  .viewer-wrapper {
+    height: auto;
+    overflow: visible;
+  }
   .layout {
     grid-template-columns: 1fr;
+    height: auto;
   }
   .main { height: auto; overflow: visible; }
 }
