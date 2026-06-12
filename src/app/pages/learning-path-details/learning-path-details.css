@@ -24,28 +24,39 @@
 
 /* ── Top Banner ─────────────────────────────────── */
 .lp-banner {
-  background: var(--navy);
+  background: linear-gradient(135deg, #0f1b3d 0%, #080f22 100%);
   color: var(--white);
-  padding: 40px 0;
-  box-shadow: inset 0 -10px 30px rgba(0,0,0,0.1);
+  padding: 48px 0 40px;
   position: relative;
   overflow: hidden;
+}
+
+.lp-banner::before {
+  content: '';
+  position: absolute;
+  top: -120px;
+  right: -120px;
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
 }
 
 .lp-banner::after {
   content: '';
   position: absolute;
-  top: -100px;
-  right: -100px;
-  width: 400px;
-  height: 400px;
-  background: rgba(255,255,255,0.03);
+  bottom: -80px;
+  left: -80px;
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 70%);
   border-radius: 50%;
   pointer-events: none;
 }
 
 .lp-banner-content {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 40px;
   position: relative;
@@ -56,28 +67,28 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: rgba(255,255,255,0.6);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.7);
   margin-bottom: 24px;
 }
 
 .breadcrumb-link {
-  color: var(--white);
+  color: rgba(255,255,255,0.7);
   text-decoration: none;
   cursor: pointer;
   transition: color 0.2s;
 }
 
-.breadcrumb-link:hover { color: var(--blue-light); }
+.breadcrumb-link:hover { color: #60a5fa; }
 .breadcrumb-sep { color: rgba(255,255,255,0.4); }
-.breadcrumb-current { color: rgba(255,255,255,0.9); }
+.breadcrumb-current { color: rgba(255,255,255,0.95); font-weight: 600; }
 
 .lp-header-row {
   display: flex;
   align-items: flex-start;
   gap: 18px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .lp-header-info {
@@ -85,32 +96,33 @@
 }
 
 .lp-banner h1 {
-  font-size: 32px;
+  font-size: 34px;
   font-weight: 800;
   margin: 0;
   letter-spacing: -0.5px;
+  line-height: 1.25;
 }
 
 .lp-banner .back-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--white);
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .lp-banner .back-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.35);
-  transform: translateX(-3px);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateX(-2px);
 }
 
 .lp-banner .back-btn:focus-visible {
@@ -119,21 +131,21 @@
 }
 
 .lp-banner .back-btn .material-symbols-outlined {
-  font-size: 20px;
+  font-size: 19px;
 }
 
 .banner-desc {
   font-size: 15px;
-  color: rgba(255,255,255,0.8);
+  color: rgba(255,255,255,0.85);
   line-height: 1.6;
-  max-width: 700px;
+  max-width: 750px;
   margin: 0 0 24px;
 }
 
 .banner-meta {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
   flex-wrap: wrap;
 }
 
@@ -141,16 +153,16 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
   color: rgba(255,255,255,0.9);
 }
 
-.meta-item .material-symbols-outlined { font-size: 18px; color: rgba(255,255,255,0.7); }
+.meta-item .material-symbols-outlined { font-size: 18px; color: rgba(255,255,255,0.75); }
 
 /* ── Container ──────────────────────────────────── */
 .page-container {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 40px 40px 0;
 }

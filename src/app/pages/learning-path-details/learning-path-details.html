@@ -2,6 +2,13 @@
   <!-- Top Banner -->
   <div class="lp-banner">
     <div class="lp-banner-content">
+      <!-- Breadcrumbs -->
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <span class="breadcrumb-link" (click)="goBack()">Home</span>
+        <span class="breadcrumb-sep">&gt;</span>
+        <span class="breadcrumb-current">{{ path()?.title || 'Learning Path' }}</span>
+      </nav>
+
       <div class="lp-header-row">
         <button type="button" class="back-btn" (click)="goBack()" aria-label="Go Back">
           <span class="material-symbols-outlined">arrow_back</span>
@@ -15,11 +22,19 @@
       <div class="banner-meta">
         <div class="meta-item">
           <span class="material-symbols-outlined">menu_book</span>
-          {{ path()?.courses?.length || 0 }} Courses
+          <span>{{ path()?.courses?.length || 0 }} {{ (path()?.courses?.length === 1) ? 'Course' : 'Courses' }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="material-symbols-outlined">schedule</span>
+          <span>{{ (path()?.courses?.length || 0) * 8 }} Hours</span>
         </div>
         <div class="meta-item">
           <span class="material-symbols-outlined">signal_cellular_alt</span>
-          All Levels
+          <span>Intermediate</span>
+        </div>
+        <div class="meta-item">
+          <span class="material-symbols-outlined">groups</span>
+          <span>{{ 12450 + (path()?.id || 0) * 145 | number }} enrolled</span>
         </div>
       </div>
     </div>

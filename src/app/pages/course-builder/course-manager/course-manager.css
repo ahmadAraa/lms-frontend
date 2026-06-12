@@ -1,6 +1,6 @@
 /* ── Page ──────────────────────────────────────────── */
 .cm-page {
-  max-width: 960px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 36px 28px 60px;
 }
@@ -206,8 +206,8 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #d1fae5;
-  color: #065f46;
+  background: var(--blue-light, #dbeafe);
+  color: var(--blue, #2563eb);
   font-size: 14px;
   font-weight: 800;
   display: flex;

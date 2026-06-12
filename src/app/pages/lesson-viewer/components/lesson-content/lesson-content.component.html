@@ -214,51 +214,6 @@
           }
         </div>
       </div>
-
-      <!-- Integrated Description Section (Udemy-style, no card wrappers) -->
-      <div class="lv-info-container">
-        
-        <!-- Lesson Details Section -->
-        <div class="lv-info-section">
-          <h2 class="lv-info-heading">
-            <span class="material-symbols-outlined">menu_book</span>
-            Lesson Details
-          </h2>
-          @if (lesson.description) {
-            <p class="lv-info-text">{{ lesson.description }}</p>
-          } @else {
-            <p class="lv-info-empty">No description available for this lesson.</p>
-          }
-          
-          @if (lesson.content) {
-            <div class="lv-info-content" [innerHTML]="lesson.content"></div>
-          }
-        </div>
-
-        <div class="lv-info-divider"></div>
-
-        <!-- Course Overview Section -->
-        <div class="lv-info-section">
-          <h2 class="lv-info-heading">
-            <span class="material-symbols-outlined">school</span>
-            Course Overview
-          </h2>
-          <div class="lv-course-overview-row">
-            @if (course?.pictureUrl) {
-              <img [src]="getCoursePictureUrl()" alt="Course Cover" class="lv-course-overview-img" />
-            }
-            <div class="lv-course-overview-text-col">
-              <h3 class="lv-course-overview-title">{{ course?.title }}</h3>
-              @if (course?.description) {
-                <p class="lv-info-text">{{ course?.description }}</p>
-              } @else {
-                <p class="lv-info-empty">No overview description available for this course.</p>
-              }
-            </div>
-          </div>
-        </div>
-
-      </div>
     }
 
   </div>
