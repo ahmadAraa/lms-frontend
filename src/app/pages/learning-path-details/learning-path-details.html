@@ -24,18 +24,6 @@
           <span class="material-symbols-outlined">menu_book</span>
           <span>{{ path()?.courses?.length || 0 }} {{ (path()?.courses?.length === 1) ? 'Course' : 'Courses' }}</span>
         </div>
-        <div class="meta-item">
-          <span class="material-symbols-outlined">schedule</span>
-          <span>{{ (path()?.courses?.length || 0) * 8 }} Hours</span>
-        </div>
-        <div class="meta-item">
-          <span class="material-symbols-outlined">signal_cellular_alt</span>
-          <span>Intermediate</span>
-        </div>
-        <div class="meta-item">
-          <span class="material-symbols-outlined">groups</span>
-          <span>{{ 12450 + (path()?.id || 0) * 145 | number }} enrolled</span>
-        </div>
       </div>
     </div>
   </div>

@@ -1,6 +1,6 @@
 /* ── Page ──────────────────────────────────────────── */
 .cm-page {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 36px 28px 60px;
 }
@@ -1268,3 +1268,4 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+

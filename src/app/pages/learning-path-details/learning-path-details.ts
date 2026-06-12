@@ -5,6 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { LearningPathService, LearningPathResponseDto, CourseResponseDTO } from '../../core/services/learning-path.service';
 import { ProgressService } from '../../core/services/progress.service';
 import { AuthService } from '../../core/services/auth';
+import { ToastService } from '../../core/services/toast.service';
 import { BASE_URL } from '../../types/course-builder.types';
 
 /**
@@ -67,6 +68,7 @@ export class LearningPathDetails implements OnInit {
     private learningPathService: LearningPathService,
     private progressService: ProgressService,
     private authService: AuthService,
+    private toast: ToastService,
   ) {}
 
   /**
@@ -86,13 +88,7 @@ export class LearningPathDetails implements OnInit {
     if (!this.isStaffPreview()) {
       const access = await this.progressService.canAccess(course.id);
       if (!access.canAccess) {
-        void this.router.navigate(['/course', course.id], {
-          state: {
-            course,
-            pathId: this.pathId(),
-            lockReason: access.reason,
-          },
-        });
+        this.toast.error(access.reason || 'This course is locked. Please complete the previous course to unlock.');
         return;
       }
     }
@@ -111,9 +107,13 @@ export class LearningPathDetails implements OnInit {
       }
     }
 
-    void this.router.navigate(['/course', course.id], {
-      state: { course, pathId: this.pathId() }
-    });
+    if (this.isStaffPreview()) {
+      void this.router.navigate(['/course', course.id], {
+        state: { course, pathId: this.pathId() }
+      });
+    } else {
+      this.toast.error('This course does not have any lessons available.');
+    }
   }
 
   /**

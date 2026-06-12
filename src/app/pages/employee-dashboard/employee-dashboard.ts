@@ -10,6 +10,7 @@ import { CourseResponseDTO, LearningPathService, LearningPathResponseDto } from 
 import { CoursesApiService } from '../../core/services/courses-api.service';
 import { ProgressService } from '../../core/services/progress.service';
 import { SectionsApiService } from '../../core/services/sections-api.service';
+import { ToastService } from '../../core/services/toast.service';
 import { BASE_URL } from '../../types/course-builder.types';
 
 import { ContinueLearningComponent } from './components/continue-learning/continue-learning.component';
@@ -234,6 +235,7 @@ export class EmployeeDashboard implements OnInit {
     private sectionsApi: SectionsApiService,
     private authService: AuthService,
     private router: Router,
+    private toast: ToastService,
   ) {}
 
   /**
@@ -421,9 +423,16 @@ export class EmployeeDashboard implements OnInit {
         state: { courseId: state.courseId, pathId: state.pathId },
       });
     } else if (state.courseId) {
-      this.router.navigate(['/course', state.courseId], {
-        state: { pathId: state.pathId },
-      });
+      const pathCourses = this.allPaths().find(p => p.id === state.pathId)?.courses ?? [];
+      const course = pathCourses.find(c => c.id === state.courseId);
+      const firstLessonId = course ? this.getFirstLessonId(course) : null;
+      if (firstLessonId) {
+        this.router.navigate(['/lesson', firstLessonId], {
+          state: { courseId: state.courseId, pathId: state.pathId },
+        });
+      } else {
+        this.openPath(state.pathId);
+      }
     } else {
       const incompleteCourse = path ? this.getFirstIncompleteCourse(path) : null;
       if (incompleteCourse && path) {
@@ -538,13 +547,7 @@ export class EmployeeDashboard implements OnInit {
   async openCourse(course: CourseResponseDTO, learningPathId: number) {
     const access = await this.progressService.canAccess(course.id);
     if (!access.canAccess) {
-      void this.router.navigate(['/course', course.id], {
-        state: {
-          course,
-          pathId: learningPathId,
-          lockReason: access.reason,
-        },
-      });
+      this.toast.error(access.reason || 'This course is locked. Please complete the previous course to unlock.');
       return;
     }
 
@@ -572,9 +575,7 @@ export class EmployeeDashboard implements OnInit {
       // Fall back to course details when lessons cannot be loaded.
     }
 
-    void this.router.navigate(['/course', course.id], {
-      state: { course, pathId: learningPathId }
-    });
+    this.toast.error('This course does not have any lessons available.');
   }
 
   /**

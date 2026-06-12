@@ -48,7 +48,7 @@ export const routes: Routes = [
         path: '',
         loadComponent: () => import('./pages/course-details/course-details').then(m => m.CourseDetails),
         canActivate: [roleGuard],
-        data: { roles: ['EMPLOYEE', 'SUPERADMIN', 'HR', 'MANAGER'] }
+        data: { roles: ['SUPERADMIN', 'HR', 'MANAGER'] }
       }
     ]
   },

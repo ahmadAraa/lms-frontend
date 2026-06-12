@@ -532,11 +532,15 @@ export class LessonViewerComponent implements OnInit {
    * Routes the user to the parent course detail page.
    */
   goToCourse(): void {
-    const course = this.course();
-    if (!course) return;
-    void this.router.navigate(['/course', course.id], {
-      state: { course, pathId: this.pathId },
-    });
+    if (this.isPreviewMode()) {
+      const course = this.course();
+      if (!course) return;
+      void this.router.navigate(['/course', course.id], {
+        state: { course, pathId: this.pathId },
+      });
+    } else {
+      this.goToCourseBuilder();
+    }
   }
 
   /**

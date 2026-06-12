@@ -68,8 +68,19 @@
                   <span class="m-lesson-sub">
                     @if (l.id === currentLessonId) {
                       <span class="m-lesson-sub-now">
-                        <span class="material-symbols-outlined">menu_book</span>
-                        Currently Reading
+                        @if (l.type === 0) {
+                          <span class="material-symbols-outlined">smart_display</span>
+                          Currently Watching
+                        } @else if (l.type === 1) {
+                          <span class="material-symbols-outlined">picture_as_pdf</span>
+                          Currently Reading
+                        } @else if (l.type === 2) {
+                          <span class="material-symbols-outlined">slideshow</span>
+                          Currently Viewing
+                        } @else {
+                          <span class="material-symbols-outlined">language</span>
+                          Currently Viewing
+                        }
                       </span>
                     } @else if (isLessonCompleted(l.id)) {
                       <span class="m-lesson-sub-done">Completed</span>
