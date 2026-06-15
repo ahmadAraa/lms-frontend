@@ -9,16 +9,19 @@
 /* ── Sidebar ─────────────────────────────────────── */
 .hr-sidebar {
   width: 220px;
+  min-width: 220px;
   flex-shrink: 0;
   background: var(--navy);
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
   position: fixed;
   top: 0;
   left: 0;
   bottom: 0;
   z-index: 100;
+  overflow-y: auto;
+  overflow-x: hidden;
   transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -53,6 +56,9 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .hr-sidebar-link {
@@ -159,6 +165,7 @@
 @media (max-width: 900px) {
   .hr-sidebar {
     width: 64px;
+    min-width: 64px;
   }
   .hr-sidebar-brand {
     padding: 14px 8px;
@@ -197,9 +204,51 @@
   }
 }
 
+/* ── Short viewport (wide aspect ratios like 19:10) ── */
+@media (max-height: 580px) {
+  .hr-sidebar-brand {
+    padding: 12px 14px;
+  }
+  .brand-logo-frame {
+    height: 40px;
+  }
+  .hr-sidebar-nav {
+    padding: 12px 12px;
+    gap: 2px;
+  }
+  .hr-sidebar-link {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+  .hr-sidebar-footer {
+    padding: 10px 16px;
+  }
+  .sidebar-copyright {
+    font-size: 10px;
+  }
+  .sidebar-sub-copyright {
+    font-size: 8px;
+  }
+}
+
+/* ── Sidebar scrollbar styling ──────────────────────── */
+.hr-sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+.hr-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.hr-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+.hr-sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
 /* ── Sidebar Footer ──────────────────────────────── */
 .hr-sidebar-spacer {
-  flex: 1;
+  flex: 0 0 auto;
 }
 
 .hr-sidebar-footer {
